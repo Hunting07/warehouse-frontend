@@ -1,57 +1,43 @@
 package com.teach.javafx.request;
-/**
- * JwtResponse JWT数据返回对象 包含客户登录的信息
- * String tokenType token字符串
- * Integer id 用户的ID user_id
- * String username 用户的登录名
- * String accessToken 登录客户加密数据串 请求是要传到后端进行权限验证
- * String roles 用户角色 ROLE_ADMIN, ROLE_STUDENT, ROLE_TEACHER
- */
 
 public class JwtResponse {
     private String tokenType;
     private Integer id;
     private String username;
-    private String token;
+    private String token; // 兼容前端旧代码
     private String role;
 
-    public String getTokenType() {
-        return tokenType;
-    }
+    // 新增：适配 Satoken 返回的字段
+    private String tokenValue;
+    private String loginId;
+    private String loginType;
+    private Boolean isLogin;
 
-    public void setTokenType(String tokenType) {
-        this.tokenType = tokenType;
-    }
+    public String getTokenType() { return tokenType; }
+    public void setTokenType(String tokenType) { this.tokenType = tokenType; }
 
-    public Integer getId() {
-        return id;
-    }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public String getUsername() {
-        return username;
-    }
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 
-    public String getToken() {
-        return token;
-    }
+    // 新增属性的 Getter 和 Setter
+    public String getTokenValue() { return tokenValue; }
+    public void setTokenValue(String tokenValue) { this.tokenValue = tokenValue; }
 
-    public void setToken(String token) {
-        this.token = token;
-    }
+    public String getLoginId() { return loginId; }
+    public void setLoginId(String loginId) { this.loginId = loginId; }
 
-    public String getRole() {
-        return role;
-    }
+    public String getLoginType() { return loginType; }
+    public void setLoginType(String loginType) { this.loginType = loginType; }
 
-    public void setRole(String role) {
-        this.role = role;
-    }
+    public Boolean getIsLogin() { return isLogin; }
+    public void setIsLogin(Boolean isLogin) { this.isLogin = isLogin; }
 }

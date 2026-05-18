@@ -168,10 +168,14 @@ public class MainFrameController {
         handler =new ChangePanelHandler();
         DataRequest req= new DataRequest();
         DataResponse res;
-        res = HttpRequestUtil.request("/api/base/getDataBaseUserName",req);
-        String userName = (String)res.getData();
-        systemPrompt.setText("服务器：" + HttpRequestUtil.serverUrl + " 数据库：" + userName);
+       // res = HttpRequestUtil.request("/api/base/getDataBaseUserName",req);
+       // String userName = (String)res.getData();
+       // systemPrompt.setText("服务器：" + HttpRequestUtil.serverUrl + " 数据库：" + userName);
         res = HttpRequestUtil.request("/api/base/getMenuList",req);
+        if (res == null || res.getData() == null) {
+            System.out.println("菜单加载失败，请检查后端接口");
+            return;
+        }
         List<Map> mList = (List<Map>)res.getData();
         initMenuBar(mList);
         initMenuTree(mList);

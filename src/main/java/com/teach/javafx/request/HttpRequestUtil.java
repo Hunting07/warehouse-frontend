@@ -36,7 +36,7 @@ public class HttpRequestUtil {
      * @return  返回null 登录成功 AppStore注册登录账号信息 非空，登录错误信息
      */
 
-    public static String login(LoginRequest request){
+    /*public static String login(LoginRequest request){
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(serverUrl + "/auth/login"))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
@@ -56,7 +56,38 @@ public class HttpRequestUtil {
                 e.printStackTrace();
             }
         return "登录失败";
+    }*/
+
+    public static String login(LoginRequest request){
+        String fullUrl = serverUrl + "/auth/login";
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(fullUrl))
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
+                .headers("Content-Type", "application/json")
+                .build();
+        try {
+            HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            System.out.println("响应内容: " + response.body());
+
+            if (response.statusCode() == 200) {
+                Map<String, Object> map = gson.fromJson(response.body(), Map.class);
+                if (map.get("code") != null && ((Number)map.get("code")).intValue() == 200) {
+                    Map<String, Object> data = (Map<String, Object>) map.get("data");
+                    // 适配 Satoken 的 tokenValue 字段
+                    JwtResponse jwt = new JwtResponse();
+                    jwt.setToken((String) data.get("tokenValue"));
+                    jwt.setLoginId((String) data.get("loginId"));
+                    AppStore.setJwt(jwt);
+                    return null;
+                }
+            }
+            return "登录失败：" + response.body();
+        } catch (Exception e) {
+            return "登录异常：" + e.getMessage();
+        }
     }
+// ... existing code ...
+
 
     /**
      * DataResponse request(String url,DataRequest request) 一般数据请求业务的实现
@@ -64,7 +95,7 @@ public class HttpRequestUtil {
      * @param request 请求参数对象
      * @return DataResponse 返回后台返回数据
      */
-    public static DataResponse request(String url, DataRequest request){
+   /* public static DataResponse request(String url, DataRequest request){
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(serverUrl + url))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
@@ -84,7 +115,30 @@ public class HttpRequestUtil {
                 e.printStackTrace();
             }
         return null;
+    }*/
+    public static DataResponse request(String url, DataRequest request){
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + url))
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(request)))
+                .headers("Content-Type", "application/json")
+                // 修改这里：satoken 是后端要求的请求头名
+                .headers("satoken", AppStore.getJwt().getToken())
+                .build();
+        request.add("username", AppStore.getJwt().getUsername());
+        HttpClient client = HttpClient.newHttpClient();
+        try {
+            HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            System.out.println("url=" + url +"    response.statusCode="+response.statusCode());
+            if (response.statusCode() == 200) {
+                return gson.fromJson(response.body(), DataResponse.class);
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+// ... existing code ...
+
 
     /**
      *  MyTreeNode requestTreeNode(String url, DataRequest request) 获取树节点对象
