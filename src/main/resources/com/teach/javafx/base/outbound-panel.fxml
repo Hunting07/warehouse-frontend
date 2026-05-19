@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.teach.javafx.controller.base.OutboundApplyController">
+
+    <top>
+        <HBox spacing="10" padding="10">
+            <Label text="备注："/>
+            <TextField fx:id="remarkField" promptText="填写出库备注" prefWidth="300"/>
+        </HBox>
+    </top>
+
+    <center>
+        <TableView fx:id="detailTableView" editable="true">
+            <columns>
+                <TableColumn fx:id="goodsNameCol" text="商品名称" prefWidth="150"/>
+                <TableColumn fx:id="goodsSpecCol" text="规格型号" prefWidth="120"/>
+                <TableColumn fx:id="unitCol" text="单位" prefWidth="80"/>
+                <TableColumn fx:id="outNumCol" text="出库数量" prefWidth="100"/>
+                <TableColumn fx:id="unitPriceCol" text="单价" prefWidth="100"/>
+                <TableColumn fx:id="totalPriceCol" text="总价" prefWidth="100"/>
+            </columns>
+        </TableView>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER" spacing="15" padding="15">
+            <Button text="添加商品" onAction="#onAdd" prefWidth="100"/>
+            <Button text="删除选中" onAction="#onDelete" prefWidth="100"/>
+            <Button text="提交出库" onAction="#onSubmit" prefWidth="100"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>
