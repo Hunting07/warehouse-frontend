@@ -36,9 +36,9 @@ public class PasswordController {
             MessageDialog.showDialog("新密码和确认密码不同，不能修改！");
             return;
         }
-        request.add("oldPassword", oldPassword);
-        request.add("newPassword", newPassword);
-        request.add("confirmPassword", confirmPassword);
+        request.put("oldPassword", oldPassword);
+        request.put("newPassword", newPassword);
+        request.put("confirmPassword", confirmPassword);
         DataResponse res = HttpRequestUtil.request("/api/base/updatePassword",request);
         if(res.getCode() == 0) {
             MessageDialog.showDialog("修改成功！");

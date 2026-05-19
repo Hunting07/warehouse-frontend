@@ -13,7 +13,7 @@ import java.io.IOException;
 public class ProgressDialog {
 
     private  ProgressController progressController= null;
-    private static ProgressDialog instance = new ProgressDialog();
+    private static final ProgressDialog instance = new ProgressDialog();
 
 
     private ProgressDialog() {
@@ -27,7 +27,7 @@ public class ProgressDialog {
             stage.initOwner(null);
             stage.setScene(scene);
             stage.setTitle("进度显示对话框");
-            progressController = (ProgressController) fxmlLoader.getController();
+            progressController = fxmlLoader.getController();
             progressController.setStage(stage);
         } catch (IOException e) {
             throw new RuntimeException(e);

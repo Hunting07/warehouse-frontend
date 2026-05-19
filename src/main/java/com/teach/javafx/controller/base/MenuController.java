@@ -178,7 +178,7 @@ public class MenuController {
             if(ret != MessageDialog.CHOICE_YES)
                 return;
             DataRequest req = new DataRequest();
-            req.add("id",node.getId());
+            req.put("id",node.getId());
             DataResponse res= HttpRequestUtil.request("/api/base/menuDelete", req);
             if(res.getCode() == 0) {
                 MessageDialog.showDialog("删除成功！");
@@ -213,8 +213,8 @@ public class MenuController {
         editNode.setUserTypeIds(str);
         editNode.setLabel(editNode.getId()+"-"+editNode.getTitle());
         DataRequest req = new DataRequest();
-        req.add("editType", editType);
-        req.add("node",editNode);
+        req.put("editType", editType);
+        req.put("node",editNode);
         DataResponse res = HttpRequestUtil.request("/api/base/menuSave", req);
         if(res.getCode() == 0) {
             MessageDialog.showDialog("保存成功！");

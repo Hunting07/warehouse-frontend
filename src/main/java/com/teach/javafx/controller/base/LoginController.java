@@ -59,7 +59,7 @@ public class LoginController {
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/main-frame.fxml"));
         try {
             Scene scene = new Scene(fxmlLoader.load(), -1, -1);
-            AppStore.setMainFrameController((MainFrameController) fxmlLoader.getController());
+            AppStore.setMainFrameController(fxmlLoader.getController());
             MainApplication.resetStage("教学管理系统", scene);
         } catch (IOException e) {
             throw new RuntimeException(e);

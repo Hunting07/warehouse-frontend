@@ -56,7 +56,7 @@ public class StockInController {
     @FXML
     private TableColumn<StockIn, LocalDateTime> approveTimeColumn;
 
-    private ObservableList<StockIn> stockInList = FXCollections.observableArrayList();
+    private final ObservableList<StockIn> stockInList = FXCollections.observableArrayList();
     private final Gson gson = new Gson();
     private final HttpClient httpClient = HttpClient.newHttpClient();
 

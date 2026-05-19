@@ -212,7 +212,7 @@ public class DateTimeTool {
         return cal.get(Calendar.DAY_OF_WEEK);
     }
 
-    public static void main(String args[]){
+    public static void main(String[] args){
         System.out.println(getCurrentWeekDay());
 
     }

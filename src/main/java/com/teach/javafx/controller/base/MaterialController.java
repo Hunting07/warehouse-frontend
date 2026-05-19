@@ -31,9 +31,9 @@ public class MaterialController{
         if(root == null)
             return;
         fileNameColumn.setCellValueFactory(new TreeItemPropertyValueFactory<>("value"));
-        fileNameColumn.setCellFactory(TextFieldTreeTableCell.<MyTreeNode>forTreeTableColumn());
+        fileNameColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         titleColumn.setCellValueFactory(new TreeItemPropertyValueFactory<>("label"));
-        titleColumn.setCellFactory(TextFieldTreeTableCell.<MyTreeNode>forTreeTableColumn());
+        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         TreeItem<MyTreeNode> rootNode = new TreeItem<>(root);
         MyTreeNode node;
         TreeItem<MyTreeNode> tNode, tNodes;
@@ -72,7 +72,7 @@ public class MaterialController{
         }
         String fileName =node.getValue();
         int index = fileName.lastIndexOf(".");
-        String suffix = fileName.substring(index+1,fileName.length());
+        String suffix = fileName.substring(index+1);
         DataRequest req = new DataRequest();
         String dir = selectedItem.getParent().getValue().getValue();
         String path= null;
@@ -81,7 +81,7 @@ public class MaterialController{
         }else {
             path = "material/" +dir+"/"+ fileName;
         }
-        req.add("fileName",path);
+        req.put("fileName",path);
         byte[] bytes = HttpRequestUtil.requestByteData("/api/base/getFileByteData", req);
         if (bytes != null) {
             FileChooser fileDialog = new FileChooser();

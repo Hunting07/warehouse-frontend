@@ -34,9 +34,9 @@ public class MainFrameController {
             changeContent(actionEvent);
         }
     }
-    private Map<String,Tab> tabMap = new HashMap<String,Tab>();
-    private Map<String,Scene> sceneMap = new HashMap<String,Scene>();
-    private Map<String,ToolController> controlMap =new HashMap<String,ToolController>();
+    private final Map<String,Tab> tabMap = new HashMap<String,Tab>();
+    private final Map<String,Scene> sceneMap = new HashMap<String,Scene>();
+    private final Map<String,ToolController> controlMap =new HashMap<String,ToolController>();
     @FXML
     private MenuBar menuBar;
     @FXML
@@ -207,8 +207,7 @@ public class MainFrameController {
     public  void changeContent(ActionEvent ae) {
         Object obj = ae.getSource();
         String name= null, title= null;
-        if(obj instanceof MenuItem) {
-            MenuItem item = (MenuItem)obj;
+        if(obj instanceof MenuItem item) {
             name = item.getId();
             title = item.getText();
         }

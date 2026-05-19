@@ -19,7 +19,7 @@ public class MessageDialog {
 
     private  MessageController messageController= null;
     private  ChoiceController choiceController= null;
-    private static MessageDialog instance = new MessageDialog();
+    private static final MessageDialog instance = new MessageDialog();
 
     /**
      * 初始加载三个页面
@@ -43,7 +43,7 @@ public class MessageDialog {
             });
             stage.setScene(scene);
             stage.setTitle("信息显示对话框");
-            messageController = (MessageController) fxmlLoader.getController();
+            messageController = fxmlLoader.getController();
             messageController.setStage(stage);
 
             fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/choice-dialog.fxml"));
@@ -57,7 +57,7 @@ public class MessageDialog {
             });
             stage.setScene(scene);
             stage.setTitle("信息显示对话框");
-            choiceController = (ChoiceController) fxmlLoader.getController();
+            choiceController = fxmlLoader.getController();
             choiceController.setStage(stage);
 
         } catch (IOException e) {

@@ -49,8 +49,8 @@ public class DictionaryController {
         titleColumn.setCellValueFactory(new TreeItemPropertyValueFactory<>("title"));
 
         idColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn(new IntegerStringConverter()));
-        valueColumn.setCellFactory(TextFieldTreeTableCell.<MyTreeNode>forTreeTableColumn());
-        titleColumn.setCellFactory(TextFieldTreeTableCell.<MyTreeNode>forTreeTableColumn());
+        valueColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
+        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
         idColumn.setOnEditCommit(e->{
             MyTreeNode node = e.getRowValue().getValue();
             node.setId(e.getNewValue());
@@ -136,7 +136,7 @@ public class DictionaryController {
         MyTreeNode node = selectedItem.getValue();
         parent.getValue().getChildren().remove(node);
         DataRequest req = new DataRequest();
-        req.add("id",node.getId());
+        req.put("id", node.getId());
         DataResponse res= HttpRequestUtil.request("/api/base/dictionaryDelete", req);
         if(res.getCode() == 0) {
             MessageDialog.showDialog("删除成功！");
@@ -152,10 +152,10 @@ public class DictionaryController {
         TreeItem<MyTreeNode> selectedItem = sm.getModelItem(rowIndex);
         MyTreeNode node = selectedItem.getValue();
         DataRequest req = new DataRequest();
-        req.add("id", node.getId());
-        req.add("value",node.getValue());
-        req.add("title",node.getTitle());
-        req.add("pid",node.getPid());
+        req.put("id", node.getId());
+        req.put("value",node.getValue());
+        req.put("title",node.getTitle());
+        req.put("pid",node.getPid());
         DataResponse res = HttpRequestUtil.request("/api/base/dictionarySave", req);
         if(res.getCode() == 0) {
             MessageDialog.showDialog("保存成功！");

@@ -102,7 +102,7 @@ public class HttpRequestUtil {
                     .headers("Content-Type", "application/json")
                     .headers("Authorization", "Bearer " + AppStore.getJwt().getToken())
                     .build();
-            request.add("username",AppStore.getJwt().getUsername());
+            request.put("username",AppStore.getJwt().getUsername());
             HttpClient client = HttpClient.newHttpClient();
             try {
                 HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -124,7 +124,7 @@ public class HttpRequestUtil {
                 // 修改这里：satoken 是后端要求的请求头名
                 .headers("satoken", AppStore.getJwt().getToken())
                 .build();
-        request.add("username", AppStore.getJwt().getUsername());
+        request.put("username", AppStore.getJwt().getUsername());
         HttpClient client = HttpClient.newHttpClient();
         try {
             HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -223,7 +223,7 @@ public class HttpRequestUtil {
      */
     public static  List<OptionItem> getDictionaryOptionItemList(String code) {
         DataRequest req = new DataRequest();
-        req.add("code", code);
+        req.put("code", code);
         return requestOptionItemList("/api/base/getDictionaryOptionItemList",req);
     }
 

@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
  */
 public class IntegerStringConverter extends StringConverter<Integer> {
     private String pattern = "yyyy-MM-dd";
-    private DateTimeFormatter dtFormatter;
+    private final DateTimeFormatter dtFormatter;
     public IntegerStringConverter() {
         dtFormatter = DateTimeFormatter.ofPattern(pattern);
     }

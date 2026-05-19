@@ -35,10 +35,7 @@ public class CommonMethod {
             return false;
         if(obj instanceof Boolean)
             return (Boolean)obj;
-        if("true".equals(obj.toString()))
-            return true;
-        else
-            return false;
+        return "true".equals(obj.toString());
     }
     public static List<?> getList(Map<String,Object> data, String key){
         if(data == null)
