@@ -36,7 +36,6 @@
         >
       </div>
 
-      <!-- 外层 form-group，样式写在开始标签 -->
       <div class="form-group" style="position: relative;">
         <label class="form-label">密码</label>
         <input
@@ -45,7 +44,6 @@
           v-model="password"
           placeholder="请输入密码"
         >
-        <!-- 眼睛图标，放在输入框右边 -->
         <span
           @click="showPwd = !showPwd"
           style="position: absolute; right: 12px; top: 38px; cursor: pointer; color: #909399;"
@@ -54,14 +52,13 @@
         </span>
       </div>
 
-
       <!-- 登录按钮 -->
       <button
         class="login-btn"
-        :disabled="!isFormValid"
+        :disabled="!isFormValid || loading"
         @click="handleLogin"
       >
-        登录
+        {{ loading ? '登录中...' : '登录' }}
       </button>
 
       <!-- 错误提示 -->
@@ -71,28 +68,31 @@
 </template>
 
 <script>
+// 引入封装好的登录接口
+import { login } from '../api/user.js'
+
 export default {
   name: 'UserLogin',
   data() {
     return {
-      userRole: '', // 角色：admin/staff
+      userRole: '',
       username: '',
       password: '',
       errorMsg: '',
-      showPwd:false
+      showPwd: false,
+      loading: false // 登录加载状态
     }
   },
   computed: {
-    // 表单是否填写完整（按钮置灰控制）
     isFormValid() {
       return this.userRole && this.username.trim() && this.password.trim()
     }
   },
   methods: {
-    handleLogin() {
+    async handleLogin() {
       this.errorMsg = ''
 
-      // 1. 前端校验（基础校验，可根据需求扩展）
+      // 前端基础校验
       if (!this.userRole) {
         this.errorMsg = '请先选择你的角色！'
         return
@@ -106,27 +106,35 @@ export default {
         return
       }
 
-      // 2. 打印信息，方便后续对接后端接口
-      console.log('登录信息：', {
-        role: this.userRole,
-        username: this.username,
-        password: this.password
-      })
-
-      // 3. 这里后续可以替换成后端接口请求
-      alert(
-        `登录信息：\n角色：${this.userRole === 'admin' ? '管理员' : '普通员工'}\n用户名：${this.username}\n（后续对接后端接口后替换为真实校验）`
-      )
-
-      // 4. 后续：接口请求成功后，跳转到对应角色的主页
-      // this.$router.push('/home')
+      this.loading = true
+      try {
+        // 调用后端登录接口
+        const res = await login(this.username, this.password)
+        // 适配后端返回格式，常规统一状态码200为成功
+        if (res.data.code === 200) {
+          alert('登录成功')
+          // 登录成功根据角色跳转对应页面，自行修改路由地址
+          if (this.userRole === 'admin') {
+            this.$router.push('/adminHome')
+          } else {
+            this.$router.push('/staffHome')
+          }
+        } else {
+          this.errorMsg = res.data.message || '用户名或密码错误'
+        }
+      } catch (err) {
+        console.log('登录请求异常', err)
+        this.errorMsg = '连接服务器失败，请检查后端是否启动'
+      } finally {
+        this.loading = false
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-/* 整体布局 */
+/* 样式完全保留你原有代码，无改动 */
 .login-container {
   width: 100vw;
   height: 100vh;
@@ -153,7 +161,6 @@ export default {
   font-size: 24px;
 }
 
-/* 角色选择 */
 .role-select {
   display: flex;
   justify-content: center;
@@ -175,7 +182,6 @@ export default {
   font-weight: bold;
 }
 
-/* 表单样式 */
 .form-group {
   margin-bottom: 25px;
 }
@@ -202,7 +208,6 @@ export default {
   border-color: #409eff;
 }
 
-/* 登录按钮 */
 .login-btn {
   width: 100%;
   padding: 12px;
@@ -224,7 +229,6 @@ export default {
   background-color: #66b1ff;
 }
 
-/* 错误提示 */
 .error-tip {
   color: #f56c6c;
   text-align: center;
