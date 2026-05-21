@@ -110,28 +110,36 @@ public class MenuController {
 
     }
     public void updateTreeView(){
-        // 1. 清空原有菜单，防止重复加载
+        System.out.println("===== 1. 开始执行菜单加载方法 =====");
+
+        // 1. 清空原有菜单
         root.getChildren().clear();
+        System.out.println("===== 2. 清空原有菜单完成 =====");
 
-        // 2. 准备请求对象
-        DataRequest req = new DataRequest();
+        // 2. 调用接口获取菜单数据
+        List<Menu> menuList = HttpRequestUtil.requestMenuList("/api/base/getMenuTreeNodeList");
+        System.out.println("===== 3. 接口返回结果：" + menuList);
+        System.out.println("===== 4. 接口返回数据条数：" + (menuList == null ? 0 : menuList.size()));
 
-        // 3. 调用工具类请求菜单接口
-        List<MyTreeNode> nodeList = HttpRequestUtil.requestTreeNodeList(
-                "/api/base/getMenuTreeNodeList",
-                req
-        );
-
-        // 4. 判空处理
-        if (nodeList == null || nodeList.size() == 0) {
-            System.out.println("菜单接口返回数据为空");
+        // 3. 判空处理
+        if (menuList == null || menuList.isEmpty()) {
+            System.out.println("===== 5. 接口返回数据为空，方法结束 =====");
             return;
         }
 
-        // 5. 直接添加一级菜单（如果你的 getTreeItem 方法已经存在，就直接用）
-        for (int i = 0; i < nodeList.size(); i++) {
-            root.getChildren().add(getTreeItem(nodeList.get(i)));
+        // 4. 循环添加菜单到树里
+        for (Menu menu : menuList) {
+            System.out.println("===== 6. 正在添加菜单：" + menu.getName());
+            TreeItem<Menu> treeItem = new TreeItem<>(menu);
+            root.getChildren().add(treeItem);
         }
+
+        // 5. 强制刷新 TreeView
+        treeView.setRoot(null);
+        treeView.setRoot(root);
+        treeView.setShowRoot(false); // 隐藏根节点，只显示子菜单
+
+        System.out.println("===== 7. 菜单加载完成，共添加：" + root.getChildren().size() + " 个菜单 =====");
     }
     public void setRoleCheckBox(){
         nodeAdminCheckBox.setSelected(false);
