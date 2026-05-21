@@ -1,105 +1,147 @@
 package com.teach.javafx.controller.base;
 
-import com.teach.javafx.request.*;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.*;
-import javafx.stage.FileChooser;
-import com.teach.javafx.request.DataRequest;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.util.Callback;
+import java.time.LocalDateTime;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.List;
+public class MaterialController {
 
-/**
- * DictionaryController 登录交互控制类 对应 base/dictionary-panel.fxml
- *  @FXML  属性 对应fxml文件中的
- *  @FXML 方法 对应于fxml文件中的 on***Click的属性
- */
-public class MaterialController{
     @FXML
-    private TreeTableView<MyTreeNode> treeTable;
+    private TableView<Material> materialTable;
+
     @FXML
-    private TreeTableColumn<MyTreeNode, String> fileNameColumn;
+    private TableColumn<Material, Integer> idCol;
     @FXML
-    private TreeTableColumn<MyTreeNode, String> titleColumn;
+    private TableColumn<Material, String> nameCol;
+    @FXML
+    private TableColumn<Material, String> categoryNameCol;
+    @FXML
+    private TableColumn<Material, Integer> currentStockCol;
+    @FXML
+    private TableColumn<Material, Integer> safetyStockCol;
+    @FXML
+    private TableColumn<Material, LocalDateTime> createTimeCol;
+    @FXML
+    private TableColumn<Material, Void> actionCol;
+
+    private ObservableList<Material> dataList = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
-        MyTreeNode root = HttpRequestUtil.requestTreeNode("/api/base/getMaterialTreeNode",new DataRequest());
-        if(root == null)
-            return;
-        fileNameColumn.setCellValueFactory(new TreeItemPropertyValueFactory<>("value"));
-        fileNameColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
-        titleColumn.setCellValueFactory(new TreeItemPropertyValueFactory<>("label"));
-        titleColumn.setCellFactory(TextFieldTreeTableCell.forTreeTableColumn());
-        TreeItem<MyTreeNode> rootNode = new TreeItem<>(root);
-        MyTreeNode node;
-        TreeItem<MyTreeNode> tNode, tNodes;
-        List<MyTreeNode> sList;
-        List<MyTreeNode> cList = root.getChildren();
-        int i,j;
-        for(i = 0;  i <cList.size();i++) {
-            node = cList.get(i);
-            tNode = new TreeItem<>(node);
-            sList = node.getChildren();
-            for(j = 0; j < sList.size();j++) {
-                tNodes = new TreeItem<>(sList.get(j));
-                tNode.getChildren().add(tNodes);
+        // 绑定列
+        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+        categoryNameCol.setCellValueFactory(new PropertyValueFactory<>("categoryName"));
+        currentStockCol.setCellValueFactory(new PropertyValueFactory<>("currentStock"));
+        safetyStockCol.setCellValueFactory(new PropertyValueFactory<>("safetyStock"));
+        createTimeCol.setCellValueFactory(new PropertyValueFactory<>("createTime"));
+
+        // 操作列（和 CategoryController 完全一样）
+        actionCol.setCellFactory(new Callback<>() {
+            @Override
+            public TableCell<Material, Void> call(TableColumn<Material, Void> param) {
+                return new TableCell<>() {
+                    @Override
+                    protected void updateItem(Void item, boolean empty) {
+                        super.updateItem(item, empty);
+                        setGraphic(null);
+                    }
+                };
             }
-            rootNode.getChildren().add(tNode);
-        }
-        rootNode.setExpanded(true);
-        treeTable.setRoot(rootNode);
-        treeTable.getSelectionModel().selectFirst();
-        TreeTableView.TreeTableViewSelectionModel<MyTreeNode> tsm = treeTable.getSelectionModel();
-        ObservableList<Integer> list = tsm.getSelectedIndices();
+        });
+
+        // 假数据（和 CategoryController 格式完全一致）
+        dataList.add(new Material(1, "笔记本电脑", "电子设备", 10, 5, LocalDateTime.now()));
+        dataList.add(new Material(2, "打印纸", "办公用品", 50, 20, LocalDateTime.now()));
+
+        materialTable.setItems(dataList);
     }
+
     @FXML
-    public void onDownloadButtonClick(){
-        TreeTableView.TreeTableViewSelectionModel<MyTreeNode> sm = treeTable.getSelectionModel();
-        if (sm.isEmpty()) {
-            MessageDialog.showDialog("没有选择，无法下载");
-            return;
+    private void addMaterial() {
+        new Alert(Alert.AlertType.INFORMATION, "新增功能暂未实现").show();
+    }
+
+    @FXML
+    private void editMaterial() {
+        new Alert(Alert.AlertType.INFORMATION, "编辑功能暂未实现").show();
+    }
+
+    @FXML
+    private void deleteMaterial() {
+        new Alert(Alert.AlertType.INFORMATION, "删除功能暂未实现").show();
+    }
+
+    // 内部类（和 Category 格式完全一致）
+    public static class Material {
+        private Integer id;
+        private String name;
+        private String categoryName;
+        private Integer currentStock;
+        private Integer safetyStock;
+        private LocalDateTime createTime;
+
+        public Material() {}
+
+        public Material(Integer id, String name, String categoryName, Integer currentStock, Integer safetyStock, LocalDateTime createTime) {
+            this.id = id;
+            this.name = name;
+            this.categoryName = categoryName;
+            this.currentStock = currentStock;
+            this.safetyStock = safetyStock;
+            this.createTime = createTime;
         }
-        int rowIndex = sm.getSelectedIndex();
-        TreeItem<MyTreeNode> selectedItem = sm.getModelItem(rowIndex);
-        MyTreeNode node = selectedItem.getValue();
-        if(!node.getIsLeaf().equals(1)) {
-            MessageDialog.showDialog("选择为目录，不是文件，无法下载");
-            return;
+
+        public Integer getId() {
+            return id;
         }
-        String fileName =node.getValue();
-        int index = fileName.lastIndexOf(".");
-        String suffix = fileName.substring(index+1);
-        DataRequest req = new DataRequest();
-        String dir = selectedItem.getParent().getValue().getValue();
-        String path= null;
-        if(dir== null || dir.length()== 0) {
-            path = "material/" + fileName;
-        }else {
-            path = "material/" +dir+"/"+ fileName;
+
+        public void setId(Integer id) {
+            this.id = id;
         }
-        req.put("fileName",path);
-        byte[] bytes = HttpRequestUtil.requestByteData("/api/base/getFileByteData", req);
-        if (bytes != null) {
-            FileChooser fileDialog = new FileChooser();
-            fileDialog.setTitle("请选择保存的文件名");
-            fileDialog.getExtensionFilters().addAll(
-                    new FileChooser.ExtensionFilter(suffix+" 文件", "*."+suffix));
-            fileDialog.setInitialFileName(fileName);
-            File file = fileDialog.showSaveDialog(null);
-            if(file != null) {
-                try {
-                    FileOutputStream out = new FileOutputStream(file);
-                    out.write(bytes);
-                    out.close();
-                    MessageDialog.showDialog("下载成功！");
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getCategoryName() {
+            return categoryName;
+        }
+
+        public void setCategoryName(String categoryName) {
+            this.categoryName = categoryName;
+        }
+
+        public Integer getCurrentStock() {
+            return currentStock;
+        }
+
+        public void setCurrentStock(Integer currentStock) {
+            this.currentStock = currentStock;
+        }
+
+        public Integer getSafetyStock() {
+            return safetyStock;
+        }
+
+        public void setSafetyStock(Integer safetyStock) {
+            this.safetyStock = safetyStock;
+        }
+
+        public LocalDateTime getCreateTime() {
+            return createTime;
+        }
+
+        public void setCreateTime(LocalDateTime createTime) {
+            this.createTime = createTime;
         }
     }
 }

@@ -12,6 +12,12 @@ import com.teach.javafx.request.DataResponse;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.event.EventHandler;
+import javafx.scene.input.MouseEvent;
+
 /**
  * MenuController 登录交互控制类 对应 base/menu-panel.fxml
  *  @FXML  属性 对应fxml文件中的
@@ -75,21 +81,65 @@ public class MenuController {
         delete.setOnAction(this::onDeleteButtonClick);
         contextMenu.getItems().addAll(add, edit, delete);
         menuTreeView.setContextMenu(contextMenu);
-        menuTreeView.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>(){
-            public void handle(MouseEvent event){
+        menuTreeView.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
                 treeItem = menuTreeView.getSelectionModel().getSelectedItem();
+                if (treeItem != null && treeItem.getValue() != null) {
+                    MyTreeNode node = treeItem.getValue();
+                    // 物资分类管理菜单节点
+                    if ("物资分类管理".equals(node.getTitle())) {
+                        try {
+                            openCategoryView();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    // 物资管理菜单节点
+                    if ("物资管理".equals(node.getTitle())) {
+                        try {
+                            openMaterialView();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
             }
         });
 
+
     }
     public void updateTreeView(){
-        DataRequest req = new DataRequest();
-        List<MyTreeNode> nodeList = HttpRequestUtil.requestTreeNodeList("/api/base/getMenuTreeNodeList", req);
-        if (nodeList == null ||nodeList.size()== 0)
+        System.out.println("===== 1. 开始执行菜单加载方法 =====");
+
+        // 1. 清空原有菜单
+        root.getChildren().clear();
+        System.out.println("===== 2. 清空原有菜单完成 =====");
+
+        // 2. 调用接口获取菜单数据
+        List<Menu> menuList = HttpRequestUtil.requestMenuList("/api/base/getMenuTreeNodeList");
+        System.out.println("===== 3. 接口返回结果：" + menuList);
+        System.out.println("===== 4. 接口返回数据条数：" + (menuList == null ? 0 : menuList.size()));
+
+        // 3. 判空处理
+        if (menuList == null || menuList.isEmpty()) {
+            System.out.println("===== 5. 接口返回数据为空，方法结束 =====");
             return;
-        for (int i = 0; i < nodeList.size(); i++) {
-            root.getChildren().add(getTreeItem(nodeList.get(i)));
         }
+
+        // 4. 循环添加菜单到树里
+        for (Menu menu : menuList) {
+            System.out.println("===== 6. 正在添加菜单：" + menu.getName());
+            TreeItem<Menu> treeItem = new TreeItem<>(menu);
+            root.getChildren().add(treeItem);
+        }
+
+        // 5. 强制刷新 TreeView
+        treeView.setRoot(null);
+        treeView.setRoot(root);
+        treeView.setShowRoot(false); // 隐藏根节点，只显示子菜单
+
+        System.out.println("===== 7. 菜单加载完成，共添加：" + root.getChildren().size() + " 个菜单 =====");
     }
     public void setRoleCheckBox(){
         nodeAdminCheckBox.setSelected(false);
@@ -227,4 +277,28 @@ public class MenuController {
             MessageDialog.showDialog(res.getMsg());
         }
     }
+
+
+    // 打开物资分类管理界面
+    private void openCategoryView() throws Exception {
+        Stage stage = new Stage();
+        // 注意：路径必须和你的FXML文件位置一致，去掉多余的name:
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/CategoryView.fxml"));
+        Scene scene = new Scene(loader.load());
+        stage.setTitle("物资分类管理");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    // 打开物资管理界面
+    private void openMaterialView() throws Exception {
+        Stage stage = new Stage();
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/MaterialView.fxml"));
+        Scene scene = new Scene(loader.load());
+        stage.setTitle("物资管理");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+
 }
