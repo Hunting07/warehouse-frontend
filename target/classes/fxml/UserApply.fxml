@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<!-- 标准命名空间，IDEA能直接识别，不会报URI错误 -->
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.teach.javafx.controller.base.UserApplyController"
+            prefWidth="800" prefHeight="600">
+
+    <!-- 顶部标题栏 -->
+    <top>
+        <VBox padding="20" style="-fx-background-color:#f5f7fa;">
+            <Label text="用户/权限申请" style="-fx-font-size:22px;-fx-font-weight:bold;-fx-text-fill:#2c3e50;"/>
+            <Label text="请填写申请信息，提交后等待管理员审批" style="-fx-text-fill:#7f8c8d;-fx-font-size:14px;"/>
+        </VBox>
+    </top>
+
+    <!-- 中间表单区域 -->
+    <center>
+        <VBox spacing="20" padding="30">
+            <!-- 基本信息区域 -->
+            <TitledPane text="基本信息" expanded="true">
+                <GridPane hgap="20" vgap="15" padding="20">
+                    <!-- 第1行：申请账号 + 申请人姓名 -->
+                    <Label text="申请账号：" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-size:14px;"/>
+                    <TextField fx:id="accountField" GridPane.columnIndex="1" GridPane.rowIndex="0" promptText="请输入申请的登录账号" prefWidth="250"/>
+
+                    <Label text="申请人姓名：" GridPane.columnIndex="2" GridPane.rowIndex="0" style="-fx-font-size:14px;"/>
+                    <TextField fx:id="nameField" GridPane.columnIndex="3" GridPane.rowIndex="0" promptText="请输入真实姓名" prefWidth="250"/>
+
+                    <!-- 第2行：联系电话 + 申请角色 -->
+                    <Label text="联系电话：" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-size:14px;"/>
+                    <TextField fx:id="phoneField" GridPane.columnIndex="1" GridPane.rowIndex="1" promptText="请输入联系电话" prefWidth="250"/>
+
+                    <Label text="申请角色：" GridPane.columnIndex="2" GridPane.rowIndex="1" style="-fx-font-size:14px;"/>
+                    <ComboBox fx:id="roleCombo" GridPane.columnIndex="3" GridPane.rowIndex="1" promptText="请选择申请角色" prefWidth="250">
+                        <items>
+                            <String>仓储管理员</String>
+                            <String>普通操作员</String>
+                            <String>数据查看员</String>
+                            <String>供应商账号</String>
+                        </items>
+                    </ComboBox>
+                </GridPane>
+            </TitledPane>
+
+            <!-- 权限申请区域 -->
+            <TitledPane text="权限申请" expanded="true">
+                <VBox spacing="15" padding="20">
+                    <CheckBox fx:id="perm1" text="商品信息管理（增删改查）" style="-fx-font-size:14px;"/>
+                    <CheckBox fx:id="perm2" text="入库单创建/编辑" style="-fx-font-size:14px;"/>
+                    <CheckBox fx:id="perm3" text="出库单创建/编辑" style="-fx-font-size:14px;"/>
+                    <CheckBox fx:id="perm4" text="库存数据查看" style="-fx-font-size:14px;"/>
+                    <CheckBox fx:id="perm5" text="库存预警设置" style="-fx-font-size:14px;"/>
+                    <CheckBox fx:id="perm6" text="供应商信息管理" style="-fx-font-size:14px;"/>
+                </VBox>
+            </TitledPane>
+
+            <!-- 申请说明区域 -->
+            <TitledPane text="申请说明（可选）" expanded="true">
+                <VBox padding="20">
+                    <TextArea fx:id="descArea" promptText="请简要说明申请原因、使用场景等" prefRowCount="4" style="-fx-font-size:14px;"/>
+                </VBox>
+            </TitledPane>
+
+            <!-- 按钮区域 -->
+            <HBox spacing="15" alignment="CENTER" padding="20">
+                <Button text="提交申请" onAction="#handleSubmit" style="-fx-background-color:#165DFF;-fx-text-fill:white;-fx-font-size:14px;-fx-pref-width:120;-fx-pref-height:35;"/>
+                <Button text="重置表单" onAction="#handleReset" style="-fx-background-color:#6c757d;-fx-text-fill:white;-fx-font-size:14px;-fx-pref-width:120;-fx-pref-height:35;"/>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>
