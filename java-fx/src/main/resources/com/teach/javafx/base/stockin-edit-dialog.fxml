@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.StockInEditDialog"
+      spacing="15" prefWidth="700" prefHeight="500">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- 标题 -->
+    <Label text="新增入库单" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+    <!-- 入库类型选择 -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="入库类型：" prefWidth="80"/>
+        <ComboBox fx:id="typeComboBox" prefWidth="200"/>
+    </HBox>
+
+    <!-- 明细表格 -->
+    <Label text="入库明细：" style="-fx-font-weight: bold;"/>
+
+    <TableView fx:id="itemTable" prefHeight="250">
+        <columns>
+            <TableColumn fx:id="materialColumn" text="物资" prefWidth="200"/>
+            <TableColumn fx:id="quantityColumn" text="数量" prefWidth="100"/>
+            <TableColumn fx:id="priceColumn" text="单价" prefWidth="100"/>
+            <TableColumn fx:id="amountColumn" text="金额" prefWidth="100"/>
+            <TableColumn fx:id="actionColumn" text="操作" prefWidth="80"/>
+        </columns>
+    </TableView>
+
+    <!-- 添加明细按钮 -->
+    <HBox spacing="10">
+        <Button text="+ 添加物资" onAction="#onAddItemButtonClick"
+                style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+        <Label fx:id="totalAmountLabel" text="总金额：0.00"
+               style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+    </HBox>
+
+    <!-- 操作按钮 -->
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="提交" onAction="#onSubmitButtonClick"
+                style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-min-width: 80;"/>
+        <Button text="取消" onAction="#onCancelButtonClick"
+                style="-fx-min-width: 80;"/>
+    </HBox>
+</VBox>
+

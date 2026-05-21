@@ -6,16 +6,13 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import com.teach.javafx.request.DataRequest;
-import com.teach.javafx.request.DataResponse;
 
 import java.util.List;
 import java.util.StringTokenizer;
 
 /**
- * MenuController 登录交互控制类 对应 base/menu-panel.fxml
- *  @FXML  属性 对应fxml文件中的
- *  @FXML 方法 对应于fxml文件中的 on***Click的属性
+ * MenuController 菜单管理控制类 对应 base/menu-panel.fxml
+ * 适配仓储管理系统：仅保留“管理员”和“员工”两种身份
  */
 public class MenuController {
     @FXML
@@ -29,24 +26,23 @@ public class MenuController {
     @FXML
     private TextField nodeTitleField;
 
-    private TreeItem<MyTreeNode> treeItem;
-    private MyTreeNode editNode= null;
+    // 仅保留两个身份复选框
+    @FXML
+    private CheckBox nodeAdminCheckBox;   // 管理员 (ID: 1)
+    @FXML
+    private CheckBox nodeEmployeeCheckBox; // 员工 (ID: 2)
 
-    @FXML
-    private  CheckBox nodeAdminCheckBox;
-    @FXML
-    private  CheckBox nodeStudentCheckBox;
-    @FXML
-    private  CheckBox nodeTeacherCheckBox;
+    private TreeItem<MyTreeNode> treeItem;
+    private MyTreeNode editNode = null;
     private TreeItem<MyTreeNode> root;
     private Integer editType = 0;
+
     private TreeItem<MyTreeNode> getTreeItem(MyTreeNode node) {
         TreeItem<MyTreeNode> item = new TreeItem<>(node);
         List<MyTreeNode> sList = node.getChildren();
-        if (sList == null)
-            return item;
-        for (int i = 0; i < sList.size(); i++) {
-            item.getChildren().add(getTreeItem(sList.get(i)));
+        if (sList == null) return item;
+        for (MyTreeNode child : sList) {
+            item.getChildren().add(getTreeItem(child));
         }
         return item;
     }
@@ -57,15 +53,16 @@ public class MenuController {
     }
 
     /**
-     * 页面加载对象创建完成初始话方法，页面中控件属性的设置，初始数据显示等初始操作都在这里完成，其他代码都事件处理方法里
+     * 页面初始化
      */
     @FXML
     public void initialize() {
-        MyTreeNode  node  = new MyTreeNode(null, "", "",0);
+        MyTreeNode node = new MyTreeNode(null, "", "", 0);
         root = new TreeItem<>(node);
         menuTreeView.setRoot(root);
         menuTreeView.setShowRoot(false);
         updateTreeView();
+
         ContextMenu contextMenu = new ContextMenu();
         MenuItem add = new MenuItem("添加");
         add.setOnAction(this::onAddButtonClick);
@@ -75,70 +72,63 @@ public class MenuController {
         delete.setOnAction(this::onDeleteButtonClick);
         contextMenu.getItems().addAll(add, edit, delete);
         menuTreeView.setContextMenu(contextMenu);
-        menuTreeView.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>(){
-            public void handle(MouseEvent event){
-                treeItem = menuTreeView.getSelectionModel().getSelectedItem();
-            }
-        });
 
+        menuTreeView.addEventFilter(MouseEvent.MOUSE_CLICKED, event ->
+                treeItem = menuTreeView.getSelectionModel().getSelectedItem()
+        );
     }
-    public void updateTreeView(){
+
+    public void updateTreeView() {
         DataRequest req = new DataRequest();
         List<MyTreeNode> nodeList = HttpRequestUtil.requestTreeNodeList("/api/base/getMenuTreeNodeList", req);
-        if (nodeList == null ||nodeList.size()== 0)
-            return;
-        for (int i = 0; i < nodeList.size(); i++) {
-            root.getChildren().add(getTreeItem(nodeList.get(i)));
+        if (nodeList == null || nodeList.isEmpty()) return;
+        for (MyTreeNode node : nodeList) {
+            root.getChildren().add(getTreeItem(node));
         }
     }
-    public void setRoleCheckBox(){
+
+    /**
+     * 根据节点权限设置复选框状态
+     */
+    public void setRoleCheckBox() {
         nodeAdminCheckBox.setSelected(false);
-        nodeStudentCheckBox.setSelected(false);
-        nodeTeacherCheckBox.setSelected(false);
-        if(editNode == null) {
-            return;
-        }
+        nodeEmployeeCheckBox.setSelected(false);
+
+        if (editNode == null) return;
         String useTypeIds = editNode.getUserTypeIds();
-        if(useTypeIds == null || useTypeIds.length() == 0 )
-            return;
-        StringTokenizer sz = new StringTokenizer(useTypeIds,",");
-        String str;
-        while(sz.hasMoreTokens()) {
-            str = sz.nextToken();
-            if("1".equals(str)) {
-                nodeAdminCheckBox.setSelected(true);
-            }else if("2".equals(str)) {
-                nodeStudentCheckBox.setSelected(true);
-            }
-            if("3".equals(str)) {
-                nodeTeacherCheckBox.setSelected(true);
-            }
+        if (useTypeIds == null || useTypeIds.isEmpty()) return;
+
+        StringTokenizer sz = new StringTokenizer(useTypeIds, ",");
+        while (sz.hasMoreTokens()) {
+            String str = sz.nextToken();
+            if ("1".equals(str)) nodeAdminCheckBox.setSelected(true);
+            if ("2".equals(str)) nodeEmployeeCheckBox.setSelected(true);
         }
     }
-    public void updateNodePanel(){
-        if(editNode == null) {
+
+    public void updateNodePanel() {
+        if (editNode == null) {
             nodeIdField.setText("");
             nodeNameField.setText("");
             nodeTitleField.setText("");
-        }else {
-            if(editNode.getId() == null)
-                nodeIdField.setText("");
-            else
-                nodeIdField.setText(editNode.getId().toString());
+        } else {
+            nodeIdField.setText(editNode.getId() == null ? "" : editNode.getId().toString());
             nodeNameField.setText(editNode.getValue());
             nodeTitleField.setText(editNode.getTitle());
         }
         setRoleCheckBox();
     }
+
     @FXML
-    protected void onAddRootButtonClick(){
+    protected void onAddRootButtonClick() {
         editType = 0;
         editNode = new MyTreeNode();
         editNode.setParentTitle("");
         updateNodePanel();
     }
-    protected void onAddButtonClick(ActionEvent e ) {
-        if (treeItem == null || treeItem.getValue()==null) {
+
+    protected void onAddButtonClick(ActionEvent e) {
+        if (treeItem == null || treeItem.getValue() == null) {
             MessageDialog.showDialog("没有选择，无法添加");
             return;
         }
@@ -149,9 +139,10 @@ public class MenuController {
         editType = 1;
         updateNodePanel();
     }
+
     @FXML
-    protected void onEditButtonClick(ActionEvent e ) {
-        if (treeItem == null || treeItem.getValue()==null) {
+    protected void onEditButtonClick(ActionEvent e) {
+        if (treeItem == null || treeItem.getValue() == null) {
             MessageDialog.showDialog("没有选择，无法修改");
             return;
         }
@@ -159,72 +150,71 @@ public class MenuController {
         editNode = treeItem.getValue();
         updateNodePanel();
     }
+
     @FXML
-    protected void onDeleteButtonClick(ActionEvent e ) {
-        if(treeItem == null) {
+    protected void onDeleteButtonClick(ActionEvent e) {
+        if (treeItem == null || treeItem.getValue() == null) {
             MessageDialog.showDialog("没有选择，无法删除");
             return;
         }
         MyTreeNode node = treeItem.getValue();
-        if (node == null) {
-            MessageDialog.showDialog("没有选择，无法删除");
-            return;
-        }
         TreeItem<MyTreeNode> parent = treeItem.getParent();
-        if (parent == null ) {
+        if (parent == null) {
             MessageDialog.showDialog("不能删除根节点");
         } else {
-            int ret= MessageDialog.choiceDialog("确认要删除菜单；"+node.getLabel()+"‘吗?");
-            if(ret != MessageDialog.CHOICE_YES)
-                return;
+            int ret = MessageDialog.choiceDialog("确认要删除菜单：" + node.getLabel() + " 吗？");
+            if (ret != MessageDialog.CHOICE_YES) return;
+
             DataRequest req = new DataRequest();
-            req.put("id",node.getId());
-            DataResponse res= HttpRequestUtil.request("/api/base/menuDelete", req);
-            if(res.getCode() == 0) {
+            req.put("id", node.getId());
+            DataResponse res = HttpRequestUtil.request("/api/base/menuDelete", req);
+            if (res != null && res.getCode() == 0) {
                 MessageDialog.showDialog("删除成功！");
-            }else {
-                MessageDialog.showDialog(res.getMsg());
+                parent.getChildren().remove(treeItem);
+                treeItem = null;
+            } else {
+                MessageDialog.showDialog(res != null ? res.getMsg() : "删除失败");
             }
-            parent.getChildren().remove(treeItem);
-            treeItem = null;
         }
     }
+
     @FXML
     protected void onSubmitButtonClick() {
+        if (nodeIdField.getText().isEmpty()) {
+            MessageDialog.showDialog("ID 不能为空");
+            return;
+        }
         editNode.setId(Integer.parseInt(nodeIdField.getText()));
         editNode.setValue(nodeNameField.getText());
         editNode.setTitle(nodeTitleField.getText());
+
+        // 组装权限字符串（1=管理员，2=员工）
         String str = null;
-        if(nodeAdminCheckBox.isSelected()) {
-            if(str == null)
-                str ="1";
-            else str +=",1";
+        if (nodeAdminCheckBox.isSelected()) {
+            str = (str == null) ? "1" : str + ",1";
         }
-        if(nodeStudentCheckBox.isSelected()) {
-            if(str == null)
-                str ="2";
-            else str +=",2";
-        }
-        if(nodeTeacherCheckBox.isSelected()) {
-            if(str == null)
-                str ="3";
-            else str +=",3";
+        if (nodeEmployeeCheckBox.isSelected()) {
+            str = (str == null) ? "2" : str + ",2";
         }
         editNode.setUserTypeIds(str);
-        editNode.setLabel(editNode.getId()+"-"+editNode.getTitle());
+        editNode.setLabel(editNode.getId() + "-" + editNode.getTitle());
+
         DataRequest req = new DataRequest();
         req.put("editType", editType);
-        req.put("node",editNode);
+        req.put("node", editNode);
         DataResponse res = HttpRequestUtil.request("/api/base/menuSave", req);
-        if(res.getCode() == 0) {
+
+        if (res != null && res.getCode() == 0) {
             MessageDialog.showDialog("保存成功！");
-            if(editType== 0) {
+            if (editType == 0) {
                 root.getChildren().add(new TreeItem<>(editNode));
-            }else if(editType== 1){
+            } else if (editType == 1) {
                 treeItem.getChildren().add(new TreeItem<>(editNode));
+            } else if (editType == 2) {
+                treeItem.setValue(editNode);
             }
-        }else {
-            MessageDialog.showDialog(res.getMsg());
+        } else {
+            MessageDialog.showDialog(res != null ? res.getMsg() : "保存失败");
         }
     }
 }

@@ -149,8 +149,17 @@ public class StockInController {
 
     @FXML
     protected void onAddButtonClick() {
-        MessageDialog.showDialog("新增功能开发中");
+        try {
+            StockInEditDialog dialog = new StockInEditDialog();
+            dialog.showAndWait();
+            loadStockInList(); // 刷新列表
+        } catch (Exception e) {
+            e.printStackTrace();
+            MessageDialog.showDialog("打开新增窗口失败：" + e.getMessage());
+        }
     }
+// ... existing code ...
+
 
     @FXML
     protected void onEditButtonClick() {
