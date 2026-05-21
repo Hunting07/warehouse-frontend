@@ -1,12 +1,12 @@
 package com.teach.javafx.util;
 
-
 import com.teach.javafx.request.OptionItem;
-/**
- * CommonMethod 公共处理方法实例类
- */
+
 import java.util.*;
 
+/**
+ * CommonMethod 公共处理方法实例类（仓储系统适配版）
+ */
 public class CommonMethod {
     public static String[] getStrings(Map<String,Object> data,String key){
         Object obj = data.get(key);
@@ -27,6 +27,7 @@ public class CommonMethod {
             return (String)obj;
         return obj.toString();
     }
+
     public static Boolean getBoolean(Map<String,Object> data,String key){
         if(data == null)
             return null;
@@ -37,6 +38,7 @@ public class CommonMethod {
             return (Boolean)obj;
         return "true".equals(obj.toString());
     }
+
     public static List<?> getList(Map<String,Object> data, String key){
         if(data == null)
             return new ArrayList<>();
@@ -48,6 +50,7 @@ public class CommonMethod {
         else
             return new ArrayList<>();
     }
+
     public static Map<String,Object> getMap(Map<String,Object> data,String key){
         if(data == null)
             return new HashMap<>();
@@ -59,6 +62,7 @@ public class CommonMethod {
         else
             return new HashMap<>();
     }
+
     public static Integer getIntegerFromObject(Object obj) {
         if(obj == null)
             return null;
@@ -87,6 +91,7 @@ public class CommonMethod {
             return null;
         }
     }
+
     public static Integer getInteger0(Map<String,Object> data,String key) {
         if(data == null)
             return 0;
@@ -113,13 +118,16 @@ public class CommonMethod {
             return (Double)obj;
         String str = obj.toString();
         try {
-            return 0d;
+            return Double.parseDouble(str);
         }catch(Exception e) {
             return null;
         }
     }
+
     public static Double getDouble0(Map<String,Object> data,String key) {
         Double d0 = 0d;
+        if(data == null)
+            return d0;
         Object obj = data.get(key);
         if(obj == null)
             return d0;
@@ -127,11 +135,12 @@ public class CommonMethod {
             return (Double)obj;
         String str = obj.toString();
         try {
-            return d0;
+            return Double.parseDouble(str);
         }catch(Exception e) {
             return d0;
         }
     }
+
     public static Date getDate(Map<String,Object> data, String key) {
         if(data == null)
             return null;
@@ -143,6 +152,7 @@ public class CommonMethod {
         String str = obj.toString();
         return DateTimeTool.formatDateTime(str,"yyyy-MM-dd");
     }
+
     public static Date getTime(Map<String,Object> data,String key) {
         if(data == null)
             return null;
@@ -155,49 +165,54 @@ public class CommonMethod {
         return DateTimeTool.formatDateTime(str,"yyyy-MM-dd HH:mm:ss");
     }
 
+    /**
+     * 将 Map 列表转为 OptionItem 列表（仓储系统适配：使用 id 和 name）
+     */
     public static List<OptionItem> changeMapListToOptionItemList(List<Map<String,Object>> mapList) {
         List<OptionItem> itemList = new ArrayList<>();
+        if(mapList == null) return itemList;
         for(Map<String,Object> m:mapList){
-            itemList.add(new OptionItem((Integer)m.get("id"),(String)m.get("value"),(String)m.get("label")));
+            Integer id = getInteger(m, "id");
+            String name = getString(m, "name");
+            itemList.add(new OptionItem(id, name));
         }
         return itemList;
     }
+
     public static int getOptionItemIndexById(List<OptionItem>itemList, Integer id){
-        if(id == null)
+        if(id == null || itemList == null)
             return -1;
         for(int i = 0; i < itemList.size();i++) {
-            if(itemList.get(i).getId().equals(id))
+            if(itemList.get(i).getId() != null && itemList.get(i).getId().equals(id))
                 return i;
         }
         return -1;
-    }
-    public static int getOptionItemIndexByValue(List<OptionItem>itemList, String value){
-        if(value == null || value.isEmpty())
-            return -1;
-        for(int i = 0; i < itemList.size();i++) {
-            if(itemList.get(i).getValue().equals(value))
-                return i;
-        }
-        return -1;
-    }
-    public static String getOptionItemTitleByValue(List<OptionItem>itemList, String value){
-        if(value == null || value.isEmpty())
-            return "";
-        for (OptionItem optionItem : itemList) {
-            if (optionItem.getValue().equals(value))
-                return optionItem.getTitle();
-        }
-        return "";
     }
 
-    public static int getOptionItemIndexByTitle(List<OptionItem>itemList, String title){
-        if(title == null || title.isEmpty())
+    /**
+     * 根据 name 查找 OptionItem 索引
+     */
+    public static int getOptionItemIndexByName(List<OptionItem>itemList, String name){
+        if(name == null || name.isEmpty() || itemList == null)
             return -1;
         for(int i = 0; i < itemList.size();i++) {
-            if(itemList.get(i).getTitle().equals(title))
+            if(itemList.get(i).getName() != null && itemList.get(i).getName().equals(name))
                 return i;
         }
         return -1;
+    }
+
+    /**
+     * 根据 id 获取 OptionItem 的 name
+     */
+    public static String getOptionItemNameById(List<OptionItem>itemList, Integer id){
+        if(id == null || itemList == null)
+            return "";
+        for (OptionItem optionItem : itemList) {
+            if (optionItem.getId() != null && optionItem.getId().equals(id))
+                return optionItem.getName();
+        }
+        return "";
     }
 
     public static String addThingies(String s) {
@@ -228,6 +243,10 @@ public class CommonMethod {
         }
         return str;
     }
+
+    /**
+     * 将 Map 列表转为 OptionItem 列表（使用 OptionItem(Map) 构造器）
+     */
     public static List<OptionItem> changeMapToOptionItemList(List<Map<String,Object>> mList) {
         List<OptionItem> iList = new ArrayList<>();
         if(mList == null)

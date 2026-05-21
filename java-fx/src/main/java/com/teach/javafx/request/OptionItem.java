@@ -1,33 +1,33 @@
 package com.teach.javafx.request;
 
-import com.teach.javafx.util.CommonMethod;
-
 import java.util.Map;
 
 /**
- * OptionItem 选项数据类
+ * OptionItem 选项数据类（仓储系统通用）
  * Integer id  数据项id
- * String value 数据项值
- * String label 数据值标题
+ * String name 数据项名称（如下拉框显示的物资名称）
  */
 public class OptionItem {
     private Integer id;
-    private String value;
-    private String title;
+    private String name;
 
-    public OptionItem(){
+    public OptionItem() {
 
     }
-    public OptionItem(Integer id, String value, String title){
+
+    public OptionItem(Integer id, String name) {
         this.id = id;
-        this.value = value;
-        this.title = title;
+        this.name = name;
     }
-    public OptionItem(Map<String,Object> map){
-        this.id = CommonMethod.getInteger(map,"id");
-        this.value = CommonMethod.getString(map,"value");
-        this.title = CommonMethod.getString(map,"title");
+
+    public OptionItem(Map<String, Object> map) {
+        if (map != null) {
+            Object idObj = map.get("id");
+            this.id = idObj != null ? ((Number) idObj).intValue() : null;
+            this.name = (String) map.get("name");
+        }
     }
+
     public Integer getId() {
         return id;
     }
@@ -36,23 +36,16 @@ public class OptionItem {
         this.id = id;
     }
 
-    public String getValue() {
-        return value;
+    public String getName() {
+        return name;
     }
 
-    public void setValue(String value) {
-        this.value = value;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String toString(){
-        return title;
+    @Override
+    public String toString() {
+        return name;
     }
 }
