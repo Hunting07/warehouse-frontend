@@ -88,7 +88,6 @@ public class MainFrameController {
         item.setOnAction(this::changeContent);
         menu.getItems().add(item);
     }
-    
     public void initMenuBar(List<Map> mList){
         Menu menu;
         Map m;
@@ -129,7 +128,9 @@ public class MainFrameController {
         for(i = 0; i < mList.size();i++) {
             m = mList.get(i);
             sList = (List<Map>)m.get("sList");
-            menu = new TreeItem<>(new MyTreeNode(null, (String)m.get("name"), (String)m.get("title"), (Integer)m.get("isLeft")));
+            Object isLeftObj = m.get("isLeft");
+            int isLeft = isLeftObj instanceof Number ? ((Number) isLeftObj).intValue() : 0;
+            menu = new TreeItem<>(new MyTreeNode(null, (String)m.get("name"), (String)m.get("title"), isLeft));
             if(sList != null && sList.size()> 0) {
                 addMenuItems(menu,sList);
             }
@@ -164,31 +165,30 @@ public class MainFrameController {
             }
         });
     }
-    
+
     @FXML
     public void initialize() {
-        handler =new ChangePanelHandler();
-        DataRequest req= new DataRequest();
-        DataResponse res;
-       // res = HttpRequestUtil.request("/api/base/getDataBaseUserName",req);
-       // String userName = (String)res.getData();
-       // systemPrompt.setText("服务器：" + HttpRequestUtil.serverUrl + " 数据库：" + userName);
-        res = HttpRequestUtil.request("/api/base/getMenuList",req);
-        if (res == null || res.getData() == null) {
+        handler = new ChangePanelHandler();
+        DataRequest req = new DataRequest();
+        DataResponse res = HttpRequestUtil.request("/api/base/getMenuList", req);
+
+        if (res == null || res.getCode() != 200 || res.getData() == null) {
             System.out.println("菜单加载失败，请检查后端接口");
+            if (res != null) {
+                System.out.println("返回码：" + res.getCode() + "，消息：" + res.getMsg());
+            }
             return;
         }
-        List<Map> mList = (List<Map>)res.getData();
+
+        List<Map> mList = (List<Map>) res.getData();
+        System.out.println("成功加载 " + mList.size() + " 个菜单项");
+
         initMenuBar(mList);
         initMenuTree(mList);
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
-        contentTabPane.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");  //inline选择器
-
-        // 添加出库单列表菜单（临时测试用）
-        if (!menuBar.getMenus().isEmpty()) {
-            addMenuItem(menuBar.getMenus().get(0), "base/outorder-list-panel", "出库单列表");
-        }
+        contentTabPane.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
     }
+
 
 
     /**
