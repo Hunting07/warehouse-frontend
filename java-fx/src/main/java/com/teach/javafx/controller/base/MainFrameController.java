@@ -88,6 +88,7 @@ public class MainFrameController {
         item.setOnAction(this::changeContent);
         menu.getItems().add(item);
     }
+    
     public void initMenuBar(List<Map> mList){
         Menu menu;
         Map m;
@@ -163,6 +164,7 @@ public class MainFrameController {
             }
         });
     }
+    
     @FXML
     public void initialize() {
         handler =new ChangePanelHandler();
@@ -182,7 +184,10 @@ public class MainFrameController {
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         contentTabPane.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");  //inline选择器
 
-
+        // 添加出库单列表菜单（临时测试用）
+        if (!menuBar.getMenus().isEmpty()) {
+            addMenuItem(menuBar.getMenus().get(0), "base/outorder-list-panel", "出库单列表");
+        }
     }
 
 

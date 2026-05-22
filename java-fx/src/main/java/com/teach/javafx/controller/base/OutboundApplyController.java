@@ -1,5 +1,6 @@
 package com.teach.javafx.controller.base;
 
+import com.teach.javafx.AppStore;
 import com.teach.javafx.bean.OutOrderDetail;
 import com.teach.javafx.request.DataRequest;
 import com.teach.javafx.request.DataResponse;
@@ -22,6 +23,10 @@ public class OutboundApplyController {
 
     @FXML
     private TextField remarkField;
+    @FXML
+    private TextField applicantIdField;
+    @FXML
+    private TextField applicantNameField;
     @FXML
     private TableView<OutOrderDetail> detailTableView;
     @FXML
@@ -72,6 +77,21 @@ public class OutboundApplyController {
         });
 
         detailTableView.setItems(detailList);
+        
+        loadUserInfo();
+    }
+    
+    private void loadUserInfo() {
+        try {
+            if (AppStore.getJwt() != null && AppStore.getJwt().getUsername() != null) {
+                applicantNameField.setText(AppStore.getJwt().getUsername());
+            }
+            if (AppStore.getJwt() != null && AppStore.getJwt().getId() != null) {
+                applicantIdField.setText(String.valueOf(AppStore.getJwt().getId()));
+            }
+        } catch (Exception e) {
+            System.err.println("加载用户信息失败: " + e.getMessage());
+        }
     }
 
     // ===================== 按钮方法 =====================
@@ -111,24 +131,32 @@ public class OutboundApplyController {
 
     public void submitApply() {
         if (detailList.isEmpty()) {
-            System.out.println("请添加商品");
+            MessageDialog.showDialog("请添加商品");
+            return;
+        }
+        
+        String applicantId = applicantIdField.getText();
+        String applicantName = applicantNameField.getText();
+        
+        if (applicantId == null || applicantId.trim().isEmpty()) {
+            MessageDialog.showDialog("申请人ID不能为空");
             return;
         }
 
         DataRequest req = new DataRequest();
-        req.put("applicantId", 1);
-        req.put("applicantName", "测试用户");
+        req.put("applicantId", Integer.parseInt(applicantId));
+        req.put("applicantName", applicantName);
         req.put("remark", remarkField.getText());
         req.put("detailList", detailList);
 
         DataResponse res = HttpRequestUtil.request("/api/outOrder/create", req);
 
-        if (res != null && res.getCode() == 0) {
+        if (res != null && (res.getCode() == 0 || res.getCode() == 200)) {
             detailList.clear();
             remarkField.clear();
-            System.out.println("提交成功！");
+            MessageDialog.showDialog("提交成功！");
         } else {
-            System.out.println("提交失败！");
+            MessageDialog.showDialog("提交失败！");
         }
     }
 }
