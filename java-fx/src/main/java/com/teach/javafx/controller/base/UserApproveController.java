@@ -1,4 +1,5 @@
-package com.teach.javafx.controller;
+package com.teach.javafx.controller.base;  // ✅ 正确
+
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
