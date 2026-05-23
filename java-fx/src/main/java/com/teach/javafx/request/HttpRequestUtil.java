@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.nio.file.Path;
 import java.util.Map;
+import java.time.Duration;
 
 /**
  * HttpRequestUtil 后台请求实例程序，主要实践向后台发送请求的方法
@@ -87,6 +88,66 @@ public class HttpRequestUtil {
         }
     }
 // ... existing code ...
+
+
+    /**
+     * 通用GET请求
+     * @param path 接口路径，比如 /api/category/list
+     * @return 接口返回的JSON字符串
+     */
+    public static String get(String path) throws Exception {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + path))
+                .GET()
+                .timeout(Duration.ofSeconds(10))
+                .build();
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception("请求失败，状态码：" + response.statusCode());
+        }
+    }
+
+    /**
+     * 通用POST请求
+     * @param path 接口路径，比如 /api/category/add
+     * @param jsonBody 请求体JSON字符串
+     * @return 接口返回的JSON字符串
+     */
+    public static String post(String path, String jsonBody) throws Exception {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + path))
+                .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                .headers("Content-Type", "application/json")
+                .timeout(Duration.ofSeconds(10))
+                .build();
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception("请求失败，状态码：" + response.statusCode());
+        }
+    }
+
+    /**
+     * 通用DELETE请求
+     * @param path 接口路径，比如 /api/category/delete/1
+     * @return 接口返回的JSON字符串
+     */
+    public static String delete(String path) throws Exception {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + path))
+                .DELETE()
+                .timeout(Duration.ofSeconds(10))
+                .build();
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 200) {
+            return response.body();
+        } else {
+            throw new Exception("请求失败，状态码：" + response.statusCode());
+        }
+    }
 
 
     /**

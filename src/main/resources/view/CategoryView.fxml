@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.teach.javafx.controller.base.CategoryController"
+            prefHeight="400.0" prefWidth="600.0">
+    <top>
+        <HBox spacing="10" padding="10">
+            <Button text="新增分类" onAction="#addCategory"/>
+        </HBox>
+    </top>
+    <center>
+        <TableView fx:id="categoryTable">
+            <columns>
+                <TableColumn fx:id="idCol" text="分类编号"/>
+                <TableColumn fx:id="nameCol" text="分类名称"/>
+                <TableColumn fx:id="createTimeCol" text="创建时间"/>
+                <TableColumn fx:id="actionCol" text="操作"/>
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>
+
