@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.teach.javafx.controller.base.OutOrderListController">
+
+    <!-- 顶部工具栏 -->
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <!-- 搜索和筛选区域 -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="出库单号："/>
+                <TextField fx:id="searchOrderNoField" prefWidth="150" promptText="输入单号查询"/>
+
+                <Label text="申请人："/>
+                <TextField fx:id="applicantNameField" prefWidth="120" promptText="输入申请人"/>
+
+                <Label text="状态："/>
+                <ComboBox fx:id="statusComboBox" prefWidth="100"/>
+
+                <Button text="查询" onAction="#onSearchButtonClick"/>
+                <Button text="重置" onAction="#onResetButtonClick"/>
+            </HBox>
+
+            <!-- 操作按钮区域 -->
+            <HBox spacing="10">
+                <Button text="审批通过" onAction="#onApproveButtonClick"
+                        style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+                <Button text="驳回" onAction="#onRejectButtonClick"
+                        style="-fx-background-color: #f44336; -fx-text-fill: white;"/>
+                <Button text="确认出库" onAction="#onCompleteButtonClick"
+                        style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
+                <Button text="删除" onAction="#onDeleteButtonClick"
+                        style="-fx-background-color: #FF9800; -fx-text-fill: white;"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- 中间数据表格 -->
+    <center>
+        <TableView fx:id="outOrderTable" BorderPane.alignment="CENTER">
+            <columns>
+                <TableColumn fx:id="idColumn" text="编号" prefWidth="60"/>
+                <TableColumn fx:id="orderNoColumn" text="出库单号" prefWidth="150"/>
+                <TableColumn fx:id="applicantNameColumn" text="申请人" prefWidth="100"/>
+                <TableColumn fx:id="applyTimeColumn" text="申请时间" prefWidth="150"/>
+                <TableColumn fx:id="totalNumColumn" text="总数量" prefWidth="80"/>
+                <TableColumn fx:id="totalAmountColumn" text="总金额" prefWidth="100"/>
+                <TableColumn fx:id="statusColumn" text="状态" prefWidth="80"/>
+                <TableColumn fx:id="auditUserNameColumn" text="审批人" prefWidth="100"/>
+                <TableColumn fx:id="auditTimeColumn" text="审批时间" prefWidth="150"/>
+                <TableColumn fx:id="remarkColumn" text="备注" prefWidth="200"/>
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>
