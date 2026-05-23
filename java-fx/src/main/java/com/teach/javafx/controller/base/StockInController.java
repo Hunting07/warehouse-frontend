@@ -239,8 +239,35 @@ public class StockInController {
         int ret = MessageDialog.choiceDialog("确认入库 " + selected.getInCode() + "？");
         if (ret != MessageDialog.CHOICE_YES) return;
 
-        MessageDialog.showDialog("后端未提供入库完成接口");
+        try {
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("stockInId", selected.getId());
+
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(HttpRequestUtil.serverUrl + "/stock-in/complete"))
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                    .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                if (resultMap.get("code").equals(200.0)) {
+                    MessageDialog.showDialog("入库成功");
+                    loadStockInList();
+                } else {
+                    MessageDialog.showDialog("入库失败：" + resultMap.get("msg"));
+                }
+            } else {
+                MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            MessageDialog.showDialog("入库异常：" + e.getMessage());
+        }
     }
+
 
     private Integer getStatusValue(String status) {
         switch (status) {
