@@ -169,6 +169,17 @@ public class MainFrameController {
     @FXML
     public void initialize() {
         handler = new ChangePanelHandler();
+        
+        Menu inventoryMenu = new Menu("库存管理");
+        
+        MenuItem stockWarningItem = new MenuItem("库存预警");
+        stockWarningItem.setId("view/StockWarningView");
+        stockWarningItem.setText("库存预警");
+        stockWarningItem.setOnAction(this::changeContent);
+        inventoryMenu.getItems().add(stockWarningItem);
+        
+        menuBar.getMenus().add(inventoryMenu);
+        
         DataRequest req = new DataRequest();
         DataResponse res = HttpRequestUtil.request("/api/base/getMenuList", req);
 
@@ -279,8 +290,15 @@ public class MainFrameController {
     public void tabOnClosed(Event e) {
         Tab tab = (Tab)e.getSource();
         String name = tab.getId();
+        
+        Object controller = controlMap.get(name);
+        if (controller instanceof StockWarningController) {
+            ((StockWarningController) controller).cleanup();
+        }
+        
         contentTabPane.getTabs().remove(tab);
         tabMap.remove(name);
+        controlMap.remove(name);
     }
     /**
      * ToolController getCurrentToolController() 获取当前显示的面板的控制对象， 如果面板响应编辑菜单中的编辑命名，交互控制需要继承 ToolController， 重写里面的方法
