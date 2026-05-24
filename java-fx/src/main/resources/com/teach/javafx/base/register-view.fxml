@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.RegisterController"
+      alignment="CENTER" spacing="20" style="-fx-background-image: url('shanda1.jpg'); -fx-background-size: cover;">
+
+    <padding>
+        <Insets top="40" right="40" bottom="40" left="40"/>
+    </padding>
+
+    <Label text="用户注册" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+
+    <TitledPane text="选择注册类型" expanded="true" style="-fx-font-size: 14px;">
+        <VBox spacing="15" style="-fx-padding: 15px;">
+            <RadioButton fx:id="staffRadio" text="员工注册（无需审批，注册后可直接登录）" selected="true"/>
+            <RadioButton fx:id="adminRadio" text="管理员注册（需要管理员审批）"/>
+        </VBox>
+    </TitledPane>
+
+    <VBox spacing="10" style="-fx-padding: 10px;">
+        <Label text="用户名" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+        <TextField fx:id="usernameField" promptText="请输入用户名" style="-fx-font-size: 14px;"/>
+
+        <Label text="密码" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+        <PasswordField fx:id="passwordField" promptText="请输入密码" style="-fx-font-size: 14px;"/>
+
+        <Label text="确认密码" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
+        <PasswordField fx:id="confirmPasswordField" promptText="请再次输入密码" style="-fx-font-size: 14px;"/>
+    </VBox>
+
+    <HBox spacing="15" alignment="CENTER">
+        <Button text="注册" onAction="#handleRegister" style="-fx-font-size: 14px; -fx-pref-width: 100px;"/>
+        <Button text="返回登录" onAction="#handleBack" style="-fx-font-size: 14px; -fx-pref-width: 100px;"/>
+    </HBox>
+
+</VBox>

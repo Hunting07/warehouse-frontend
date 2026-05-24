@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.UserAuditController"
+      spacing="15">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="用户审批管理" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <TextField fx:id="searchField" promptText="输入用户名或账号搜索" prefWidth="250"/>
+        <Button text="搜索" onAction="#handleSearch" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
+        <Button text="刷新" onAction="#loadAuditList" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+    </HBox>
+
+    <TableView fx:id="auditTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
+            <TableColumn fx:id="colAccount" text="账号" prefWidth="120"/>
+            <TableColumn fx:id="colName" text="姓名" prefWidth="100"/>
+            <TableColumn fx:id="colPhone" text="电话" prefWidth="130"/>
+            <TableColumn fx:id="colRole" text="角色" prefWidth="100"/>
+            <TableColumn fx:id="colStatus" text="状态" prefWidth="100"/>
+            <TableColumn fx:id="colApplyTime" text="申请时间" prefWidth="160"/>
+            <TableColumn fx:id="colOperate" text="操作" prefWidth="180"/>
+        </columns>
+    </TableView>
+
+</VBox>

@@ -169,17 +169,40 @@ public class MainFrameController {
     @FXML
     public void initialize() {
         handler = new ChangePanelHandler();
-        
+
         Menu inventoryMenu = new Menu("库存管理");
-        
+
         MenuItem stockWarningItem = new MenuItem("库存预警");
         stockWarningItem.setId("view/StockWarningView");
         stockWarningItem.setText("库存预警");
         stockWarningItem.setOnAction(this::changeContent);
         inventoryMenu.getItems().add(stockWarningItem);
-        
+
         menuBar.getMenus().add(inventoryMenu);
-        
+
+        Menu userMenu = new Menu("用户中心");
+
+        MenuItem profileItem = new MenuItem("个人中心");
+        profileItem.setId("base/profile-panel");
+        profileItem.setText("个人中心");
+        profileItem.setOnAction(this::changeContent);
+        userMenu.getItems().add(profileItem);
+
+
+        MenuItem auditItem = new MenuItem("用户审批");
+        auditItem.setId("base/user-audit");
+        auditItem.setText("用户审批");
+        auditItem.setOnAction(this::changeContent);
+        userMenu.getItems().add(auditItem);
+
+        MenuItem logoutItem = new MenuItem("退出登录");
+        logoutItem.setId("logout");
+        logoutItem.setText("退出登录");
+        logoutItem.setOnAction(this::changeContent);
+        userMenu.getItems().add(logoutItem);
+
+        menuBar.getMenus().add(userMenu);
+
         DataRequest req = new DataRequest();
         DataResponse res = HttpRequestUtil.request("/api/base/getMenuList", req);
 
@@ -199,6 +222,7 @@ public class MainFrameController {
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         contentTabPane.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
     }
+
 
 
 
