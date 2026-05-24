@@ -3,30 +3,47 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.teach.javafx.controller.base.MaterialController"
-            prefHeight="400.0" prefWidth="600.0">
+            prefHeight="600.0" prefWidth="1000.0">
     <top>
-        <HBox spacing="10" padding="10">
-            <Button text="新增物资" onAction="#addMaterial"/>
-            <Button text="编辑物资" onAction="#editMaterial"/>
-            <Button text="删除物资" onAction="#deleteMaterial"/>
-        </HBox>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="物资名称:"/>
+                <TextField fx:id="searchField" promptText="输入物资名称搜索..." prefWidth="200"/>
+                <Label text="所属分类:"/>
+                <ComboBox fx:id="categoryFilter" prefWidth="150"/>
+                <Label text="库存状态:"/>
+                <ComboBox fx:id="stockStatusFilter" prefWidth="120"/>
+                <Button text="搜索" onAction="#searchMaterial" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
+                <Button text="重置" onAction="#resetSearch"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="新增物资" onAction="#addMaterial" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;"/>
+            </HBox>
+        </VBox>
     </top>
     <center>
-        <TableView fx:id="materialTable">
+        <TableView fx:id="materialTable" prefHeight="500.0">
             <columns>
-                <TableColumn fx:id="idCol" text="物资编号"/>
-                <TableColumn fx:id="nameCol" text="物资名称"/>
-                <TableColumn fx:id="categoryNameCol" text="所属分类"/>
-                <TableColumn fx:id="currentStockCol" text="当前库存"/>
-                <TableColumn fx:id="safetyStockCol" text="安全库存"/>
-                <TableColumn fx:id="createTimeCol" text="创建时间"/>
-                <TableColumn fx:id="actionCol" text="操作"/>
+                <TableColumn fx:id="idCol" text="ID" prefWidth="60"/>
+                <TableColumn fx:id="nameCol" text="物资名称" prefWidth="150"/>
+                <TableColumn fx:id="codeCol" text="物资编码" prefWidth="120"/>
+                <TableColumn fx:id="categoryNameCol" text="所属分类" prefWidth="150"/>
+                <TableColumn fx:id="unitCol" text="单位"/>
+                <TableColumn fx:id="currentStockCol" text="当前库存" prefWidth="100"/>
+                <TableColumn fx:id="safetyStockCol" text="安全库存" prefWidth="100"/>
+                <TableColumn fx:id="priceCol" text="单价" prefWidth="100"/>
+                <TableColumn fx:id="statusCol" text="状态"/>
+                <TableColumn fx:id="createTimeCol" text="创建时间" prefWidth="180"/>
+                <TableColumn fx:id="actionCol" text="操作" prefWidth="180"/>
             </columns>
         </TableView>
     </center>
 </BorderPane>
-
