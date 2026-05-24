@@ -3,25 +3,41 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.teach.javafx.controller.base.CategoryController"
-            prefHeight="400.0" prefWidth="600.0">
+            prefHeight="600.0" prefWidth="900.0">
     <top>
-        <HBox spacing="10" padding="10">
-            <Button text="新增分类" onAction="#addCategory"/>
-        </HBox>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="分类名称:"/>
+                <TextField fx:id="searchField" promptText="输入分类名称搜索..." prefWidth="200"/>
+                <Label text="状态:"/>
+                <ComboBox fx:id="statusFilter" prefWidth="100"/>
+                <Button text="搜索" onAction="#searchCategory" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
+                <Button text="重置" onAction="#resetSearch"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="新增分类" onAction="#addCategory" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;"/>
+            </HBox>
+        </VBox>
     </top>
     <center>
-        <TableView fx:id="categoryTable">
+        <TreeTableView fx:id="categoryTreeTable" prefHeight="500.0">
             <columns>
-                <TableColumn fx:id="idCol" text="分类编号"/>
-                <TableColumn fx:id="nameCol" text="分类名称"/>
-                <TableColumn fx:id="createTimeCol" text="创建时间"/>
-                <TableColumn fx:id="actionCol" text="操作"/>
+                <TreeTableColumn fx:id="idCol" text="ID" prefWidth="60"/>
+                <TreeTableColumn fx:id="nameCol" text="分类名称" prefWidth="200"/>
+                <TreeTableColumn fx:id="codeCol" text="分类编码" prefWidth="150"/>
+                <TreeTableColumn fx:id="sortCol" text="排序"/>
+                <TreeTableColumn fx:id="statusCol" text="状态"/>
+                <TreeTableColumn fx:id="createTimeCol" text="创建时间" prefWidth="180"/>
+                <TreeTableColumn fx:id="actionCol" text="操作" prefWidth="180"/>
             </columns>
-        </TableView>
+        </TreeTableView>
     </center>
 </BorderPane>
-
