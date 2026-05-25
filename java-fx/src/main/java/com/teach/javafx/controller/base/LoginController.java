@@ -38,13 +38,31 @@ public class LoginController {
 
     @FXML
     protected void onAdminLoginButtonClick() {
-        login("admin", "123456", true);
+        String username = usernameField.getText().trim();
+        String password = passwordField.getText();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            MessageDialog.showDialog("请输入用户名和密码");
+            return;
+        }
+
+        login(username, password, true);
     }
 
     @FXML
     protected void onEmployeeLoginButtonClick() {
-        login("staff01", "123123", false);
+        String username = usernameField.getText().trim();
+        String password = passwordField.getText();
+
+        if (username.isEmpty() || password.isEmpty()) {
+            MessageDialog.showDialog("请输入用户名和密码");
+            return;
+        }
+
+        login(username, password, false);
     }
+// ... existing code ...
+
 
     @FXML
     protected void onRegisterButtonClick() {
@@ -78,11 +96,22 @@ public class LoginController {
                 Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                 if (result.get("code").equals(200.0)) {
                     Map<String, Object> data = (Map<String, Object>) result.get("data");
-                    String token = (String) data.get("tokenValue");
+                    String token = (String) data.get("token");
+                    Map<String, Object> userInfo = (Map<String, Object>) data.get("userInfo");
+
+                    if (token == null || userInfo == null) {
+                        MessageDialog.showDialog("登录失败：未获取到完整数据");
+                        return;
+                    }
+
+                    String userName = (String) userInfo.get("username");
+                    String role = (String) userInfo.get("role");
 
                     JwtResponse jwt = new JwtResponse();
-                    jwt.setTokenValue(token);
                     jwt.setToken(token);
+                    jwt.setTokenValue(token);
+                    jwt.setUsername(userName);
+                    jwt.setRole(role);
                     AppStore.setJwt(jwt);
 
                     MessageDialog.showDialog("登录成功");
@@ -91,13 +120,44 @@ public class LoginController {
                     Scene scene = new Scene(fxmlLoader.load(), -1, -1);
                     AppStore.setMainFrameController(fxmlLoader.getController());
                     MainApplication.resetStage("仓储管理系统", scene);
+                }else {
+                String msg = (String) result.get("msg");
+                if (msg != null) {
+                    if (msg.contains("待审批") || msg.contains("pending") || msg.contains("未通过")) {
+                        MessageDialog.showDialog("请等待管理员审批通过哦~");
+                    } else if (msg.contains("驳回") || msg.contains("rejected") || msg.contains("拒绝")) {
+                        MessageDialog.showDialog("很抱歉！您的管理员申请已被驳回！");
+                    } else {
+                        MessageDialog.showDialog("登录失败：" + msg);
+                    }
                 } else {
-                    MessageDialog.showDialog("登录失败：" + result.get("msg"));
+                    MessageDialog.showDialog("登录失败");
                 }
-            } else {
+            }
+// ... existing code ...
+
+        }else {
+            try {
+                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                String msg = (String) result.get("msg");
+                if (msg != null) {
+                    if (msg.contains("待审批") || msg.contains("pending") || msg.contains("未通过")) {
+                        MessageDialog.showDialog("请等待管理员审批通过哦~");
+                    } else if (msg.contains("驳回") || msg.contains("rejected") || msg.contains("拒绝")) {
+                        MessageDialog.showDialog("很抱歉！您的管理员申请已被驳回！");
+                    } else {
+                        MessageDialog.showDialog("登录失败：" + msg);
+                    }
+                } else {
+                    MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
+                }
+            } catch (Exception e) {
                 MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
             }
-        } catch (Exception e) {
+        }
+// ... existing code ...
+
+    } catch (Exception e) {
             e.printStackTrace();
             MessageDialog.showDialog("登录异常：" + e.getMessage());
         }

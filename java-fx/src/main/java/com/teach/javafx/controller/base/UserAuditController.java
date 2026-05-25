@@ -23,29 +23,46 @@ public class UserAuditController {
     @FXML
     private TextField searchField;
     @FXML
-    private TableView<UserAuditInfo> auditTable;
+    private TableView<UserAuditInfo> adminPendingTable;
     @FXML
-    private TableColumn<UserAuditInfo, Integer> colId;
+    private TableColumn<UserAuditInfo, Integer> colPendingId;
     @FXML
-    private TableColumn<UserAuditInfo, String> colAccount, colName, colPhone, colRole, colStatus, colApplyTime;
+    private TableColumn<UserAuditInfo, String> colPendingAccount, colPendingName, colPendingPhone, colPendingRole, colPendingStatus, colPendingTime;
     @FXML
-    private TableColumn<UserAuditInfo, Void> colOperate;
+    private TableColumn<UserAuditInfo, Void> colPendingOperate;
 
-    private final ObservableList<UserAuditInfo> auditList = FXCollections.observableArrayList();
+    @FXML
+    private TableView<UserAuditInfo> adminApprovedTable;
+    @FXML
+    private TableColumn<UserAuditInfo, Integer> colApprovedId;
+    @FXML
+    private TableColumn<UserAuditInfo, String> colApprovedAccount, colApprovedName, colApprovedPhone, colApprovedRole, colApprovedStatus, colApprovedTime;
+
+    @FXML
+    private TableView<UserAuditInfo> staffTable;
+    @FXML
+    private TableColumn<UserAuditInfo, Integer> colStaffId;
+    @FXML
+    private TableColumn<UserAuditInfo, String> colStaffAccount, colStaffName, colStaffPhone, colStaffRole, colStaffStatus, colStaffTime;
+
+    private final ObservableList<UserAuditInfo> adminPendingList = FXCollections.observableArrayList();
+    private final ObservableList<UserAuditInfo> adminApprovedList = FXCollections.observableArrayList();
+    private final ObservableList<UserAuditInfo> staffList = FXCollections.observableArrayList();
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
     @FXML
     public void initialize() {
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colAccount.setCellValueFactory(new PropertyValueFactory<>("account"));
-        colName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
-        colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
-        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-        colApplyTime.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
+        // 管理员待审批表格
+        colPendingId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colPendingAccount.setCellValueFactory(new PropertyValueFactory<>("account"));
+        colPendingName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colPendingPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        colPendingRole.setCellValueFactory(new PropertyValueFactory<>("role"));
+        colPendingStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        colPendingTime.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
 
-        colOperate.setCellFactory(param -> new TableCell<UserAuditInfo, Void>() {
+        colPendingOperate.setCellFactory(param -> new TableCell<UserAuditInfo, Void>() {
             private final Button passBtn = new Button("通过");
             private final Button rejectBtn = new Button("驳回");
             private final HBox box = new HBox(10, passBtn, rejectBtn);
@@ -71,23 +88,42 @@ public class UserAuditController {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    UserAuditInfo info = getTableView().getItems().get(getIndex());
-                    if ("待审批".equals(info.getStatus())) {
-                        setGraphic(box);
-                    } else {
-                        setGraphic(null);
-                    }
+                    setGraphic(box);
                 }
             }
         });
 
-        auditTable.setItems(auditList);
-        loadAuditList();
+        adminPendingTable.setItems(adminPendingList);
+
+        // 管理员已审批表格
+        colApprovedId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colApprovedAccount.setCellValueFactory(new PropertyValueFactory<>("account"));
+        colApprovedName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colApprovedPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        colApprovedRole.setCellValueFactory(new PropertyValueFactory<>("role"));
+        colApprovedStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        colApprovedTime.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
+
+        adminApprovedTable.setItems(adminApprovedList);
+
+        // 员工表格
+        colStaffId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colStaffAccount.setCellValueFactory(new PropertyValueFactory<>("account"));
+        colStaffName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colStaffPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        colStaffRole.setCellValueFactory(new PropertyValueFactory<>("role"));
+        colStaffStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        colStaffTime.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
+
+        staffTable.setItems(staffList);
+        loadUserList();
     }
 
     @FXML
-    public void loadAuditList() {
-        auditList.clear();
+    public void loadUserList() {
+        adminPendingList.clear();
+        adminApprovedList.clear();
+        staffList.clear();
 
         try {
             HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -100,18 +136,40 @@ public class UserAuditController {
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+
                 if (result.get("code").equals(200.0)) {
                     java.util.List<Map<String, Object>> data = (java.util.List<Map<String, Object>>) result.get("data");
-                    for (Map<String, Object> item : data) {
-                        UserAuditInfo info = new UserAuditInfo();
-                        info.setId(((Number) item.get("id")).intValue());
-                        info.setAccount((String) item.get("account"));
-                        info.setName((String) item.get("name"));
-                        info.setPhone((String) item.getOrDefault("phone", ""));
-                        info.setRole((String) item.get("role"));
-                        info.setStatus((String) item.get("status"));
-                        info.setApplyTime((String) item.getOrDefault("applyTime", ""));
-                        auditList.add(info);
+
+                    if (data != null) {
+                        for (Map<String, Object> item : data) {
+                            UserAuditInfo info = new UserAuditInfo();
+                            info.setId(((Number) item.get("id")).intValue());
+
+                            String account = (String) item.get("username");
+                            if (account == null) account = (String) item.get("account");
+                            info.setAccount(account);
+
+                            String name = (String) item.get("realName");
+                            if (name == null || name.isEmpty()) name = (String) item.get("name");
+                            if (name == null || name.isEmpty()) name = account;
+                            info.setName(name);
+
+                            info.setPhone((String) item.getOrDefault("phone", ""));
+                            info.setRole((String) item.get("role"));
+                            info.setStatus((String) item.get("status"));
+                            info.setApplyTime((String) item.getOrDefault("createTime", ""));
+
+                            // 分类显示
+                            if ("admin".equals(info.getRole())) {
+                                if ("pending".equals(info.getStatus())) {
+                                    adminPendingList.add(info);
+                                } else {
+                                    adminApprovedList.add(info);
+                                }
+                            } else {
+                                staffList.add(info);
+                            }
+                        }
                     }
                 } else {
                     MessageDialog.showDialog("获取列表失败：" + result.get("msg"));
@@ -125,32 +183,21 @@ public class UserAuditController {
 
     @FXML
     public void handleSearch() {
-        String keyword = searchField.getText().trim();
-        if (keyword.isBlank()) {
-            loadAuditList();
-            return;
-        }
-
-        ObservableList<UserAuditInfo> filterList = FXCollections.observableArrayList();
-        for (UserAuditInfo info : auditList) {
-            if (info.getAccount().contains(keyword) || info.getName().contains(keyword)) {
-                filterList.add(info);
-            }
-        }
-        auditTable.setItems(filterList);
+        loadUserList();
     }
 
     private void handleApprove(UserAuditInfo info, boolean approved) {
         String statusText = approved ? "通过" : "驳回";
-        int ret = MessageDialog.choiceDialog("确认要" + statusText + "用户【" + info.getName() + "】的申请吗？");
+        int ret = MessageDialog.choiceDialog("确认要" + statusText + "管理员【" + info.getName() + "】的申请吗？");
 
         if (ret != MessageDialog.CHOICE_YES) return;
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("id", info.getId());
-        requestBody.put("role", info.getRole());
+        requestBody.put("status", approved ? "approved" : "rejected");
 
         try {
+            System.out.println("审批请求参数：" + gson.toJson(requestBody));
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(HttpRequestUtil.serverUrl + "/user/approve"))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
@@ -159,13 +206,28 @@ public class UserAuditController {
 
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
+            System.out.println("审批接口返回状态码：" + response.statusCode());
+            System.out.println("审批接口返回内容：" + response.body());
+
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                 if (result.get("code").equals(200.0)) {
                     MessageDialog.showDialog("审批" + statusText + "成功！");
-                    loadAuditList();
+                    loadUserList();
                 } else {
                     MessageDialog.showDialog("审批失败：" + result.get("msg"));
+                }
+            } else {
+                try {
+                    Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                    String msg = (String) result.get("msg");
+                    if (msg != null && !msg.isEmpty()) {
+                        MessageDialog.showDialog("审批失败：" + msg);
+                    } else {
+                        MessageDialog.showDialog("审批失败，状态码：" + response.statusCode());
+                    }
+                } catch (Exception e) {
+                    MessageDialog.showDialog("审批失败，状态码：" + response.statusCode());
                 }
             }
         } catch (Exception e) {

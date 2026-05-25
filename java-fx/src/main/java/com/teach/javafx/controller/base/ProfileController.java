@@ -58,7 +58,20 @@ public class ProfileController {
                 Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                 if (result.get("code").equals(200.0)) {
                     Map<String, Object> data = (Map<String, Object>) result.get("data");
-                    usernameLabel.setText((String) data.get("username"));
+
+                    // 优先使用 username，如果没有则使用 realName
+                    String username = (String) data.get("username");
+                    if (username == null || username.isEmpty()) {
+                        username = (String) data.get("realName");
+                    }
+                    if (username == null || username.isEmpty()) {
+                        username = (String) data.get("name");
+                    }
+                    if (username == null || username.isEmpty()) {
+                        username = AppStore.getJwt().getUsername();
+                    }
+
+                    usernameLabel.setText(username != null ? username : "未知用户");
                     roleLabel.setText((String) data.get("role"));
                     nameField.setText((String) data.getOrDefault("name", ""));
                     phoneField.setText((String) data.getOrDefault("phone", ""));
@@ -66,6 +79,7 @@ public class ProfileController {
                     MessageDialog.showDialog("获取个人信息失败：" + result.get("msg"));
                 }
             }
+
         } catch (Exception e) {
             e.printStackTrace();
             MessageDialog.showDialog("获取个人信息异常：" + e.getMessage());

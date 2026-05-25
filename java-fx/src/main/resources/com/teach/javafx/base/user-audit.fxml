@@ -14,22 +14,50 @@
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Label text="用户审批管理" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
         <Region HBox.hgrow="ALWAYS"/>
-        <TextField fx:id="searchField" promptText="输入用户名或账号搜索" prefWidth="250"/>
-        <Button text="搜索" onAction="#handleSearch" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
-        <Button text="刷新" onAction="#loadAuditList" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+        <Button text="刷新" onAction="#loadUserList" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
     </HBox>
 
-    <TableView fx:id="auditTable" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
-            <TableColumn fx:id="colAccount" text="账号" prefWidth="120"/>
-            <TableColumn fx:id="colName" text="姓名" prefWidth="100"/>
-            <TableColumn fx:id="colPhone" text="电话" prefWidth="130"/>
-            <TableColumn fx:id="colRole" text="角色" prefWidth="100"/>
-            <TableColumn fx:id="colStatus" text="状态" prefWidth="100"/>
-            <TableColumn fx:id="colApplyTime" text="申请时间" prefWidth="160"/>
-            <TableColumn fx:id="colOperate" text="操作" prefWidth="180"/>
-        </columns>
-    </TableView>
+    <TitledPane text="管理员审批（待审批）" expanded="true">
+        <TableView fx:id="adminPendingTable" VBox.vgrow="ALWAYS" prefHeight="200">
+            <columns>
+                <TableColumn fx:id="colPendingId" text="ID" prefWidth="60"/>
+                <TableColumn fx:id="colPendingAccount" text="账号" prefWidth="120"/>
+                <TableColumn fx:id="colPendingName" text="姓名" prefWidth="100"/>
+                <TableColumn fx:id="colPendingPhone" text="电话" prefWidth="130"/>
+                <TableColumn fx:id="colPendingRole" text="角色" prefWidth="80"/>
+                <TableColumn fx:id="colPendingStatus" text="状态" prefWidth="80"/>
+                <TableColumn fx:id="colPendingTime" text="申请时间" prefWidth="160"/>
+                <TableColumn fx:id="colPendingOperate" text="操作" prefWidth="180"/>
+            </columns>
+        </TableView>
+    </TitledPane>
+
+    <TitledPane text="所有管理员（已审批）" expanded="true">
+        <TableView fx:id="adminApprovedTable" VBox.vgrow="ALWAYS" prefHeight="200">
+            <columns>
+                <TableColumn fx:id="colApprovedId" text="ID" prefWidth="60"/>
+                <TableColumn fx:id="colApprovedAccount" text="账号" prefWidth="120"/>
+                <TableColumn fx:id="colApprovedName" text="姓名" prefWidth="100"/>
+                <TableColumn fx:id="colApprovedPhone" text="电话" prefWidth="130"/>
+                <TableColumn fx:id="colApprovedRole" text="角色" prefWidth="80"/>
+                <TableColumn fx:id="colApprovedStatus" text="状态" prefWidth="80"/>
+                <TableColumn fx:id="colApprovedTime" text="审批时间" prefWidth="160"/>
+            </columns>
+        </TableView>
+    </TitledPane>
+
+    <TitledPane text="所有员工" expanded="true">
+        <TableView fx:id="staffTable" VBox.vgrow="ALWAYS" prefHeight="200">
+            <columns>
+                <TableColumn fx:id="colStaffId" text="ID" prefWidth="60"/>
+                <TableColumn fx:id="colStaffAccount" text="账号" prefWidth="120"/>
+                <TableColumn fx:id="colStaffName" text="姓名" prefWidth="100"/>
+                <TableColumn fx:id="colStaffPhone" text="电话" prefWidth="130"/>
+                <TableColumn fx:id="colStaffRole" text="角色" prefWidth="80"/>
+                <TableColumn fx:id="colStaffStatus" text="状态" prefWidth="80"/>
+                <TableColumn fx:id="colStaffTime" text="创建时间" prefWidth="160"/>
+            </columns>
+        </TableView>
+    </TitledPane>
 
 </VBox>
