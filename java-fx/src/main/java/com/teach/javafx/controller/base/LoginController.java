@@ -107,6 +107,16 @@ public class LoginController {
                     String userName = (String) userInfo.get("username");
                     String role = (String) userInfo.get("role");
 
+                    // 验证角色是否匹配
+                    if (isAdmin && !"admin".equals(role)) {
+                        MessageDialog.showDialog("请使用员工登录入口");
+                        return;
+                    }
+                    if (!isAdmin && !"staff".equals(role)) {
+                        MessageDialog.showDialog("请使用管理员登录入口");
+                        return;
+                    }
+
                     JwtResponse jwt = new JwtResponse();
                     jwt.setToken(token);
                     jwt.setTokenValue(token);
@@ -120,46 +130,43 @@ public class LoginController {
                     Scene scene = new Scene(fxmlLoader.load(), -1, -1);
                     AppStore.setMainFrameController(fxmlLoader.getController());
                     MainApplication.resetStage("仓储管理系统", scene);
-                }else {
-                String msg = (String) result.get("msg");
-                if (msg != null) {
-                    if (msg.contains("待审批") || msg.contains("pending") || msg.contains("未通过")) {
-                        MessageDialog.showDialog("请等待管理员审批通过哦~");
-                    } else if (msg.contains("驳回") || msg.contains("rejected") || msg.contains("拒绝")) {
-                        MessageDialog.showDialog("很抱歉！您的管理员申请已被驳回！");
-                    } else {
-                        MessageDialog.showDialog("登录失败：" + msg);
-                    }
                 } else {
-                    MessageDialog.showDialog("登录失败");
+                    String msg = (String) result.get("msg");
+                    if (msg != null) {
+                        if (msg.contains("待审批") || msg.contains("pending") || msg.contains("未通过")) {
+                            MessageDialog.showDialog("请等待管理员审批通过哦~");
+                        } else if (msg.contains("驳回") || msg.contains("rejected") || msg.contains("拒绝")) {
+                            MessageDialog.showDialog("很抱歉！您的管理员申请已被驳回！");
+                        } else {
+                            MessageDialog.showDialog("登录失败：" + msg);
+                        }
+                    } else {
+                        MessageDialog.showDialog("登录失败");
+                    }
                 }
-            }
-// ... existing code ...
-
-        }else {
-            try {
-                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
-                String msg = (String) result.get("msg");
-                if (msg != null) {
-                    if (msg.contains("待审批") || msg.contains("pending") || msg.contains("未通过")) {
-                        MessageDialog.showDialog("请等待管理员审批通过哦~");
-                    } else if (msg.contains("驳回") || msg.contains("rejected") || msg.contains("拒绝")) {
-                        MessageDialog.showDialog("很抱歉！您的管理员申请已被驳回！");
+            } else {
+                try {
+                    Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                    String msg = (String) result.get("msg");
+                    if (msg != null) {
+                        if (msg.contains("待审批") || msg.contains("pending") || msg.contains("未通过")) {
+                            MessageDialog.showDialog("请等待管理员审批通过哦~");
+                        } else if (msg.contains("驳回") || msg.contains("rejected") || msg.contains("拒绝")) {
+                            MessageDialog.showDialog("很抱歉！您的管理员申请已被驳回！");
+                        } else {
+                            MessageDialog.showDialog("登录失败：" + msg);
+                        }
                     } else {
-                        MessageDialog.showDialog("登录失败：" + msg);
+                        MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
                     }
-                } else {
+                } catch (Exception e) {
                     MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
                 }
-            } catch (Exception e) {
-                MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
             }
-        }
-// ... existing code ...
-
-    } catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             MessageDialog.showDialog("登录异常：" + e.getMessage());
         }
     }
+
 }
