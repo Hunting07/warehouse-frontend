@@ -16,6 +16,8 @@ public class OutOrder {
     private String remark;
     private Integer totalNum;
     private BigDecimal totalAmount;
+    private Integer outType;
+    private String rejectReason;
 
     public Integer getId() {
         return id;
@@ -111,5 +113,21 @@ public class OutOrder {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public Integer getOutType() {
+        return outType;
+    }
+
+    public void setOutType(Integer outType) {
+        this.outType = outType;
+    }
+
+    public String getRejectReason() {
+        return rejectReason;
+    }
+
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
     }
 }

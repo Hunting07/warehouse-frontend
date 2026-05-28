@@ -287,6 +287,10 @@ public class MainFrameController {
             fxmlPath = "view/StockWarningView";
         } else if (name.contains("stockin")) {
             fxmlPath = "base/stockin-panel";
+        } else if ("stockout-approve".equals(name) || name.contains("outbound-approve")) {
+            fxmlPath = "base/outbound-panel";
+        } else if ("stockout-apply".equals(name) || name.contains("outbound-apply")) {
+            fxmlPath = "base/outbound-apply";
         } else if (name.contains("stockout") || name.contains("outbound")) {
             fxmlPath = "base/outbound-panel";
         } else if (name.contains("outorder")) {
@@ -299,8 +303,6 @@ public class MainFrameController {
             fxmlPath = "base/password-panel";
         } else if (name.contains("dictionary")) {
             fxmlPath = "base/dictionary-panel";
-        } else if (name.contains("apply")) {
-            fxmlPath = "base/outbound-apply";
         }
 
         Tab tab = tabMap.get(fxmlPath);
@@ -309,14 +311,27 @@ public class MainFrameController {
         if(tab == null) {
             scene = sceneMap.get(fxmlPath);
             if(scene == null) {
-                System.out.println("加载 FXML: " + fxmlPath + ".fxml");
-                FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource(fxmlPath + ".fxml"));
+                String resourcePath = fxmlPath + ".fxml";
+                System.out.println("尝试加载 FXML: " + resourcePath);
+                
+                java.net.URL resource = MainApplication.class.getResource(resourcePath);
+                if (resource == null) {
+                    System.err.println(" FXML 文件不存在: " + resourcePath);
+                    System.err.println("请检查文件是否在 resources 目录下");
+                    MessageDialog.showDialog("界面文件不存在: " + resourcePath);
+                    return;
+                }
+                
+                System.out.println("✅ FXML 文件找到: " + resource.getPath());
+                
+                FXMLLoader fxmlLoader = new FXMLLoader(resource);
                 try {
                     scene = new Scene(fxmlLoader.load(), 1024, 768);
                     sceneMap.put(fxmlPath, scene);
                 } catch (IOException e) {
                     e.printStackTrace();
                     System.out.println("加载 FXML 失败: " + e.getMessage());
+                    MessageDialog.showDialog("加载界面失败: " + e.getMessage());
                     return;
                 }
                 c = fxmlLoader.getController();
