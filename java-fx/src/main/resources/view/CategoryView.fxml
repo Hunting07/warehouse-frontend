@@ -23,18 +23,18 @@
                 <Button text="搜索" onAction="#searchCategory" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
                 <Button text="重置" onAction="#resetSearch"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <Button text="新增分类" onAction="#addCategory" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;"/>
+                <Button fx:id="addCategoryBtn" text="新增分类" onAction="#addCategory" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;"/>
             </HBox>
         </VBox>
     </top>
-    <center>
+        <center>
         <TreeTableView fx:id="categoryTreeTable" prefHeight="500.0">
             <columns>
                 <TreeTableColumn fx:id="idCol" text="ID" prefWidth="60"/>
                 <TreeTableColumn fx:id="nameCol" text="分类名称" prefWidth="200"/>
                 <TreeTableColumn fx:id="codeCol" text="分类编码" prefWidth="150"/>
-                <TreeTableColumn fx:id="sortCol" text="排序"/>
-                <TreeTableColumn fx:id="statusCol" text="状态"/>
+                <TreeTableColumn fx:id="materialCountCol" text="物资数量" prefWidth="100"/>
+                <TreeTableColumn fx:id="statusCol" text="状态" prefWidth="100"/>
                 <TreeTableColumn fx:id="createTimeCol" text="创建时间" prefWidth="180"/>
                 <TreeTableColumn fx:id="actionCol" text="操作" prefWidth="180"/>
             </columns>

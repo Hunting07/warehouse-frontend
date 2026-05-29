@@ -9,7 +9,6 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
@@ -18,8 +17,8 @@ import com.teach.javafx.request.DataResponse;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -30,9 +29,9 @@ public class MainFrameController {
             changeContent(actionEvent);
         }
     }
-    private final Map<String,Tab> tabMap = new HashMap<String,Tab>();
-    private final Map<String,Scene> sceneMap = new HashMap<String,Scene>();
-    private final Map<String,ToolController> controlMap =new HashMap<String,ToolController>();
+    private final Map<String,Tab> tabMap = new HashMap<>();
+    private final Map<String,Scene> sceneMap = new HashMap<>();
+    private final Map<String,ToolController> controlMap =new HashMap<>();
     @FXML
     private MenuBar menuBar;
     @FXML
@@ -40,94 +39,79 @@ public class MainFrameController {
     @FXML
     protected TabPane contentTabPane;
     @FXML
+    @SuppressWarnings("unused")
     private Label systemPrompt;
 
-    private ChangePanelHandler handler= null;
-
-    void addMenuItems(Menu parent, List<Map> mList) {
+    void addMenuItems(Menu parent, List<Map<String, Object>> mList) {
         String name, title;
-        List sList;
-        Map ms;
         Menu menu;
         MenuItem item;
-        for ( Map m :mList) {
-            sList = (List<Map>)m.get("sList");
-            name = (String)m.get("name");
-            title = (String)m.get("title");
-            if(sList == null || sList.size()== 0) {
+        for (Map<String, Object> m : mList) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> sList = (List<Map<String, Object>>) m.get("sList");
+            name = (String) m.get("name");
+            title = (String) m.get("title");
+            if (sList == null || sList.isEmpty()) {
                 item = new MenuItem();
                 item.setId(name);
                 item.setText(title);
                 item.setOnAction(this::changeContent);
                 parent.getItems().add(item);
-            }else {
+            } else {
                 menu = new Menu();
                 menu.setText(title);
-                addMenuItems(menu,sList);
+                addMenuItems(menu, sList);
                 parent.getItems().add(menu);
             }
         }
     }
 
-    public void addMenuItem(Menu menu, String name, String title){
-        MenuItem item;
-        item = new MenuItem();
-        item.setText(title);
-        item.setId(name);
-        item.setOnAction(this::changeContent);
-        menu.getItems().add(item);
-    }
 
-    public void initMenuBar(List<Map> mList){
+    public void initMenuBar(List<Map<String, Object>> mList) {
         Menu menu;
-        Map m;
-        int i;
-        List<Map> sList;
-        for(i = 0; i < mList.size();i++) {
-            m = mList.get(i);
-            sList = (List<Map>)m.get("sList");
+        List<Map<String, Object>> sList;
+        for (Map<String, Object> m : mList) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> list = (List<Map<String, Object>>) m.get("sList");
+            sList = list;
             menu = new Menu();
-            menu.setText((String)m.get("title"));
-            if(sList != null && sList.size()> 0) {
-                addMenuItems(menu,sList);
+            menu.setText((String) m.get("title"));
+            if (sList != null && !sList.isEmpty()) {
+                addMenuItems(menu, sList);
             }
             menuBar.getMenus().add(menu);
         }
     }
 
-    void addMenuItems( TreeItem<MyTreeNode> parent, List<Map> mList) {
-        List sList;
+    void addMenuItems(TreeItem<MyTreeNode> parent, List<Map<String, Object>> mList) {
+        List<Map<String, Object>> sList;
         TreeItem<MyTreeNode> menu;
-        for ( Map m :mList) {
-            sList = (List<Map>)m.get("sList");
-            menu = new TreeItem<>(new MyTreeNode(null,(String)m.get("name") ,(String)m.get("title"),0));
+        for (Map<String, Object> m : mList) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> list = (List<Map<String, Object>>) m.get("sList");
+            sList = list;
+            menu = new TreeItem<>(new MyTreeNode(null, (String) m.get("name"), (String) m.get("title"), 0));
             parent.getChildren().add(menu);
-            if(sList !=  null && sList.size()> 0) {
+            if (sList != null && !sList.isEmpty()) {
                 addMenuItems(menu, sList);
             }
         }
     }
 
-    public void initMenuTree(List<Map> mList) {
-        String role = AppStore.getJwt().getRole();
+    public void initMenuTree(List<Map<String, Object>> mList) {
         MyTreeNode node = new MyTreeNode(null, null, "菜单", 0);
         TreeItem<MyTreeNode> root = new TreeItem<>(node);
         TreeItem<MyTreeNode> menu;
-        int i, j;
-        Map m;
-        List<Map> sList;
 
-        // 先从后端返回的菜单中过滤出左侧菜单
-        for (i = 0; i < mList.size(); i++) {
-            m = mList.get(i);
-            sList = (List<Map>) m.get("sList");
+        for (Map<String, Object> m : mList) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> sList = (List<Map<String, Object>>) m.get("sList");
             Object isLeftObj = m.get("isLeft");
             int isLeft = isLeftObj instanceof Number ? ((Number) isLeftObj).intValue() : 0;
 
-            // 只添加 isLeft=1 的菜单到左侧树
             if (isLeft == 1) {
                 menu = new TreeItem<>(new MyTreeNode(null, (String) m.get("name"), (String) m.get("title"), isLeft));
-                if (sList != null && sList.size() > 0) {
+                if (sList != null && !sList.isEmpty()) {
                     addMenuItems(menu, sList);
                 }
                 root.getChildren().add(menu);
@@ -136,11 +120,10 @@ public class MainFrameController {
 
         menuTree.setRoot(root);
         menuTree.setShowRoot(false);
-        menuTree.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+        menuTree.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<>() {
             public void handle(MouseEvent event) {
                 System.out.println("========== 树菜单点击调试 ==========");
 
-                Node node = event.getPickResult().getIntersectedNode();
                 TreeItem<MyTreeNode> treeItem = menuTree.getSelectionModel().getSelectedItem();
                 System.out.println("treeItem: " + (treeItem == null ? "null" : treeItem.getValue()));
 
@@ -162,7 +145,7 @@ public class MainFrameController {
                 System.out.println("label: " + menu.getLabel());
                 System.out.println("========================================");
 
-                if (name == null || name.length() == 0) {
+                if (name == null || name.isEmpty()) {
                     System.out.println("name 为空，返回");
                     return;
                 }
@@ -173,6 +156,7 @@ public class MainFrameController {
                         Method m = this.getClass().getMethod(name);
                         m.invoke(this);
                     } catch (Exception e) {
+                        System.err.println("执行命令失败: " + name);
                         e.printStackTrace();
                     }
                 } else {
@@ -184,7 +168,9 @@ public class MainFrameController {
 
     @FXML
     public void initialize() {
-        handler = new ChangePanelHandler();
+        @SuppressWarnings("unused")
+        ChangePanelHandler handler = new ChangePanelHandler();
+
 
         Menu inventoryMenu = new Menu("库存管理");
 
@@ -232,7 +218,7 @@ public class MainFrameController {
             return;
         }
 
-        List<Map> mList = (List<Map>) res.getData();
+        List<Map<String, Object>> mList = (List<Map<String, Object>>) res.getData();
         System.out.println("成功加载 " + mList.size() + " 个菜单项");
 
         initMenuBar(mList);
@@ -241,11 +227,7 @@ public class MainFrameController {
         contentTabPane.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
     }
 
-    protected void onLogoutMenuClick(ActionEvent event){
-        logout();
-    }
-
-    protected void logout(){
+    protected void logout() {
         AppStore.setJwt(null);
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
         try {
@@ -259,11 +241,11 @@ public class MainFrameController {
     public void changeContent(ActionEvent ae) {
         Object obj = ae.getSource();
         String name = null, title = null;
-        if(obj instanceof MenuItem item) {
+        if (obj instanceof MenuItem item) {
             name = item.getId();
             title = item.getText();
         }
-        if(name == null)
+        if (name == null)
             return;
         changeContent(name, title);
     }
@@ -274,69 +256,64 @@ public class MainFrameController {
         System.out.println("title: " + title);
         System.out.println("========================================");
 
-        if(name == null || name.length() == 0)
+        if (name == null || name.isEmpty())
             return;
 
         String fxmlPath = name;
 
         if ("material".equals(name)) {
-            fxmlPath = "view/MaterialView";
+            fxmlPath = "/view/MaterialView";
         } else if ("category".equals(name)) {
-            fxmlPath = "view/CategoryView";
+            fxmlPath = "/view/CategoryView";
         } else if ("stock-warning".equals(name) || "warning".equals(name)) {
-            fxmlPath = "view/StockWarningView";
+            fxmlPath = "/view/StockWarningView";
         } else if (name.contains("stockin")) {
-            fxmlPath = "base/stockin-panel";
-        } else if ("stockout-approve".equals(name) || name.contains("outbound-approve")) {
-            fxmlPath = "base/outbound-panel";
-        } else if ("stockout-apply".equals(name) || name.contains("outbound-apply")) {
-            fxmlPath = "base/outbound-apply";
+            fxmlPath = "/base/stockin-panel";
         } else if (name.contains("stockout") || name.contains("outbound")) {
-            fxmlPath = "base/outbound-panel";
+            fxmlPath = "/base/outbound-panel";
         } else if (name.contains("outorder")) {
-            fxmlPath = "base/outorder-list-panel";
+            fxmlPath = "/base/outorder-list-panel";
         } else if (name.contains("user-audit") || name.contains("user-approve")) {
-            fxmlPath = "base/user-audit";
+            fxmlPath = "/base/user-audit";
         } else if (name.contains("profile")) {
-            fxmlPath = "base/profile-panel";
+            fxmlPath = "/base/profile-panel";
         } else if (name.contains("password")) {
-            fxmlPath = "base/password-panel";
+            fxmlPath = "/base/password-panel";
         } else if (name.contains("dictionary")) {
-            fxmlPath = "base/dictionary-panel";
+            fxmlPath = "/base/dictionary-panel";
+        } else if (name.contains("apply")) {
+            fxmlPath = "/base/outbound-apply";
         }
 
         Tab tab = tabMap.get(fxmlPath);
         Scene scene;
         Object c;
-        if(tab == null) {
+        if (tab == null) {
             scene = sceneMap.get(fxmlPath);
-            if(scene == null) {
-                String resourcePath = fxmlPath + ".fxml";
-                System.out.println("尝试加载 FXML: " + resourcePath);
-                
-                java.net.URL resource = MainApplication.class.getResource(resourcePath);
-                if (resource == null) {
-                    System.err.println(" FXML 文件不存在: " + resourcePath);
-                    System.err.println("请检查文件是否在 resources 目录下");
-                    MessageDialog.showDialog("界面文件不存在: " + resourcePath);
+            if (scene == null) {
+                System.out.println("加载 FXML: " + fxmlPath + ".fxml");
+                URL fxmlUrl = MainApplication.class.getResource(fxmlPath + ".fxml");
+                System.out.println("FXML URL: " + fxmlUrl);
+
+                if (fxmlUrl == null) {
+                    System.out.println("错误：找不到 FXML 文件！路径: " + fxmlPath + ".fxml");
+                    showError("找不到页面文件", fxmlPath + ".fxml");
                     return;
                 }
-                
-                System.out.println("✅ FXML 文件找到: " + resource.getPath());
-                
-                FXMLLoader fxmlLoader = new FXMLLoader(resource);
+
+                FXMLLoader fxmlLoader = new FXMLLoader(fxmlUrl);
                 try {
                     scene = new Scene(fxmlLoader.load(), 1024, 768);
                     sceneMap.put(fxmlPath, scene);
                 } catch (IOException e) {
+                    System.err.println("加载 FXML 失败: " + e.getMessage());
                     e.printStackTrace();
-                    System.out.println("加载 FXML 失败: " + e.getMessage());
-                    MessageDialog.showDialog("加载界面失败: " + e.getMessage());
+                    showError("加载失败", e.getMessage());
                     return;
                 }
                 c = fxmlLoader.getController();
-                if(c instanceof ToolController) {
-                    controlMap.put(fxmlPath,(ToolController)c);
+                if (c instanceof ToolController) {
+                    controlMap.put(fxmlPath, (ToolController) c);
                 }
             }
 
@@ -351,17 +328,26 @@ public class MainFrameController {
         contentTabPane.getSelectionModel().select(tab);
     }
 
+    private void showError(String title, String message) {
+        javafx.application.Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
 
     public void tabSelectedChanged(Event e) {
-        Tab tab = (Tab)e.getSource();
+        Tab tab = (Tab) e.getSource();
         String name = tab.getId();
         ToolController c = controlMap.get(name);
-        if(c != null)
+        if (c != null)
             c.doRefresh();
     }
 
     public void tabOnClosed(Event e) {
-        Tab tab = (Tab)e.getSource();
+        Tab tab = (Tab) e.getSource();
         String name = tab.getId();
 
         Object controller = controlMap.get(name);
@@ -374,71 +360,75 @@ public class MainFrameController {
         controlMap.remove(name);
     }
 
-    public ToolController getCurrentToolController(){
-        Iterator<String> iterator = controlMap.keySet().iterator();
-        String name;
-        Tab tab;
-        while(iterator.hasNext()) {
-            name = iterator.next();
-            tab = tabMap.get(name);
-            if(tab.isSelected()) {
+    public ToolController getCurrentToolController() {
+        for (String name : controlMap.keySet()) {
+            Tab tab = tabMap.get(name);
+            if (tab != null && tab.isSelected()) {
                 return controlMap.get(name);
             }
         }
         return null;
     }
 
-    protected void doNewCommand(){
+    @SuppressWarnings("unused")
+    protected void doNewCommand() {
         ToolController c = getCurrentToolController();
-        if(c == null)
-            return;
-        c.doNew();
-    }
-
-    protected void doSaveCommand(){
-        ToolController c = getCurrentToolController();
-        if(c == null)
-            return;
-        c.doSave();
-    }
-
-    protected void doDeleteCommand(){
-        ToolController c = getCurrentToolController();
-        if(c == null)
-            return;
-        c.doDelete();
-    }
-
-    protected void doPrintCommand(){
-        ToolController c = getCurrentToolController();
-        if(c == null)
-            return;
-        c.doPrint();
-    }
-
-    protected void doExportCommand(){
-        ToolController c = getCurrentToolController();
-        if(c == null)
-            return;
-        c.doExport();
-    }
-
-    protected void doImportCommand(){
-        ToolController c = getCurrentToolController();
-        if(c == null)
-            return;
-        c.doImport();
-    }
-
-    protected void doTestCommand(){
-        ToolController c = getCurrentToolController();
-        if(c == null) {
-            c= new ToolController(){};
+        if (c != null) {
+            c.doNew();
         }
-        c.doTest();
     }
 
-    public ToolController getToolController(String name){
+    @SuppressWarnings("unused")
+    protected void doSaveCommand() {
+        ToolController c = getCurrentToolController();
+        if (c != null) {
+            c.doSave();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    protected void doDeleteCommand() {
+        ToolController c = getCurrentToolController();
+        if (c != null) {
+            c.doDelete();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    protected void doPrintCommand() {
+        ToolController c = getCurrentToolController();
+        if (c != null) {
+            c.doPrint();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    protected void doExportCommand() {
+        ToolController c = getCurrentToolController();
+        if (c != null) {
+            c.doExport();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    protected void doImportCommand() {
+        ToolController c = getCurrentToolController();
+        if (c != null) {
+            c.doImport();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    protected void doTestCommand() {
+        ToolController c = getCurrentToolController();
+        if (c != null) {
+            c.doTest();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public ToolController getToolController(String name) {
         return controlMap.get(name);
     }
+
 }

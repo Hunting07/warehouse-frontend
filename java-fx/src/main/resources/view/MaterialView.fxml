@@ -17,15 +17,17 @@
             </padding>
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <Label text="物资名称:"/>
-                <TextField fx:id="searchField" promptText="输入物资名称搜索..." prefWidth="200"/>
+                <TextField fx:id="searchField" promptText="输入物资名称搜索..." prefWidth="150"/>
                 <Label text="所属分类:"/>
-                <ComboBox fx:id="categoryFilter" prefWidth="150"/>
+                <ComboBox fx:id="categoryFilter" prefWidth="120"/>
                 <Label text="库存状态:"/>
-                <ComboBox fx:id="stockStatusFilter" prefWidth="120"/>
+                <ComboBox fx:id="stockStatusFilter" prefWidth="80"/>
+                <Label text="物资状态:"/>
+                <ComboBox fx:id="materialStatusFilter" prefWidth="100"/>
                 <Button text="搜索" onAction="#searchMaterial" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
                 <Button text="重置" onAction="#resetSearch"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <Button text="新增物资" onAction="#addMaterial" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;"/>
+                <Button fx:id="addMaterialBtn" text="新增物资" onAction="#addMaterial" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;"/>
             </HBox>
         </VBox>
     </top>
@@ -39,8 +41,9 @@
                 <TableColumn fx:id="unitCol" text="单位"/>
                 <TableColumn fx:id="currentStockCol" text="当前库存" prefWidth="100"/>
                 <TableColumn fx:id="safetyStockCol" text="安全库存" prefWidth="100"/>
+                <TableColumn fx:id="warningCol" text="库存状态" prefWidth="100"/>
                 <TableColumn fx:id="priceCol" text="单价" prefWidth="100"/>
-                <TableColumn fx:id="statusCol" text="状态"/>
+                <TableColumn fx:id="statusCol" text="状态" prefWidth="100"/>
                 <TableColumn fx:id="createTimeCol" text="创建时间" prefWidth="180"/>
                 <TableColumn fx:id="actionCol" text="操作" prefWidth="180"/>
             </columns>
