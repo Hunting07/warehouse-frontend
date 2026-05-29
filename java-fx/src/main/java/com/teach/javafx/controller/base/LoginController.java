@@ -61,8 +61,6 @@ public class LoginController {
 
         login(username, password, false);
     }
-// ... existing code ...
-
 
     @FXML
     protected void onRegisterButtonClick() {
@@ -106,6 +104,25 @@ public class LoginController {
 
                     String userName = (String) userInfo.get("username");
                     String role = (String) userInfo.get("role");
+                    
+                    // 获取用户ID（后端可能返回 id 或 userId）
+                    Object userIdObj = userInfo.get("id");
+                    if (userIdObj == null) {
+                        userIdObj = userInfo.get("userId");
+                    }
+                    
+                    // 🔑 确保 loginId 是整数格式
+                    String loginId = null;
+                    if (userIdObj != null) {
+                        if (userIdObj instanceof Number) {
+                            // 如果是数字类型，转换为整数
+                            loginId = String.valueOf(((Number) userIdObj).intValue());
+                        } else {
+                            loginId = String.valueOf(userIdObj);
+                        }
+                    }
+                    
+                    System.out.println("提取的用户ID: " + loginId);
 
                     // 验证角色是否匹配
                     if (isAdmin && !"admin".equals(role)) {
@@ -122,7 +139,13 @@ public class LoginController {
                     jwt.setTokenValue(token);
                     jwt.setUsername(userName);
                     jwt.setRole(role);
+                    jwt.setLoginId(loginId);
                     AppStore.setJwt(jwt);
+                    
+                    System.out.println("=== 登录成功 ===");
+                    System.out.println("用户名: " + userName);
+                    System.out.println("角色: " + role);
+                    System.out.println("用户ID: " + loginId);
 
                     MessageDialog.showDialog("登录成功");
 

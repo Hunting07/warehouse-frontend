@@ -10,6 +10,8 @@ public class StockInItem {
     private Integer quantity;
     private BigDecimal price;
     private BigDecimal amount;
+    private String materialCode;
+    private String materialSpec;
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -31,5 +33,11 @@ public class StockInItem {
 
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
+
+    public String getMaterialCode() { return materialCode; }
+    public void setMaterialCode(String materialCode) { this.materialCode = materialCode; }
+
+    public String getMaterialSpec() { return materialSpec; }
+    public void setMaterialSpec(String materialSpec) { this.materialSpec = materialSpec; }
 }
 

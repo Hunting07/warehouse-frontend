@@ -44,12 +44,14 @@
         </GridPane>
     </HBox>
 
-    <FlowPane alignment="center" hgap="10" vgap="10">
-        <Button onAction="#onAdminLoginButtonClick" text="管理员登录"
-                style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
-        <Button onAction="#onEmployeeLoginButtonClick" text="员工登录"
-                style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
-        <Button onAction="#onRegisterButtonClick" text="注册"
+    <VBox spacing="10" alignment="CENTER">
+        <HBox spacing="10" alignment="CENTER">
+            <Button onAction="#onAdminLoginButtonClick" text="管理员登录"
+                    style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
+            <Button onAction="#onEmployeeLoginButtonClick" text="员工登录"
+                    style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
+        </HBox>
+        <Button onAction="#onRegisterButtonClick" text="用户注册"
                 style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
-    </FlowPane>
+    </VBox>
 </VBox>

@@ -11,16 +11,13 @@
         <Insets top="20" right="20" bottom="20" left="20"/>
     </padding>
 
-    <!-- 标题 -->
-    <Label text="新增入库单" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+    <Label fx:id="titleLabel" text="新增入库单" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
 
-    <!-- 入库类型选择 -->
     <HBox spacing="10" alignment="CENTER_LEFT">
         <Label text="入库类型：" prefWidth="80"/>
         <ComboBox fx:id="typeComboBox" prefWidth="200"/>
     </HBox>
 
-    <!-- 明细表格 -->
     <Label text="入库明细：" style="-fx-font-weight: bold;"/>
 
     <TableView fx:id="itemTable" prefHeight="250">
@@ -33,7 +30,6 @@
         </columns>
     </TableView>
 
-    <!-- 添加明细按钮 -->
     <HBox spacing="10">
         <Button text="+ 添加物资" onAction="#onAddItemButtonClick"
                 style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
@@ -41,7 +37,6 @@
                style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
     </HBox>
 
-    <!-- 操作按钮 -->
     <HBox spacing="10" alignment="CENTER_RIGHT">
         <Button text="提交" onAction="#onSubmitButtonClick"
                 style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-min-width: 80;"/>
