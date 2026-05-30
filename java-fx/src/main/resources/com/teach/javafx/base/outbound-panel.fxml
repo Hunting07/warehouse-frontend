@@ -20,8 +20,6 @@
                 <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
             </padding>
             <HBox spacing="10">
-                <Label text="申请人ID："/>
-                <TextField fx:id="applicantIdField" promptText="申请人ID" prefWidth="150"/>
                 <Label text="申请人姓名："/>
                 <TextField fx:id="applicantNameField" promptText="申请人姓名" prefWidth="150"/>
                 <Label text="出库类型："/>

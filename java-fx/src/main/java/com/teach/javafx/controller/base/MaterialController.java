@@ -106,7 +106,10 @@ public class MaterialController extends ToolController {
     }
 
     private void setupTable() {
-        idCol.setCellValueFactory(param -> param.getValue().getIdProperty().asObject());
+        idCol.setCellValueFactory(param -> {
+            int rowIndex = materialTable.getItems().indexOf(param.getValue()) + 1;
+            return new SimpleIntegerProperty(rowIndex).asObject();
+        });
         nameCol.setCellValueFactory(param -> param.getValue().nameProperty());
         codeCol.setCellValueFactory(param -> param.getValue().codeProperty());
         categoryNameCol.setCellValueFactory(param -> param.getValue().categoryNameProperty());

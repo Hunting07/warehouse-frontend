@@ -23,6 +23,7 @@
             <columnConstraints>
                 <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="95.0" minWidth="10.0" prefWidth="59.5" />
                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="140.5" minWidth="10.0" prefWidth="140.5" />
+                <ColumnConstraints halignment="LEFT" minWidth="40"/>
             </columnConstraints>
             <rowConstraints>
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
@@ -40,6 +41,8 @@
                     </GridPane.margin>
                 </Label>
                 <PasswordField fx:id="passwordField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                <Button fx:id="passwordToggleBtn" text="👁" onAction="#togglePasswordVisibility"
+                        style="-fx-background-color: transparent; -fx-cursor: hand;" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
             </children>
         </GridPane>
     </HBox>

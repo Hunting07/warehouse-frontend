@@ -9,7 +9,11 @@ import com.teach.javafx.request.JwtResponse;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
@@ -23,23 +27,28 @@ import java.util.Map;
 public class LoginController {
     @FXML
     private TextField usernameField;
+    private TextInputControl passwordInputControl;
     @FXML
-    private TextField passwordField;
+    private PasswordField passwordField;
     @FXML
     private VBox vbox;
+    @FXML
+    private Button passwordToggleBtn;
 
+    private boolean passwordVisible = false;
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
     @FXML
     public void initialize() {
         vbox.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
+        passwordInputControl = passwordField;
     }
 
     @FXML
     protected void onAdminLoginButtonClick() {
         String username = usernameField.getText().trim();
-        String password = passwordField.getText();
+        String password = passwordInputControl.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
             MessageDialog.showDialog("请输入用户名和密码");
@@ -52,7 +61,7 @@ public class LoginController {
     @FXML
     protected void onEmployeeLoginButtonClick() {
         String username = usernameField.getText().trim();
-        String password = passwordField.getText();
+        String password = passwordInputControl.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
             MessageDialog.showDialog("请输入用户名和密码");
@@ -71,6 +80,47 @@ public class LoginController {
         } catch (IOException e) {
             e.printStackTrace();
             MessageDialog.showDialog("打开注册页面失败：" + e.getMessage());
+        }
+    }
+
+    @FXML
+    protected void togglePasswordVisibility() {
+        passwordVisible = !passwordVisible;
+        GridPane parent = (GridPane) passwordInputControl.getParent();
+        Integer rowIndex = GridPane.getRowIndex(passwordInputControl);
+        Integer columnIndex = GridPane.getColumnIndex(passwordInputControl);
+        int row = (rowIndex == null) ? 1 : rowIndex;
+        int col = (columnIndex == null) ? 1 : columnIndex;
+
+        String pwdText = passwordInputControl.getText();
+        String pwdStyle = passwordInputControl.getStyle();
+        String pwdId = passwordInputControl.getId();
+        String pwdPrompt = passwordInputControl.getPromptText();
+
+        parent.getChildren().remove(passwordInputControl);
+
+        if (passwordVisible) {
+            TextField textField = new TextField();
+            textField.setText(pwdText);
+            textField.setId(pwdId);
+            textField.setStyle(pwdStyle);
+            textField.setPromptText(pwdPrompt);
+            GridPane.setRowIndex(textField, row);
+            GridPane.setColumnIndex(textField, col);
+            parent.getChildren().add(textField);
+            passwordInputControl = textField;
+            passwordToggleBtn.setText("🔓");
+        } else {
+            PasswordField newPwdField = new PasswordField();
+            newPwdField.setText(pwdText);
+            newPwdField.setId(pwdId);
+            newPwdField.setStyle(pwdStyle);
+            newPwdField.setPromptText(pwdPrompt);
+            GridPane.setRowIndex(newPwdField, row);
+            GridPane.setColumnIndex(newPwdField, col);
+            parent.getChildren().add(newPwdField);
+            passwordInputControl = newPwdField;
+            passwordToggleBtn.setText("👁");
         }
     }
 
@@ -104,27 +154,21 @@ public class LoginController {
 
                     String userName = (String) userInfo.get("username");
                     String role = (String) userInfo.get("role");
-                    
-                    // 获取用户ID（后端可能返回 id 或 userId）
+
                     Object userIdObj = userInfo.get("id");
                     if (userIdObj == null) {
                         userIdObj = userInfo.get("userId");
                     }
-                    
-                    // 🔑 确保 loginId 是整数格式
+
                     String loginId = null;
                     if (userIdObj != null) {
                         if (userIdObj instanceof Number) {
-                            // 如果是数字类型，转换为整数
                             loginId = String.valueOf(((Number) userIdObj).intValue());
                         } else {
                             loginId = String.valueOf(userIdObj);
                         }
                     }
-                    
-                    System.out.println("提取的用户ID: " + loginId);
 
-                    // 验证角色是否匹配
                     if (isAdmin && !"admin".equals(role)) {
                         MessageDialog.showDialog("请使用员工登录入口");
                         return;
@@ -141,11 +185,6 @@ public class LoginController {
                     jwt.setRole(role);
                     jwt.setLoginId(loginId);
                     AppStore.setJwt(jwt);
-                    
-                    System.out.println("=== 登录成功 ===");
-                    System.out.println("用户名: " + userName);
-                    System.out.println("角色: " + role);
-                    System.out.println("用户ID: " + loginId);
 
                     MessageDialog.showDialog("登录成功");
 

@@ -90,7 +90,14 @@ public class MainFrameController {
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> list = (List<Map<String, Object>>) m.get("sList");
             sList = list;
-            menu = new TreeItem<>(new MyTreeNode(null, (String) m.get("name"), (String) m.get("title"), 0));
+            String name = (String) m.get("name");
+            String title = (String) m.get("title");
+
+            if ("system".equals(name) || "系统管理".equals(title)) {
+                continue;
+            }
+
+            menu = new TreeItem<>(new MyTreeNode(null, name, title, 0));
             parent.getChildren().add(menu);
             if (sList != null && !sList.isEmpty()) {
                 addMenuItems(menu, sList);
@@ -104,13 +111,20 @@ public class MainFrameController {
         TreeItem<MyTreeNode> menu;
 
         for (Map<String, Object> m : mList) {
+            String name = (String) m.get("name");
+            String title = (String) m.get("title");
+
+            if ("system".equals(name) || "系统管理".equals(title)) {
+                continue;
+            }
+
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> sList = (List<Map<String, Object>>) m.get("sList");
             Object isLeftObj = m.get("isLeft");
             int isLeft = isLeftObj instanceof Number ? ((Number) isLeftObj).intValue() : 0;
 
             if (isLeft == 1) {
-                menu = new TreeItem<>(new MyTreeNode(null, (String) m.get("name"), (String) m.get("title"), isLeft));
+                menu = new TreeItem<>(new MyTreeNode(null, name, title, isLeft));
                 if (sList != null && !sList.isEmpty()) {
                     addMenuItems(menu, sList);
                 }
@@ -122,45 +136,34 @@ public class MainFrameController {
         menuTree.setShowRoot(false);
         menuTree.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<>() {
             public void handle(MouseEvent event) {
-                System.out.println("========== 树菜单点击调试 ==========");
-
                 TreeItem<MyTreeNode> treeItem = menuTree.getSelectionModel().getSelectedItem();
-                System.out.println("treeItem: " + (treeItem == null ? "null" : treeItem.getValue()));
 
                 if (treeItem == null) {
-                    System.out.println("treeItem 为空，返回");
                     return;
                 }
 
                 MyTreeNode menu = treeItem.getValue();
-                System.out.println("menu: " + (menu == null ? "null" : menu.getLabel()));
 
                 if (menu == null) {
-                    System.out.println("menu 为空，返回");
                     return;
                 }
 
-                String name = menu.getValue();
-                System.out.println("name: " + name);
-                System.out.println("label: " + menu.getLabel());
-                System.out.println("========================================");
+                String menuName = menu.getValue();
 
-                if (name == null || name.isEmpty()) {
-                    System.out.println("name 为空，返回");
+                if (menuName == null || menuName.isEmpty()) {
                     return;
                 }
-                if ("logout".equals(name)) {
+                if ("logout".equals(menuName)) {
                     logout();
-                } else if (name.endsWith("Command")) {
+                } else if (menuName.endsWith("Command")) {
                     try {
-                        Method m = this.getClass().getMethod(name);
+                        Method m = this.getClass().getMethod(menuName);
                         m.invoke(this);
                     } catch (Exception e) {
-                        System.err.println("执行命令失败: " + name);
                         e.printStackTrace();
                     }
                 } else {
-                    changeContent(name, menu.getLabel());
+                    changeContent(menuName, menu.getLabel());
                 }
             }
         });
@@ -171,60 +174,41 @@ public class MainFrameController {
         @SuppressWarnings("unused")
         ChangePanelHandler handler = new ChangePanelHandler();
 
-
-        Menu inventoryMenu = new Menu("库存管理");
-
-        MenuItem stockWarningItem = new MenuItem("库存预警");
-        stockWarningItem.setId("view/StockWarningView");
-        stockWarningItem.setText("库存预警");
-        stockWarningItem.setOnAction(this::changeContent);
-        inventoryMenu.getItems().add(stockWarningItem);
-
-        menuBar.getMenus().add(inventoryMenu);
-
-        Menu userMenu = new Menu("用户中心");
-
-        MenuItem profileItem = new MenuItem("个人中心");
-        profileItem.setId("base/profile-panel");
-        profileItem.setText("个人中心");
-        profileItem.setOnAction(this::changeContent);
-        userMenu.getItems().add(profileItem);
-
-        String role = AppStore.getJwt().getRole();
-        if ("admin".equals(role)) {
-            MenuItem auditItem = new MenuItem("用户审批");
-            auditItem.setId("base/user-audit");
-            auditItem.setText("用户审批");
-            auditItem.setOnAction(this::changeContent);
-            userMenu.getItems().add(auditItem);
-        }
-
-        MenuItem logoutItem = new MenuItem("退出登录");
-        logoutItem.setId("logout");
-        logoutItem.setText("退出登录");
-        logoutItem.setOnAction(this::changeContent);
-        userMenu.getItems().add(logoutItem);
-
-        menuBar.getMenus().add(userMenu);
-
         DataRequest req = new DataRequest();
         DataResponse res = HttpRequestUtil.request("/api/base/getMenuList", req);
 
         if (res == null || res.getCode() != 200 || res.getData() == null) {
-            System.out.println("菜单加载失败，请检查后端接口");
-            if (res != null) {
-                System.out.println("返回码：" + res.getCode() + "，消息：" + res.getMsg());
-            }
             return;
         }
 
         List<Map<String, Object>> mList = (List<Map<String, Object>>) res.getData();
-        System.out.println("成功加载 " + mList.size() + " 个菜单项");
 
-        initMenuBar(mList);
         initMenuTree(mList);
+
+        String role = AppStore.getJwt().getRole();
+        addUserCenterToTree(role);
+
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         contentTabPane.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
+    }
+
+    private void addUserCenterToTree(String role) {
+        TreeItem<MyTreeNode> root = menuTree.getRoot();
+        if (root == null) {
+            return;
+        }
+
+        for (TreeItem<MyTreeNode> item : new java.util.ArrayList<>(root.getChildren())) {
+            MyTreeNode node = item.getValue();
+            if (node != null && node.getValue() != null && node.getValue().contains("profile")) {
+                root.getChildren().remove(item);
+            }
+        }
+
+        TreeItem<MyTreeNode> profileItem = new TreeItem<>(
+                new MyTreeNode(null, "base/profile-panel", "个人中心", 0)
+        );
+        root.getChildren().add(profileItem);
     }
 
     protected void logout() {
@@ -251,11 +235,6 @@ public class MainFrameController {
     }
 
     public void changeContent(String name, String title) {
-        System.out.println("========== changeContent 调试 ==========");
-        System.out.println("name: " + name);
-        System.out.println("title: " + title);
-        System.out.println("========================================");
-
         if (name == null || name.isEmpty())
             return;
 
@@ -268,21 +247,21 @@ public class MainFrameController {
         } else if ("stock-warning".equals(name) || "warning".equals(name)) {
             fxmlPath = "/view/StockWarningView";
         } else if (name.contains("stockin")) {
-            fxmlPath = "/base/stockin-panel";
+            fxmlPath = "/com/teach/javafx/base/stockin-panel";
         } else if (name.contains("stockout") || name.contains("outbound")) {
-            fxmlPath = "/base/outbound-panel";
+            fxmlPath = "/com/teach/javafx/base/outbound-panel";
         } else if (name.contains("outorder")) {
-            fxmlPath = "/base/outorder-list-panel";
+            fxmlPath = "/com/teach/javafx/base/outorder-list-panel";
         } else if (name.contains("user-audit") || name.contains("user-approve")) {
-            fxmlPath = "/base/user-audit";
+            fxmlPath = "/com/teach/javafx/base/user-audit";
         } else if (name.contains("profile")) {
-            fxmlPath = "/base/profile-panel";
+            fxmlPath = "/com/teach/javafx/base/profile-panel";
         } else if (name.contains("password")) {
-            fxmlPath = "/base/password-panel";
+            fxmlPath = "/com/teach/javafx/base/password-panel";
         } else if (name.contains("dictionary")) {
-            fxmlPath = "/base/dictionary-panel";
+            fxmlPath = "/com/teach/javafx/base/dictionary-panel";
         } else if (name.contains("apply")) {
-            fxmlPath = "/base/outbound-apply";
+            fxmlPath = "/com/teach/javafx/base/outbound-apply";
         }
 
         Tab tab = tabMap.get(fxmlPath);
@@ -291,12 +270,9 @@ public class MainFrameController {
         if (tab == null) {
             scene = sceneMap.get(fxmlPath);
             if (scene == null) {
-                System.out.println("加载 FXML: " + fxmlPath + ".fxml");
                 URL fxmlUrl = MainApplication.class.getResource(fxmlPath + ".fxml");
-                System.out.println("FXML URL: " + fxmlUrl);
 
                 if (fxmlUrl == null) {
-                    System.out.println("错误：找不到 FXML 文件！路径: " + fxmlPath + ".fxml");
                     showError("找不到页面文件", fxmlPath + ".fxml");
                     return;
                 }

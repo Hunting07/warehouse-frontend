@@ -150,8 +150,9 @@ public class UserAuditController {
                             info.setAccount(account);
 
                             String name = (String) item.get("realName");
-                            if (name == null || name.isEmpty()) name = (String) item.get("name");
-                            if (name == null || name.isEmpty()) name = account;
+                            if (name == null || name.isEmpty()) {
+                                name = account;
+                            }
                             info.setName(name);
 
                             info.setPhone((String) item.getOrDefault("phone", ""));

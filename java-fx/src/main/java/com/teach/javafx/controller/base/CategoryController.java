@@ -71,7 +71,6 @@ public class CategoryController extends ToolController {
         if (jwt != null && jwt.getRole() != null) {
             isAdmin = "admin".equals(jwt.getRole()) || "管理员".equals(jwt.getRole());
         }
-        System.out.println("物资分类-当前用户角色: " + (jwt != null ? jwt.getRole() : "null") + ", 是否管理员: " + isAdmin);
     }
 
     private void applyRolePermissions() {
@@ -80,19 +79,29 @@ public class CategoryController extends ToolController {
                 addCategoryBtn.setVisible(false);
                 addCategoryBtn.setManaged(false);
             }
-            System.out.println("物资分类-当前为普通员工，仅查看权限");
-        } else {
-            System.out.println("物资分类-当前为管理员，拥有完整操作权限");
         }
     }
 
     private void setupTreeTable() {
-        idCol.setCellValueFactory(param -> param.getValue().getValue().idProperty().asObject());
+        idCol.setCellFactory(col -> new TreeTableCell<CategoryNode, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    int rowIndex = getIndex() + 1;
+                    setText(String.valueOf(rowIndex));
+                }
+            }
+        });
         nameCol.setCellValueFactory(param -> param.getValue().getValue().nameProperty());
         codeCol.setCellValueFactory(param -> param.getValue().getValue().codeProperty());
         statusCol.setCellValueFactory(param -> param.getValue().getValue().statusProperty());
         materialCountCol.setCellValueFactory(param -> param.getValue().getValue().materialCountProperty().asObject());
         createTimeCol.setCellValueFactory(param -> param.getValue().getValue().createTimeProperty());
+
+
 
         actionCol.setCellFactory(new Callback<>() {
             @Override
@@ -104,7 +113,6 @@ public class CategoryController extends ToolController {
                         if (empty) {
                             setGraphic(null);
                         } else {
-                            // 查看物资按钮：所有用户都可见
                             Button viewMaterialsBtn = new Button("查看物资");
                             viewMaterialsBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-cursor: hand;");
                             viewMaterialsBtn.setOnAction(e -> {
@@ -116,7 +124,6 @@ public class CategoryController extends ToolController {
                             });
 
                             if (isAdmin) {
-                                // 管理员：显示编辑和删除按钮
                                 Button editBtn = new Button("编辑");
                                 editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;");
                                 editBtn.setOnAction(e -> {
@@ -141,7 +148,6 @@ public class CategoryController extends ToolController {
                                 box.setPadding(new Insets(5));
                                 setGraphic(box);
                             } else {
-                                // 普通员工：只显示查看物资按钮
                                 javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(5, viewMaterialsBtn);
                                 box.setPadding(new Insets(5));
                                 setGraphic(box);
@@ -206,9 +212,6 @@ public class CategoryController extends ToolController {
     private CategoryNode mapToCategoryNode(Map<String, Object> map) {
         CategoryNode node = new CategoryNode();
 
-        System.out.println("====== 分类数据映射 ======");
-        System.out.println("原始数据: " + gson.toJson(map));
-
         if (map.get("id") != null) {
             node.setId(((Number) map.get("id")).intValue());
         }
@@ -216,11 +219,7 @@ public class CategoryController extends ToolController {
             node.setName((String) map.get("name"));
         }
         if (map.get("code") != null) {
-            String code = (String) map.get("code");
-            System.out.println("分类编码: " + code);
-            node.setCode(code);
-        } else {
-            System.out.println("分类编码: null (后端未返回)");
+            node.setCode((String) map.get("code"));
         }
         if (map.get("sort") != null) {
             node.setSort(((Number) map.get("sort")).intValue());
@@ -236,7 +235,6 @@ public class CategoryController extends ToolController {
                 statusText = ("1".equals(statusStr) || "启用".equals(statusStr)) ? "启用" : "禁用";
             }
             node.setStatus(statusText);
-            System.out.println("状态: " + statusText + " (原始值: " + statusObj + ")");
         }
         if (map.get("createTime") != null) {
             try {
@@ -286,22 +284,14 @@ public class CategoryController extends ToolController {
             if (status != null && !"全部".equals(status)) {
                 int statusCode = "启用".equals(status) ? 1 : 0;
                 request.put("status", statusCode);
-                System.out.println("状态转换: " + status + " -> " + statusCode);
             }
 
-            System.out.println("====== 分类搜索请求 ======");
-            System.out.println("请求URL: /api/category/search");
-            System.out.println("请求参数: " + gson.toJson(request.getParams()));
-
             DataResponse response = HttpRequestUtil.request("/api/category/search", request);
-
-            System.out.println("响应结果: " + (response != null ? gson.toJson(response) : "null"));
 
             if (response != null && response.getCode() == 200) {
                 Platform.runLater(() -> buildTreeFromData(response.getData()));
             } else {
                 String errorMsg = response != null ? response.getMsg() : "网络错误";
-                System.out.println("搜索失败: " + errorMsg);
                 showError("搜索失败", "后端返回错误: " + errorMsg);
             }
         } catch (Exception e) {
@@ -339,18 +329,11 @@ public class CategoryController extends ToolController {
             return;
         }
 
-        // 检查分类下是否有物资
         try {
             DataRequest checkRequest = new DataRequest();
             checkRequest.put("categoryName", node.getName());
 
-            System.out.println("====== 检查分类下物资 ======");
-            System.out.println("请求URL: /api/material/search");
-            System.out.println("请求参数: " + gson.toJson(checkRequest.getParams()));
-
             DataResponse checkResponse = HttpRequestUtil.request("/api/material/search", checkRequest);
-
-            System.out.println("响应结果: " + (checkResponse != null ? gson.toJson(checkResponse) : "null"));
 
             if (checkResponse != null && checkResponse.getCode() == 200 && checkResponse.getData() != null) {
                 Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
@@ -380,20 +363,13 @@ public class CategoryController extends ToolController {
                     DataRequest request = new DataRequest();
                     request.put("id", node.getId());
 
-                    System.out.println("====== 分类删除请求 ======");
-                    System.out.println("请求URL: /api/category/delete");
-                    System.out.println("请求参数: " + gson.toJson(request.getParams()));
-
                     DataResponse resp = HttpRequestUtil.request("/api/category/delete", request);
-
-                    System.out.println("响应结果: " + (resp != null ? gson.toJson(resp) : "null"));
 
                     if (resp != null && resp.getCode() == 200) {
                         showInfo("删除成功", "分类已删除");
                         loadCategoryTree();
                     } else {
                         String errorMsg = resp != null ? resp.getMsg() : "网络错误";
-                        System.out.println("删除失败: " + errorMsg);
                         showError("删除失败", "后端返回错误: " + errorMsg);
                     }
                 } catch (Exception e) {
@@ -414,13 +390,7 @@ public class CategoryController extends ToolController {
             DataRequest request = new DataRequest();
             request.put("categoryName", category.getName());
 
-            System.out.println("====== 查看分类下物资请求 ======");
-            System.out.println("请求URL: /api/material/search");
-            System.out.println("请求参数: " + gson.toJson(request.getParams()));
-
             DataResponse response = HttpRequestUtil.request("/api/material/search", request);
-
-            System.out.println("响应结果: " + (response != null ? gson.toJson(response) : "null"));
 
             if (response != null && response.getCode() == 200) {
                 showMaterialsDialog(category.getName(), response.getData());
@@ -504,8 +474,8 @@ public class CategoryController extends ToolController {
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> materialList = gson.fromJson(
-            gson.toJson(data),
-            new TypeToken<List<Map<String, Object>>>(){}.getType()
+                gson.toJson(data),
+                new TypeToken<List<Map<String, Object>>>(){}.getType()
         );
 
         if (materialList != null) {
@@ -684,23 +654,15 @@ public class CategoryController extends ToolController {
                 }
 
                 String url = node == null ? "/api/category/add" : "/api/category/update";
-                System.out.println("====== 分类保存请求 ======");
-                System.out.println("请求URL: " + url);
-                System.out.println("请求参数: " + gson.toJson(request.getParams()));
-                System.out.println("状态转换: " + statusValue + " -> " + statusCode);
 
                 DataResponse response = HttpRequestUtil.request(url, request);
-
-                System.out.println("响应结果: " + (response != null ? gson.toJson(response) : "null"));
 
                 if (response != null && response.getCode() == 200) {
                     showInfo("操作成功", node == null ? "分类已创建" : "分类已更新");
                     dialog.close();
-                    System.out.println("重新加载分类树...");
                     loadCategoryTree();
                 } else {
                     String errorMsg = response != null ? response.getMsg() : "网络错误";
-                    System.out.println("保存失败: " + errorMsg);
                     showError("操作失败", "后端返回错误: " + errorMsg);
                 }
             } catch (Exception ex) {
