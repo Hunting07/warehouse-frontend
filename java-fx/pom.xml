@@ -75,6 +75,16 @@
                     <jlinkImageName>javafx</jlinkImageName>
                     <launcher>launcher</launcher>
                     <mainClass>com.teach.javafx.MainApplication</mainClass>
+                    <options>
+                        <option>--add-opens</option>
+                        <option>java.base/java.lang=com.google.gson</option>
+                        <option>--add-opens</option>
+                        <option>java.base/java.util=com.google.gson</option>
+                        <option>--add-opens</option>
+                        <option>java.base/java.lang.reflect=com.google.gson</option>
+                        <option>--add-opens</option>
+                        <option>java.base/java.time=com.google.gson</option>
+                    </options>
                 </configuration>
             </plugin>
             <plugin>

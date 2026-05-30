@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.teach.javafx.controller.base.OutOrderEditDialog"
+            prefWidth="800" prefHeight="600">
+
+    <top>
+        <VBox spacing="15" style="-fx-background-color: #f5f7fa;">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="新增出库单" fx:id="titleLabel" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="出库类型：" style="-fx-font-size: 14px;"/>
+                <ComboBox fx:id="outTypeComboBox" prefWidth="200" promptText="请选择出库类型"/>
+            </HBox>
+
+            <Label text="出库明细：" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="10" right="20" bottom="10" left="20"/>
+            </padding>
+
+            <TableView fx:id="detailTable" prefHeight="350" editable="true">
+                <columns>
+                    <TableColumn fx:id="materialColumn" text="物资" prefWidth="200"/>
+                    <TableColumn fx:id="specColumn" text="规格型号" prefWidth="120"/>
+                    <TableColumn fx:id="unitColumn" text="单位" prefWidth="80"/>
+                    <TableColumn fx:id="quantityColumn" text="数量" prefWidth="100"/>
+                    <TableColumn fx:id="actionColumn" text="操作" prefWidth="80"/>
+                </columns>
+            </TableView>
+
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Button fx:id="addButton" text="+ 添加物资" onAction="#onAddButtonClick"
+                        style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px;"/>
+                <Label fx:id="totalLabel" text="总数量：0" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+            </HBox>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="15" alignment="CENTER_RIGHT">
+            <padding>
+                <Insets top="15" right="20" bottom="20" left="20"/>
+            </padding>
+            <Button fx:id="remarkButton" text="备注" onAction="#onRemarkButtonClick"
+                    style="-fx-background-color: #FF9800; -fx-text-fill: white;"/>
+            <Button fx:id="submitBtn" text="提交" onAction="#onSubmitButtonClick"
+                    style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-pref-width: 100;"/>
+            <Button fx:id="cancelBtn" text="取消" onAction="#onCancelButtonClick"
+                    style="-fx-font-size: 14px; -fx-pref-width: 100;"/>
+        </HBox>
+    </bottom>
+</BorderPane>

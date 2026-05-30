@@ -7,7 +7,6 @@ module com.teach.javafx {
     requires java.net.http;
     requires javafx.graphics;
 
-
     opens com.teach.javafx.request to com.google.gson, javafx.fxml;
     opens com.teach.javafx.controller.base to com.google.gson, javafx.fxml;
     opens com.teach.javafx.models to com.google.gson, javafx.fxml;

@@ -119,38 +119,70 @@ public class OutboundApplyController {
     private void loadMaterialList() {
         new Thread(() -> {
             try {
-                String url = HttpRequestUtil.serverUrl + "/api/material/getMaterialList";
+                System.out.println("=== OutboundApplyController 开始加载物资列表 ===");
+                String url = HttpRequestUtil.serverUrl + "/api/material/list";
+                System.out.println("请求URL: " + url);
 
+                // 使用 POST 请求，发送空的 JSON 对象
+                String requestBody = "{}";
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
-                        .GET()
+                        .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                        .headers("Content-Type", "application/json")
                         .headers("satoken", AppStore.getJwt().getToken())
                         .build();
 
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
+                System.out.println("响应状态码: " + response.statusCode());
+                System.out.println("响应内容: " + response.body());
+
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), Map.class);
 
-                    if (result.get("code").equals(200) || result.get("code").equals(0)) {
-                        Map<String, Object> dataMap = (Map<String, Object>) result.get("data");
-                        List<Map<String, Object>> data = (List<Map<String, Object>>) dataMap.get("records");
+                    if (result.get("code").equals(200.0) || result.get("code").equals(0)) {
+                        Object dataObj = result.get("data");
 
-                        Platform.runLater(() -> {
-                            materialList.clear();
-                            materialMapList.clear();
+                        final List<Map<String, Object>> data;
 
-                            if (data != null) {
-                                materialMapList.addAll(data);
-                                for (Map<String, Object> item : data) {
+                        if (dataObj instanceof List) {
+                            // 格式1：直接返回 List
+                            System.out.println("物资列表加载成功（格式1-直接List）");
+                            data = (List<Map<String, Object>>) dataObj;
+                        } else if (dataObj instanceof Map) {
+                            // 格式2：分页数据
+                            System.out.println("物资列表加载成功（格式2-分页数据）");
+                            Map<String, Object> dataMap = (Map<String, Object>) dataObj;
+                            data = (List<Map<String, Object>>) dataMap.get("records");
+                        } else {
+                            System.err.println("物资列表数据格式不正确");
+                            data = null;
+                        }
+
+                        if (data != null) {
+                            final List<Map<String, Object>> finalData = data;
+                            Platform.runLater(() -> {
+                                materialList.clear();
+                                materialMapList.clear();
+
+                                for (Map<String, Object> item : finalData) {
                                     OptionItem option = new OptionItem();
                                     option.setId(((Number) item.get("id")).intValue());
-                                    option.setName((String) item.get("materialName"));
+                                    option.setName((String) item.get("name"));
                                     materialList.add(option);
+                                    materialMapList.add(item);
                                 }
-                            }
-                        });
+
+                                System.out.println("物资列表加载完成，共 " + materialList.size() + " 条记录");
+                            });
+                        } else {
+                            System.err.println("物资列表数据为空");
+                        }
+                    } else {
+                        System.err.println("接口返回错误：code=" + result.get("code") + ", msg=" + result.get("msg"));
                     }
+                } else {
+                    System.err.println("HTTP请求失败，状态码：" + response.statusCode());
                 }
             } catch (Exception e) {
                 System.err.println("加载物资列表失败：" + e.getMessage());
@@ -206,6 +238,10 @@ public class OutboundApplyController {
                 if (((Number) mat.get("id")).intValue() == selectedMaterial.getId()) {
                     detail.setGoodsSpec((String) mat.getOrDefault("spec", "默认规格"));
                     detail.setUnit((String) mat.getOrDefault("unit", "件"));
+                    Object priceObj = mat.get("price");
+                    if (priceObj instanceof Number) {
+                        detail.setUnitPrice(java.math.BigDecimal.valueOf(((Number) priceObj).doubleValue()));
+                    }
                     break;
                 }
             }
@@ -276,6 +312,9 @@ public class OutboundApplyController {
             Map<String, Object> item = new HashMap<>();
             item.put("materialId", detail.getGoodsId());
             item.put("quantity", detail.getOutNum());
+            if (detail.getUnitPrice() != null) {
+                item.put("unitPrice", detail.getUnitPrice());
+            }
             items.add(item);
         }
         requestBody.put("items", items);
@@ -296,7 +335,7 @@ public class OutboundApplyController {
                     remarkField.clear();
                     MessageDialog.showDialog("提交成功！");
                 } else {
-                    MessageDialog.showDialog("提交失败！" + result.get("msg"));
+                    MessageDialog.showDialog("提交失败：" + result.get("msg"));
                 }
             } else {
                 MessageDialog.showDialog("提交失败！");
