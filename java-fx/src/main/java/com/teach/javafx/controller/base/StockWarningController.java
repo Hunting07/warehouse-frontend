@@ -2,11 +2,11 @@ package com.teach.javafx.controller.base;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.teach.javafx.AppStore;
 import com.teach.javafx.request.DataRequest;
 import com.teach.javafx.request.DataResponse;
 import com.teach.javafx.request.HttpRequestUtil;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import com.teach.javafx.request.JwtResponse;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -14,21 +14,17 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.stage.FileChooser;
-import javafx.util.Duration;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 
 import java.io.File;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -55,49 +51,81 @@ public class StockWarningController {
     @FXML
     private TableColumn<WarningNode, Integer> shortageCol;
     @FXML
-    private TableColumn<WarningNode, Integer> warningThresholdCol;
-    @FXML
-    private TableColumn<WarningNode, String> warningLevelCol;
-    @FXML
     private TableColumn<WarningNode, LocalDateTime> updateTimeCol;
     @FXML
     private TableColumn<WarningNode, Void> actionCol;
 
     @FXML
-    private ComboBox<String> warningLevelFilter;
-    @FXML
     private TextField searchField;
-    @FXML
-    private Label severeCountLabel;
     @FXML
     private Label warningCountLabel;
     @FXML
-    private Label noticeCountLabel;
-    @FXML
     private Label totalCountLabel;
+    @FXML
+    private Button exportBtn;
 
     private final ObservableList<WarningNode> dataList = FXCollections.observableArrayList();
     private final Gson gson = new Gson();
-    private Timeline refreshTimeline;
+    private boolean isAdmin = false;
 
     @FXML
     public void initialize() {
+        checkUserRole();
         setupTable();
         setupFilters();
         loadWarnings();
-        setupAutoRefresh();
+        applyRolePermissions();
+    }
+
+    private void checkUserRole() {
+        JwtResponse jwt = AppStore.getJwt();
+        if (jwt != null && jwt.getRole() != null) {
+            isAdmin = "admin".equals(jwt.getRole()) || "管理员".equals(jwt.getRole());
+        }
+    }
+
+    private void applyRolePermissions() {
+        if (!isAdmin) {
+            if (exportBtn != null) {
+                exportBtn.setVisible(false);
+                exportBtn.setManaged(false);
+            }
+        }
     }
 
     private void setupTable() {
-        idCol.setCellValueFactory(param -> param.getValue().getIdProperty().asObject());
+        idCol.setCellFactory(col -> new TableCell<WarningNode, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    int rowIndex = getIndex() + 1;
+                    setText(String.valueOf(rowIndex));
+                }
+            }
+        });
         nameCol.setCellValueFactory(param -> param.getValue().nameProperty());
         codeCol.setCellValueFactory(param -> param.getValue().codeProperty());
         categoryNameCol.setCellValueFactory(param -> param.getValue().categoryNameProperty());
         currentStockCol.setCellValueFactory(param -> param.getValue().currentStockProperty().asObject());
         safetyStockCol.setCellValueFactory(param -> param.getValue().safetyStockProperty().asObject());
+
         shortageCol.setCellValueFactory(param -> param.getValue().shortageProperty().asObject());
-        warningThresholdCol.setCellValueFactory(param -> param.getValue().warningThresholdProperty().asObject());
-        warningLevelCol.setCellValueFactory(param -> param.getValue().warningLevelProperty());
+        shortageCol.setCellFactory(col -> new TableCell<WarningNode, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.valueOf(item));
+                    setStyle("-fx-text-fill: #d32f2f; -fx-font-weight: bold;");
+                }
+            }
+        });
+
         updateTimeCol.setCellValueFactory(param -> param.getValue().updateTimeProperty());
 
         for (TableColumn<WarningNode, ?> column : warningTable.getColumns()) {
@@ -111,8 +139,13 @@ public class StockWarningController {
                 if (empty) {
                     setGraphic(null);
                 } else {
+                    if (!isAdmin) {
+                        setGraphic(null);
+                        return;
+                    }
+
                     Button settingBtn = new Button("设置");
-                    settingBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand;");
+                    settingBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;");
                     settingBtn.setOnAction(e -> {
                         WarningNode warning = getTableView().getSelectionModel().getSelectedItem();
                         editWarningSetting(warning);
@@ -123,7 +156,7 @@ public class StockWarningController {
         });
 
         warningTable.setItems(dataList);
-        
+
         warningTable.setRowFactory(tv -> new TableRow<WarningNode>() {
             @Override
             protected void updateItem(WarningNode item, boolean empty) {
@@ -131,20 +164,19 @@ public class StockWarningController {
                 if (empty || item == null) {
                     setStyle("");
                 } else {
-                    String level = item.getWarningLevel();
-                    if ("严重".equals(level)) {
-                        setStyle("-fx-background-color: #ffcccc;");
-                    } else if ("警告".equals(level)) {
-                        setStyle("-fx-background-color: #fff4cc;");
+                    if (isSelected()) {
+                        setStyle("-fx-background-color: #2196F3; -fx-text-fill: #000000;");
+                    } else if (getIndex() % 2 == 0) {
+                        setStyle("-fx-background-color: #fff5f5;");
                     } else {
-                        setStyle("");
+                        setStyle("-fx-background-color: #ffffff;");
                     }
                 }
             }
         });
 
         warningTable.setOnMouseClicked(event -> {
-            if (event.getClickCount() == 2) {
+            if (event.getClickCount() == 2 && isAdmin) {
                 WarningNode selected = warningTable.getSelectionModel().getSelectedItem();
                 if (selected != null) {
                     editWarningSetting(selected);
@@ -152,23 +184,15 @@ public class StockWarningController {
             }
         });
 
-        Label emptyLabel = new Label("暂无预警数据");
-        emptyLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #999;");
+        Label emptyLabel = new Label("✅ 库存充足，暂无预警");
+        emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4caf50;");
         warningTable.setPlaceholder(emptyLabel);
     }
 
     private void setupFilters() {
-        warningLevelFilter.getItems().addAll("全部", "严重", "警告", "提示");
-        warningLevelFilter.setValue("全部");
         searchField.setPromptText("输入物资名称或编码搜索...");
-        
-        searchField.setOnAction(event -> searchWarning());
-    }
 
-    private void setupAutoRefresh() {
-        refreshTimeline = new Timeline(new KeyFrame(Duration.minutes(5), e -> loadWarnings()));
-        refreshTimeline.setCycleCount(Timeline.INDEFINITE);
-        refreshTimeline.play();
+        searchField.setOnAction(event -> searchWarning());
     }
 
     @FXML
@@ -176,7 +200,7 @@ public class StockWarningController {
         showLoading(true);
         try {
             DataRequest request = new DataRequest();
-            String responseStr = HttpRequestUtil.post("/api/stock-warning/list", gson.toJson(request.getParams()));
+            String responseStr = HttpRequestUtil.post("/api/material/list", gson.toJson(request.getParams()));
 
             if (responseStr != null) {
                 DataResponse response = gson.fromJson(responseStr, DataResponse.class);
@@ -210,12 +234,23 @@ public class StockWarningController {
         }
 
         Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
-        List<Map<String, Object>> warningList = gson.fromJson(gson.toJson(data), listType);
+        List<Map<String, Object>> allMaterials = gson.fromJson(gson.toJson(data), listType);
 
-        if (warningList != null) {
-            for (Map<String, Object> warning : warningList) {
-                WarningNode node = mapToWarningNode(warning);
-                dataList.add(node);
+        if (allMaterials != null) {
+            for (Map<String, Object> material : allMaterials) {
+                try {
+                    int currentStock = material.get("currentStock") != null ?
+                            ((Number) material.get("currentStock")).intValue() : 0;
+                    int safetyStock = material.get("safetyStock") != null ?
+                            ((Number) material.get("safetyStock")).intValue() : 0;
+
+                    if (currentStock < safetyStock) {
+                        WarningNode node = mapToWarningNode(material);
+                        dataList.add(node);
+                    }
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "转换物资数据失败", e);
+                }
             }
         }
 
@@ -243,12 +278,6 @@ public class StockWarningController {
         if (map.get("safetyStock") != null) {
             node.setSafetyStock(((Number) map.get("safetyStock")).intValue());
         }
-        if (map.get("warningThreshold") != null) {
-            node.setWarningThreshold(((Number) map.get("warningThreshold")).intValue());
-        }
-        if (map.get("warningLevel") != null) {
-            node.setWarningLevel((String) map.get("warningLevel"));
-        }
         if (map.get("updateTime") != null) {
             try {
                 node.setUpdateTime(LocalDateTime.parse(map.get("updateTime").toString()));
@@ -259,19 +288,16 @@ public class StockWarningController {
 
         int shortage = node.getSafetyStock() - node.getCurrentStock();
         node.setShortage(shortage > 0 ? shortage : 0);
+        node.setWarningThreshold(node.getSafetyStock());
 
         return node;
     }
 
     private void updateStatistics() {
-        long severeCount = dataList.stream().filter(w -> "严重".equals(w.getWarningLevel())).count();
-        long warningCount = dataList.stream().filter(w -> "警告".equals(w.getWarningLevel())).count();
-        long noticeCount = dataList.stream().filter(w -> "提示".equals(w.getWarningLevel())).count();
+        long warningCount = dataList.size();
 
         Platform.runLater(() -> {
-            severeCountLabel.setText(String.valueOf(severeCount));
             warningCountLabel.setText(String.valueOf(warningCount));
-            noticeCountLabel.setText(String.valueOf(noticeCount));
             totalCountLabel.setText(String.valueOf(dataList.size()));
         });
     }
@@ -279,25 +305,31 @@ public class StockWarningController {
     @FXML
     private void searchWarning() {
         String keyword = searchField.getText();
-        String warningLevel = warningLevelFilter.getValue();
 
         showLoading(true);
         try {
             DataRequest request = new DataRequest();
-            if (keyword != null && !keyword.isEmpty()) {
-                request.put("keyword", keyword);
-            }
-            if (warningLevel != null && !"全部".equals(warningLevel)) {
-                request.put("warningLevel", warningLevel);
-            }
 
-            String responseStr = HttpRequestUtil.post("/api/stock-warning/search", gson.toJson(request.getParams()));
+            String responseStr = HttpRequestUtil.post("/api/material/list", gson.toJson(request.getParams()));
 
             if (responseStr != null) {
                 DataResponse response = gson.fromJson(responseStr, DataResponse.class);
                 if (response != null && response.getCode() == 200) {
                     Platform.runLater(() -> {
                         buildDataList(response.getData());
+
+                        if (keyword != null && !keyword.isEmpty()) {
+                            ObservableList<WarningNode> filteredList = FXCollections.observableArrayList();
+                            for (WarningNode node : dataList) {
+                                if (node.getName().contains(keyword) || node.getCode().contains(keyword)) {
+                                    filteredList.add(node);
+                                }
+                            }
+                            warningTable.setItems(filteredList);
+                        } else {
+                            warningTable.setItems(dataList);
+                        }
+
                         updateStatistics();
                         showLoading(false);
                     });
@@ -320,12 +352,16 @@ public class StockWarningController {
     @FXML
     private void resetSearch() {
         searchField.clear();
-        warningLevelFilter.setValue("全部");
         loadWarnings();
     }
 
     @FXML
     private void exportWarnings() {
+        if (!isAdmin) {
+            showError("权限不足", "只有管理员可以导出数据");
+            return;
+        }
+
         if (dataList.isEmpty()) {
             showInfo("导出失败", "没有可导出的数据");
             return;
@@ -334,18 +370,18 @@ public class StockWarningController {
         try {
             StringBuilder csv = new StringBuilder();
             csv.append("\uFEFF");
-            csv.append("物资名称,物资编码,所属分类,当前库存,安全库存,短缺数量,预警阈值,预警级别,更新时间\n");
+            csv.append("序号,物资名称,物资编码,所属分类,当前库存,安全库存,短缺数量,更新时间\n");
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            for (WarningNode node : dataList) {
+            for (int i = 0; i < dataList.size(); i++) {
+                WarningNode node = dataList.get(i);
+                csv.append(i + 1).append(",");
                 csv.append(escapeCsv(node.getName())).append(",");
                 csv.append(escapeCsv(node.getCode())).append(",");
                 csv.append(escapeCsv(node.getCategoryName())).append(",");
                 csv.append(node.getCurrentStock()).append(",");
                 csv.append(node.getSafetyStock()).append(",");
                 csv.append(node.getShortage()).append(",");
-                csv.append(node.getWarningThreshold()).append(",");
-                csv.append(escapeCsv(node.getWarningLevel())).append(",");
                 csv.append(node.getUpdateTime() != null ? node.getUpdateTime().format(formatter) : "").append("\n");
             }
 
@@ -375,6 +411,11 @@ public class StockWarningController {
     }
 
     private void editWarningSetting(WarningNode warning) {
+        if (!isAdmin) {
+            showError("权限不足", "只有管理员可以修改安全库存设置");
+            return;
+        }
+
         if (warning == null) {
             showError("操作失败", "请选择要设置的物资");
             return;
@@ -392,14 +433,7 @@ public class StockWarningController {
         TextField safetyStockField = new TextField(String.valueOf(warning.getSafetyStock()));
         safetyStockField.setPromptText("安全库存数量");
 
-        TextField warningThresholdField = new TextField(String.valueOf(warning.getWarningThreshold()));
-        warningThresholdField.setPromptText("预警阈值");
-
-        ComboBox<String> warningLevelCombo = new ComboBox<>();
-        warningLevelCombo.getItems().addAll("严重", "警告", "提示");
-        warningLevelCombo.setValue(warning.getWarningLevel());
-
-        Label infoLabel = new Label("💡 提示：当库存低于预警阈值时会触发预警");
+        Label infoLabel = new Label("💡 提示：当库存低于安全库存时会触发预警");
         infoLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 12px;");
 
         grid.add(new Label("物资名称:"), 0, 0);
@@ -410,39 +444,32 @@ public class StockWarningController {
         grid.add(new Label(String.valueOf(warning.getCurrentStock())), 1, 2);
         grid.add(new Label("安全库存:"), 0, 3);
         grid.add(safetyStockField, 1, 3);
-        grid.add(new Label("预警阈值:"), 0, 4);
-        grid.add(warningThresholdField, 1, 4);
-        grid.add(new Label("预警级别:"), 0, 5);
-        grid.add(warningLevelCombo, 1, 5);
-        grid.add(infoLabel, 0, 6, 2, 1);
+        grid.add(infoLabel, 0, 4, 2, 1);
 
         Button saveBtn = new Button("保存");
-        saveBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;");
+        saveBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;");
         Button cancelBtn = new Button("取消");
-        cancelBtn.setStyle("-fx-cursor: hand;");
+        cancelBtn.setStyle("-fx-cursor: hand; -fx-background-radius: 4;");
 
         saveBtn.setOnAction(e -> {
             try {
                 int safetyStock = Integer.parseInt(safetyStockField.getText());
-                int threshold = Integer.parseInt(warningThresholdField.getText());
 
-                if (safetyStock < 0 || threshold < 0) {
-                    showError("输入错误", "安全库存和预警阈值不能为负数");
+                if (safetyStock < 0) {
+                    showError("输入错误", "安全库存不能为负数");
                     return;
                 }
 
                 DataRequest request = new DataRequest();
-                request.put("materialId", warning.getId());
+                request.put("id", warning.getId());
                 request.put("safetyStock", safetyStock);
-                request.put("warningThreshold", threshold);
-                request.put("warningLevel", warningLevelCombo.getValue());
 
-                String responseStr = HttpRequestUtil.post("/api/stock-warning/setting", gson.toJson(request.getParams()));
+                String responseStr = HttpRequestUtil.post("/api/material/update", gson.toJson(request.getParams()));
 
                 if (responseStr != null) {
                     DataResponse response = gson.fromJson(responseStr, DataResponse.class);
                     if (response != null && response.getCode() == 200) {
-                        showInfo("设置成功", "预警设置已更新");
+                        showInfo("设置成功", "安全库存已更新");
                         dialog.close();
                         loadWarnings();
                     } else {
@@ -460,9 +487,9 @@ public class StockWarningController {
         cancelBtn.setOnAction(e -> dialog.close());
 
         HBox buttonBox = new HBox(10, saveBtn, cancelBtn);
-        grid.add(buttonBox, 1, 7);
+        grid.add(buttonBox, 1, 5);
 
-        javafx.scene.Scene scene = new javafx.scene.Scene(grid, 500, 300);
+        javafx.scene.Scene scene = new javafx.scene.Scene(grid, 450, 250);
         dialog.setScene(scene);
         dialog.showAndWait();
     }
@@ -498,9 +525,6 @@ public class StockWarningController {
     }
 
     public void cleanup() {
-        if (refreshTimeline != null) {
-            refreshTimeline.stop();
-        }
     }
 
     public static class WarningNode {
@@ -512,7 +536,6 @@ public class StockWarningController {
         private final IntegerProperty safetyStock = new SimpleIntegerProperty();
         private final IntegerProperty shortage = new SimpleIntegerProperty();
         private final IntegerProperty warningThreshold = new SimpleIntegerProperty();
-        private final StringProperty warningLevel = new SimpleStringProperty("");
         private final ObjectProperty<LocalDateTime> updateTime = new SimpleObjectProperty<>();
 
         public IntegerProperty getIdProperty() { return id; }
@@ -546,10 +569,6 @@ public class StockWarningController {
         public IntegerProperty warningThresholdProperty() { return warningThreshold; }
         public int getWarningThreshold() { return warningThreshold.get(); }
         public void setWarningThreshold(int value) { warningThreshold.set(value); }
-
-        public StringProperty warningLevelProperty() { return warningLevel; }
-        public String getWarningLevel() { return warningLevel.get(); }
-        public void setWarningLevel(String value) { warningLevel.set(value); }
 
         public ObjectProperty<LocalDateTime> updateTimeProperty() { return updateTime; }
         public LocalDateTime getUpdateTime() { return updateTime.get(); }
