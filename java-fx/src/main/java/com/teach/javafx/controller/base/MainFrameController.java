@@ -248,12 +248,12 @@ public class MainFrameController {
             fxmlPath = "/view/StockWarningView";
         } else if (name.contains("stockin")) {
             fxmlPath = "/com/teach/javafx/base/stockin-panel";
-        } else if (name.contains("stockout") || name.contains("outbound")) {
+        } else if (name.contains("stockout")) {
             fxmlPath = "/com/teach/javafx/base/outbound-panel";
-        } else if (name.contains("user-audit") || name.contains("user-approve") || name.contains("用户注册审批")) {
-            fxmlPath = "/com/teach/javafx/base/user-audit";
         } else if (name.contains("outorder") || name.contains("出库审批")) {
             fxmlPath = "/com/teach/javafx/base/outorder-list-panel";
+        } else if (name.contains("user-audit") || name.contains("user-approve") || name.contains("用户注册审批")) {
+            fxmlPath = "/com/teach/javafx/base/user-audit";
         } else if (name.contains("profile")) {
             fxmlPath = "/com/teach/javafx/base/profile-panel";
         } else if (name.contains("password")) {
