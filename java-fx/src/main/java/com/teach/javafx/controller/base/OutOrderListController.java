@@ -41,38 +41,27 @@ public class OutOrderListController extends ToolController {
     private TableView<OutOrder> outOrderTable;
 
     @FXML
-    private TableColumn<OutOrder, Integer> idColumn;
-
+    private TableColumn<OutOrder, Integer> indexColumn;
     @FXML
     private TableColumn<OutOrder, String> orderNoColumn;
-
     @FXML
     private TableColumn<OutOrder, String> outTypeColumn;
-
     @FXML
     private TableColumn<OutOrder, String> applicantNameColumn;
-
     @FXML
     private TableColumn<OutOrder, String> materialNamesColumn;
-
     @FXML
-    private TableColumn<OutOrder, String> applyTimeColumn;
-
+    private TableColumn<OutOrder, LocalDateTime> applyTimeColumn;
     @FXML
     private TableColumn<OutOrder, Integer> totalNumColumn;
-
     @FXML
     private TableColumn<OutOrder, BigDecimal> totalAmountColumn;
-
     @FXML
     private TableColumn<OutOrder, String> statusColumn;
-
     @FXML
     private TableColumn<OutOrder, String> auditUserNameColumn;
-
     @FXML
-    private TableColumn<OutOrder, String> auditTimeColumn;
-
+    private TableColumn<OutOrder, LocalDateTime> auditTimeColumn;
     @FXML
     private TableColumn<OutOrder, String> remarkColumn;
 
@@ -92,7 +81,12 @@ public class OutOrderListController extends ToolController {
         System.out.println("是否管理员: " + isAdmin);
         System.out.println("用户ID: " + AppStore.getJwt().getId());
 
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        // 序号列：显示行号
+        indexColumn.setCellValueFactory(data -> {
+            int index = outOrderTable.getItems().indexOf(data.getValue()) + 1;
+            return new javafx.beans.property.SimpleIntegerProperty(index).asObject();
+        });
+        
         orderNoColumn.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
         outTypeColumn.setCellValueFactory(new PropertyValueFactory<>("outTypeName"));
         applicantNameColumn.setCellValueFactory(new PropertyValueFactory<>("applicantName"));
@@ -255,7 +249,14 @@ public class OutOrderListController extends ToolController {
                                 order.setOutTypeName(outTypeName);
                                 
                                 order.setApplicantId(((Number) map.get("applicantId")).intValue());
-                                order.setApplicantName((String) map.get("applicantName"));
+                                
+                                // 处理申请人名称，如果为空则显示申请人ID
+                                String applicantName = (String) map.get("applicantName");
+                                if (applicantName == null || applicantName.trim().isEmpty()) {
+                                    Integer applicantId = ((Number) map.get("applicantId")).intValue();
+                                    applicantName = "用户" + applicantId;
+                                }
+                                order.setApplicantName(applicantName);
 
                                 String applyTimeStr = (String) map.get("applyTime");
                                 if (applyTimeStr != null) {
@@ -289,9 +290,15 @@ public class OutOrderListController extends ToolController {
                                 order.setRemark((String) map.get("remark"));
                                 order.setRejectReason((String) map.get("rejectReason"));
                                 
-                                // 设置物品名称
+                                // 设置物品名称（后端已返回）
                                 String materialNames = (String) map.get("materialNames");
+                                if (materialNames == null || materialNames.isEmpty()) {
+                                    materialNames = "暂无物品";
+                                }
                                 order.setMaterialNames(materialNames);
+                                
+                                // 调试日志
+                                System.out.println("出库单 " + order.getId() + " 物品名称: " + materialNames);
                                 
                                 // 优先使用后端返回的 totalAmount
                                 if (map.get("totalAmount") != null) {
@@ -371,7 +378,7 @@ public class OutOrderListController extends ToolController {
 
     @FXML
     protected void onSearchButtonClick() {
-
+        loadOutOrderList();
     }
 
     @FXML
@@ -571,6 +578,107 @@ public class OutOrderListController extends ToolController {
         rejectReasonArea.setPrefRowCount(4);
         rejectReasonArea.setPrefWidth(400);
 
+        // 创建明细信息文本区域（使用 TextArea 可以自动换行）
+        TextArea detailArea = new TextArea();
+        detailArea.setEditable(false);
+        detailArea.setWrapText(true);
+        detailArea.setPrefRowCount(6);
+        detailArea.setPrefWidth(450);
+        detailArea.setText("加载中...");
+
+        // 异步加载明细数据
+        new Thread(() -> {
+            try {
+                System.out.println("\n=== [审批对话框] 开始加载明细 ===");
+                System.out.println("出库单ID: " + outOrder.getId());
+                
+                String url = HttpRequestUtil.serverUrl + "/api/stockOut/getDetail/" + outOrder.getId();
+                System.out.println("请求URL: " + url);
+                
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .GET()
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
+                
+                System.out.println("发送请求...");
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                
+                System.out.println("响应状态码: " + response.statusCode());
+                System.out.println("响应内容: " + response.body());
+                
+                if (response.statusCode() == 200) {
+                    Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                    int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                    
+                    System.out.println("解析结果: code=" + code);
+                    
+                    if (code == 200 || code == 0) {
+                        Map<String, Object> data = (Map<String, Object>) result.get("data");
+                        
+                        if (data != null) {
+                            @SuppressWarnings("unchecked")
+                            List<Map<String, Object>> items = (List<Map<String, Object>>) data.get("items");
+                            
+                            System.out.println("明细数量: " + (items != null ? items.size() : 0));
+                            
+                            if (items != null && !items.isEmpty()) {
+                                System.out.println("明细字段: " + items.get(0).keySet());
+                                
+                                StringBuilder detailText = new StringBuilder();
+                                detailText.append("出库明细：\n\n");
+                                
+                                int index = 1;
+                                for (Map<String, Object> item : items) {
+                                    String materialName = (String) item.get("materialName");
+                                    Object unitPrice = item.get("unitPrice");
+                                    Object outQuantity = item.get("outQuantity");
+                                    
+                                    detailText.append(index++).append(". ");
+                                    detailText.append("物品：").append(materialName != null ? materialName : "未知");
+                                    detailText.append("  |  单价：").append(unitPrice != null ? unitPrice : "0");
+                                    detailText.append("  |  数量：").append(outQuantity != null ? outQuantity : "0");
+                                    detailText.append("\n");
+                                }
+                                
+                                final String finalDetailText = detailText.toString();
+                                javafx.application.Platform.runLater(() -> {
+                                    detailArea.setText(finalDetailText);
+                                    System.out.println("✅ 明细加载成功");
+                                });
+                            } else {
+                                javafx.application.Platform.runLater(() -> {
+                                    detailArea.setText("暂无明细数据");
+                                    System.out.println("⚠️ 没有明细数据");
+                                });
+                            }
+                        } else {
+                            System.out.println("❌ data 为 null");
+                            javafx.application.Platform.runLater(() -> {
+                                detailArea.setText("加载失败：数据为空");
+                            });
+                        }
+                    } else {
+                        System.out.println("❌ 业务错误: " + result.get("msg"));
+                        javafx.application.Platform.runLater(() -> {
+                            detailArea.setText("加载失败：" + result.get("msg"));
+                        });
+                    }
+                } else {
+                    System.out.println("❌ HTTP错误: " + response.statusCode());
+                    javafx.application.Platform.runLater(() -> {
+                        detailArea.setText("加载失败：HTTP " + response.statusCode());
+                    });
+                }
+            } catch (Exception e) {
+                System.err.println("❌ 加载明细数据失败: " + e.getMessage());
+                e.printStackTrace();
+                javafx.application.Platform.runLater(() -> {
+                    detailArea.setText("加载失败：" + e.getMessage());
+                });
+            }
+        }).start();
+
         javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(10);
         content.setPadding(new javafx.geometry.Insets(10));
         content.getChildren().addAll(
@@ -578,6 +686,9 @@ public class OutOrderListController extends ToolController {
                 new Label("出库类型：" + getOutTypeName(outOrder.getOutType())),
                 new Label("总金额：" + outOrder.getTotalAmount()),
                 new Label("申请时间：" + outOrder.getApplyTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))),
+                new javafx.scene.control.Separator(),
+                new Label("出库明细："),
+                detailArea,
                 new javafx.scene.control.Separator(),
                 new Label("驳回理由："),
                 rejectReasonArea

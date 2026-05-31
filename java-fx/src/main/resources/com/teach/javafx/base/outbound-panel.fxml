@@ -35,10 +35,6 @@
                 <Button text="编辑" onAction="#onEditButtonClick"/>
                 <Button text="删除" onAction="#onDeleteButtonClick"
                         style="-fx-background-color: #f44336; -fx-text-fill: white;"/>
-                <Button text="审批" onAction="#onApproveButtonClick"
-                        style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
-                <Button text="确认出库" onAction="#onCompleteButtonClick"
-                        style="-fx-background-color: #FF9800; -fx-text-fill: white;"/>
             </HBox>
 
         </VBox>
@@ -47,7 +43,7 @@
     <center>
         <TableView fx:id="outOrderTable" BorderPane.alignment="CENTER">
             <columns>
-                <TableColumn fx:id="idColumn" text="编号" prefWidth="60"/>
+                <TableColumn fx:id="indexColumn" text="序号" prefWidth="60"/>
                 <TableColumn fx:id="orderNoColumn" text="出库单号" prefWidth="180"/>
                 <TableColumn fx:id="outTypeColumn" text="出库类型" prefWidth="100"/>
                 <TableColumn fx:id="applicantNameColumn" text="申请人" prefWidth="100"/>

@@ -569,6 +569,13 @@ public class OutOrderEditDialog {
 
             // 添加申请人名称（从登录信息中获取）
             String applicantName = AppStore.getJwt().getUsername();
+            
+            // 如果 username 为空，尝试使用其他方式获取
+            if (applicantName == null || applicantName.isEmpty()) {
+                // 尝试从 loginId 作为备用（虽然这不是用户名，但至少不是空）
+                applicantName = "用户" + applicantId;
+            }
+            
             if (applicantName != null && !applicantName.isEmpty()) {
                 requestBody.put("applicantName", applicantName);
             }
@@ -576,10 +583,11 @@ public class OutOrderEditDialog {
             // 添加调试日志
             System.out.println("\n=== [创建出库单] 申请人信息 ===");
             System.out.println("当前登录用户ID: " + applicantId);
-            System.out.println("当前登录用户名: " + applicantName);
+            System.out.println("当前登录用户名 (username): " + AppStore.getJwt().getUsername());
+            System.out.println("最终使用的申请人名称: " + applicantName);
             System.out.println("设置到请求体中的 applicantId: " + requestBody.get("applicantId"));
             System.out.println("设置到请求体中的 applicantName: " + requestBody.get("applicantName"));
-            
+
             requestBody.put("totalNum", outOrder.getTotalNum());
             requestBody.put("totalAmount", outOrder.getTotalAmount());
 
