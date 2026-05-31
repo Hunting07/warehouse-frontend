@@ -38,7 +38,7 @@ public class StockInController extends ToolController {
     private TableView<StockIn> stockInTable;
 
     @FXML
-    private TableColumn<StockIn, Integer> idColumn;
+    private TableColumn<StockIn, Integer> serialNumberColumn;
 
     @FXML
     private TableColumn<StockIn, String> inCodeColumn;
@@ -61,6 +61,15 @@ public class StockInController extends ToolController {
     @FXML
     private TableColumn<StockIn, LocalDateTime> approveTimeColumn;
 
+    @FXML
+    private Button editButton;
+
+    @FXML
+    private Button approveButton;
+
+    @FXML
+    private Button completeButton;
+
     private final ObservableList<StockIn> stockInList = FXCollections.observableArrayList();
     private final Gson gson = GsonUtil.getGson();
     private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -71,7 +80,20 @@ public class StockInController extends ToolController {
         String role = AppStore.getJwt().getRole();
         isAdmin = "admin".equals(role);
 
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        // 根据角色控制按钮显示
+        if (isAdmin) {
+            // 管理员：隐藏编辑按钮
+            editButton.setVisible(false);
+            editButton.setManaged(false);
+        } else {
+            // 员工：隐藏审批和确认入库按钮
+            approveButton.setVisible(false);
+            approveButton.setManaged(false);
+            completeButton.setVisible(false);
+            completeButton.setManaged(false);
+        }
+
+        serialNumberColumn.setCellValueFactory(new PropertyValueFactory<>("serialNumber"));
         inCodeColumn.setCellValueFactory(new PropertyValueFactory<>("inCode"));
         typeColumn.setCellValueFactory(cellData -> {
             StockIn stockIn = cellData.getValue();

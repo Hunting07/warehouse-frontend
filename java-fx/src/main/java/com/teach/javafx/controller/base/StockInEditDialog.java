@@ -14,9 +14,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+import javafx.util.converter.DefaultStringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 import java.math.BigDecimal;
@@ -153,36 +156,66 @@ public class StockInEditDialog extends Stage {
         itemTable.setItems(itemList);
         itemTable.setEditable(true);
 
-        // 物资列 - 使用按钮选择
+        // 物资名称列 - 支持直接输入和按钮选择
         materialColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("materialName"));
-        materialColumn.setCellFactory(col -> new TableCell<StockInItem, String>() {
-            private final Button selectBtn = new Button("选择物资");
-            {
-                selectBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 11px;");
-                selectBtn.setOnAction(e -> {
-                    StockInItem item = getTableView().getItems().get(getIndex());
-                    showMaterialSelectionDialog(item);
-                });
-            }
-
-            @Override
-            protected void updateItem(String materialName, boolean empty) {
-                super.updateItem(materialName, empty);
-                if (empty || materialName == null) {
-                    setText("未选择");
-                    setGraphic(selectBtn);
-                } else {
-                    setText(materialName);
-                    setGraphic(selectBtn);
+        materialColumn.setCellFactory(col -> {
+            return new TableCell<StockInItem, String>() {
+                private final TextField textField = new TextField();
+                private final Button selectBtn = new Button("选择");
+                private final HBox container = new HBox(5, textField, selectBtn);
+                
+                {
+                    textField.setEditable(true);
+                    textField.setPromptText("输入物资名称");
+                    
+                    // 监听文本变化
+                    textField.textProperty().addListener((obs, oldVal, newVal) -> {
+                        StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (item != null) {
+                            item.setMaterialName(newVal);
+                            // 手动输入时清空 materialId
+                            item.setMaterialId(null);
+                        }
+                    });
+                    
+                    // 选择按钮点击事件
+                    selectBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
+                    selectBtn.setOnAction(e -> {
+                        StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (item == null) {
+                            MessageDialog.showDialog("请先添加物资行");
+                            return;
+                        }
+                        showMaterialSelectionDialog(item);
+                    });
+                    
+                    HBox.setHgrow(textField, Priority.ALWAYS);
                 }
-            }
+                
+                @Override
+                protected void updateItem(String materialName, boolean empty) {
+                    super.updateItem(materialName, empty);
+                    
+                    if (empty || getTableRow().getItem() == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        // 始终显示控件，即使 materialName 为空
+                        if (materialName != null) {
+                            textField.setText(materialName);
+                        } else {
+                            textField.clear();
+                        }
+                        setGraphic(container);
+                        setText(null);
+                    }
+                }
+            };
         });
 
-        // 数量列
+        // 数量列 - 可编辑
         quantityColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("quantity"));
-        quantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(
-                new IntegerStringConverter()
-        ));
+        quantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         quantityColumn.setOnEditCommit(event -> {
             StockInItem item = event.getRowValue();
             Integer newQuantity = event.getNewValue();
@@ -196,7 +229,7 @@ public class StockInEditDialog extends Stage {
             }
         });
 
-        // 单价列
+        // 单价列 - 可编辑
         priceColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("price"));
         priceColumn.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<BigDecimal>() {
             @Override
@@ -231,11 +264,11 @@ public class StockInEditDialog extends Stage {
         // 金额列（只读）
         amountColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("amount"));
 
-        // 操作列 - 删除按钮
+        // 操作列 - 只保留删除按钮
         actionColumn.setCellFactory(col -> new TableCell<StockInItem, Void>() {
             private final Button deleteBtn = new Button("删除");
             {
-                deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 11px;");
+                deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
                 deleteBtn.setOnAction(e -> {
                     StockInItem item = getTableView().getItems().get(getIndex());
                     itemList.remove(item);
@@ -266,7 +299,7 @@ public class StockInEditDialog extends Stage {
      */
     private void showMaterialSelectionDialog(StockInItem item) {
         if (materialList.isEmpty()) {
-            MessageDialog.showDialog("物资列表为空，请先添加物资");
+            MessageDialog.showDialog("物资列表为空，无法选择。您可以直接输入物资名称。");
             return;
         }
 
@@ -360,25 +393,29 @@ public class StockInEditDialog extends Stage {
 
     private void loadMaterialList() {
         try {
-            System.out.println("开始加载物资列表...");
-            String url = HttpRequestUtil.serverUrl + "/material/list";
+            System.out.println("=== 开始加载物资列表 ===");
+            String url = HttpRequestUtil.serverUrl + "/api/material/list";
             System.out.println("请求URL: " + url);
+            System.out.println("Token: " + AppStore.getJwt().getToken());
 
+            // 使用 POST 方法，发送空的 JSON 对象
+            Map<String, Object> emptyBody = new HashMap<>();
+            
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .GET()
-                    .headers("satoken", AppStore.getJwt().getToken())
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(emptyBody)))
+                    .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             System.out.println("物资列表响应状态码: " + response.statusCode());
-            if (response.body() != null) {
-                System.out.println("物资列表响应内容长度: " + response.body().length());
-            }
+            System.out.println("物资列表响应内容: " + response.body());
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                System.out.println("解析后的结果: " + result);
+                
                 if (result.get("code").equals(200.0)) {
                     List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
                     materialList.clear();
@@ -390,11 +427,15 @@ public class StockInEditDialog extends Stage {
                     }
                     updateMaterialComboBox();
                     System.out.println("成功加载 " + materialList.size() + " 个物资");
+                    
+                    // 刷新表格，让 ComboBox 显示最新的物资列表
+                    itemTable.refresh();
                 } else {
                     System.err.println("物资列表业务错误: " + result.get("msg"));
                 }
             } else {
                 System.err.println("物资列表HTTP错误: " + response.statusCode());
+                System.err.println("错误响应内容: " + response.body());
             }
         } catch (Exception e) {
             System.err.println("加载物资列表异常: " + e.getMessage());
@@ -412,6 +453,7 @@ public class StockInEditDialog extends Stage {
     @FXML
     protected void onAddItemButtonClick() {
         StockInItem newItem = new StockInItem();
+        newItem.setMaterialName("");  // 设置为空字符串而不是 null
         newItem.setQuantity(1);  // 默认数量为1
         newItem.setPrice(BigDecimal.ZERO);
         newItem.setAmount(BigDecimal.ZERO);
@@ -454,15 +496,17 @@ public class StockInEditDialog extends Stage {
 
             List<Map<String, Object>> items = new ArrayList<>();
             for (StockInItem item : itemList) {
-                if (item.getMaterialId() == null) {
+                // 检查：必须有物资名称
+                if (item.getMaterialName() == null || item.getMaterialName().trim().isEmpty()) {
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
                     alert.setTitle("警告");
                     alert.setHeaderText(null);
-                    alert.setContentText("物资不能为空");
+                    alert.setContentText("请填写物资名称");
                     alert.showAndWait();
                     return;
                 }
-                if (item.getQuantity() <= 0) {
+                
+                if (item.getQuantity() == null || item.getQuantity() <= 0) {
                     javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
                     alert.setTitle("警告");
                     alert.setHeaderText(null);
@@ -470,13 +514,39 @@ public class StockInEditDialog extends Stage {
                     alert.showAndWait();
                     return;
                 }
+                
+                if (item.getPrice() == null) {
+                    item.setPrice(BigDecimal.ZERO);
+                }
+                
+                // 计算金额
+                BigDecimal amount = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                item.setAmount(amount);
+                
                 Map<String, Object> itemMap = new HashMap<>();
-                itemMap.put("materialId", item.getMaterialId());
+                
+                // 如果选择了物资（有materialId），则提交materialId
+                if (item.getMaterialId() != null) {
+                    itemMap.put("materialId", item.getMaterialId());
+                }
+                
+                // 始终提交物资名称
+                itemMap.put("materialName", item.getMaterialName());
                 itemMap.put("quantity", item.getQuantity());
                 itemMap.put("price", item.getPrice());
+                itemMap.put("amount", amount);
+                
+                // 如果有其他字段，也一并提交
+                if (item.getMaterialCode() != null && !item.getMaterialCode().isEmpty()) {
+                    itemMap.put("materialCode", item.getMaterialCode());
+                }
+                if (item.getMaterialSpec() != null && !item.getMaterialSpec().isEmpty()) {
+                    itemMap.put("materialSpec", item.getMaterialSpec());
+                }
                 if (item.getId() != null) {
                     itemMap.put("id", item.getId());
                 }
+                
                 items.add(itemMap);
             }
             requestBody.put("items", items);

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 public class StockIn {
     private Integer id;
+    private Integer serialNumber;
     private String inCode;
     private Integer type;
     private String typeName;
@@ -22,6 +23,9 @@ public class StockIn {
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
+
+    public Integer getSerialNumber() { return serialNumber; }
+    public void setSerialNumber(Integer serialNumber) { this.serialNumber = serialNumber; }
 
     public String getInCode() { return inCode; }
     public void setInCode(String inCode) { this.inCode = inCode; }
