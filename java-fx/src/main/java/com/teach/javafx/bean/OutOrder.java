@@ -10,6 +10,7 @@ public class OutOrder {
     private String applicantName;
     private LocalDateTime applyTime;
     private Integer status;
+    private String statusName;
     private Integer auditUserId;
     private String auditUserName;
     private LocalDateTime auditTime;
@@ -17,7 +18,9 @@ public class OutOrder {
     private Integer totalNum;
     private BigDecimal totalAmount;
     private Integer outType;
+    private String outTypeName;
     private String rejectReason;
+    private String materialNames;
 
     public Integer getId() {
         return id;
@@ -65,6 +68,14 @@ public class OutOrder {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public String getStatusName() {
+        return statusName;
+    }
+
+    public void setStatusName(String statusName) {
+        this.statusName = statusName;
     }
 
     public Integer getAuditUserId() {
@@ -123,11 +134,27 @@ public class OutOrder {
         this.outType = outType;
     }
 
+    public String getOutTypeName() {
+        return outTypeName;
+    }
+
+    public void setOutTypeName(String outTypeName) {
+        this.outTypeName = outTypeName;
+    }
+
     public String getRejectReason() {
         return rejectReason;
     }
 
     public void setRejectReason(String rejectReason) {
         this.rejectReason = rejectReason;
+    }
+
+    public String getMaterialNames() {
+        return materialNames;
+    }
+
+    public void setMaterialNames(String materialNames) {
+        this.materialNames = materialNames;
     }
 }

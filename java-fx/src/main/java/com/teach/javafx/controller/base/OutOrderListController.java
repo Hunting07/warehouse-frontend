@@ -53,6 +53,9 @@ public class OutOrderListController extends ToolController {
     private TableColumn<OutOrder, String> applicantNameColumn;
 
     @FXML
+    private TableColumn<OutOrder, String> materialNamesColumn;
+
+    @FXML
     private TableColumn<OutOrder, String> applyTimeColumn;
 
     @FXML
@@ -80,70 +83,26 @@ public class OutOrderListController extends ToolController {
 
     @FXML
     public void initialize() {
+        // 判断是否为管理员
         String role = AppStore.getJwt().getRole();
-        isAdmin = role != null && (role.toLowerCase().contains("admin") || role.contains("管理"));
+        isAdmin = "admin".equals(role) || "ADMIN".equals(role);
         
-        // 添加调试日志
         System.out.println("\n=== [出库列表] 初始化 ===");
         System.out.println("当前用户角色: " + role);
         System.out.println("是否管理员: " + isAdmin);
-        System.out.println("用户ID: " + (AppStore.getJwt() != null ? AppStore.getJwt().getId() : "null"));
+        System.out.println("用户ID: " + AppStore.getJwt().getId());
 
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         orderNoColumn.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
-
-        outTypeColumn.setCellValueFactory(cellData -> {
-            Integer type = cellData.getValue().getOutType();
-            return new javafx.beans.property.SimpleStringProperty(getOutTypeName(type));
-        });
-
+        outTypeColumn.setCellValueFactory(new PropertyValueFactory<>("outTypeName"));
         applicantNameColumn.setCellValueFactory(new PropertyValueFactory<>("applicantName"));
-
-        applyTimeColumn.setCellValueFactory(cellData -> {
-            LocalDateTime time = cellData.getValue().getApplyTime();
-            return new javafx.beans.property.SimpleStringProperty(time != null ? time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "");
-        });
-
+        materialNamesColumn.setCellValueFactory(new PropertyValueFactory<>("materialNames"));
+        applyTimeColumn.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
         totalNumColumn.setCellValueFactory(new PropertyValueFactory<>("totalNum"));
         totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-
-        statusColumn.setCellValueFactory(cellData -> {
-            Integer status = cellData.getValue().getStatus();
-            return new javafx.beans.property.SimpleStringProperty(getStatusName(status));
-        });
-
-        statusColumn.setCellFactory(col -> new TableCell<OutOrder, String>() {
-            @Override
-            protected void updateItem(String status, boolean empty) {
-                super.updateItem(status, empty);
-                if (empty || status == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    switch (status) {
-                        case "待审批":
-                            setStyle("-fx-background-color: #fff4cc;");
-                            break;
-                        case "已出库":
-                            setStyle("-fx-background-color: #ccffcc;");
-                            break;
-                        case "已驳回":
-                            setStyle("-fx-background-color: #ffcccc;");
-                            break;
-                        default:
-                            setStyle("");
-                    }
-                }
-            }
-        });
-
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("statusName"));
         auditUserNameColumn.setCellValueFactory(new PropertyValueFactory<>("auditUserName"));
-
-        auditTimeColumn.setCellValueFactory(cellData -> {
-            LocalDateTime time = cellData.getValue().getAuditTime();
-            return new javafx.beans.property.SimpleStringProperty(time != null ? time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "");
-        });
-
+        auditTimeColumn.setCellValueFactory(new PropertyValueFactory<>("auditTime"));
         remarkColumn.setCellValueFactory(new PropertyValueFactory<>("remark"));
 
         outOrderTable.setItems(outOrderList);
@@ -289,6 +248,12 @@ public class OutOrderListController extends ToolController {
                                 order.setId(((Number) map.get("id")).intValue());
                                 order.setOrderNo((String) map.get("orderNo"));
                                 order.setOutType(((Number) map.get("outType")).intValue());
+                                
+                                // 设置出库类型名称
+                                Integer outType = ((Number) map.get("outType")).intValue();
+                                String outTypeName = getOutTypeName(outType);
+                                order.setOutTypeName(outTypeName);
+                                
                                 order.setApplicantId(((Number) map.get("applicantId")).intValue());
                                 order.setApplicantName((String) map.get("applicantName"));
 
@@ -298,6 +263,12 @@ public class OutOrderListController extends ToolController {
                                 }
 
                                 order.setStatus(((Number) map.get("status")).intValue());
+                                
+                                // 设置状态名称
+                                Integer status = ((Number) map.get("status")).intValue();
+                                String statusName = getStatusName(status);
+                                order.setStatusName(statusName);
+                                
                                 order.setAuditUserId(map.get("auditUserId") != null ? ((Number) map.get("auditUserId")).intValue() : null);
                                 
                                 // 处理审批人名称
@@ -317,6 +288,10 @@ public class OutOrderListController extends ToolController {
 
                                 order.setRemark((String) map.get("remark"));
                                 order.setRejectReason((String) map.get("rejectReason"));
+                                
+                                // 设置物品名称
+                                String materialNames = (String) map.get("materialNames");
+                                order.setMaterialNames(materialNames);
                                 
                                 // 优先使用后端返回的 totalAmount
                                 if (map.get("totalAmount") != null) {
