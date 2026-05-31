@@ -250,10 +250,10 @@ public class MainFrameController {
             fxmlPath = "/com/teach/javafx/base/stockin-panel";
         } else if (name.contains("stockout") || name.contains("outbound")) {
             fxmlPath = "/com/teach/javafx/base/outbound-panel";
-        } else if (name.contains("outorder") || name.contains("审批") || name.contains("approve")) {
-            fxmlPath = "/com/teach/javafx/base/outorder-list-panel";
-        } else if (name.contains("user-audit") || name.contains("user-approve")) {
+        } else if (name.contains("user-audit") || name.contains("user-approve") || name.contains("用户注册审批")) {
             fxmlPath = "/com/teach/javafx/base/user-audit";
+        } else if (name.contains("outorder") || name.contains("出库审批")) {
+            fxmlPath = "/com/teach/javafx/base/outorder-list-panel";
         } else if (name.contains("profile")) {
             fxmlPath = "/com/teach/javafx/base/profile-panel";
         } else if (name.contains("password")) {
