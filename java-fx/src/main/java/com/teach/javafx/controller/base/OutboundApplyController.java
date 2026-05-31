@@ -140,7 +140,8 @@ public class OutboundApplyController {
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), Map.class);
 
-                    if (result.get("code").equals(200.0) || result.get("code").equals(0)) {
+                    int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                    if (code == 200 || code == 0) {
                         Object dataObj = result.get("data");
 
                         final List<Map<String, Object>> data;
@@ -330,7 +331,8 @@ public class OutboundApplyController {
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                if (result.get("code").equals(200) || result.get("code").equals(0)) {
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (code == 200 || code == 0) {
                     detailList.clear();
                     remarkField.clear();
                     MessageDialog.showDialog("提交成功！");

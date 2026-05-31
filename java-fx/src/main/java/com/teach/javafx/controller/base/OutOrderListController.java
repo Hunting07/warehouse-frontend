@@ -81,31 +81,31 @@ public class OutOrderListController extends ToolController {
     @FXML
     public void initialize() {
         String role = AppStore.getJwt().getRole();
-        isAdmin = "admin".equals(role) || role.contains("管理员");
+        isAdmin = role != null && (role.toLowerCase().contains("admin") || role.contains("管理"));
 
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         orderNoColumn.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
-        
+
         outTypeColumn.setCellValueFactory(cellData -> {
             Integer type = cellData.getValue().getOutType();
             return new javafx.beans.property.SimpleStringProperty(getOutTypeName(type));
         });
-        
+
         applicantNameColumn.setCellValueFactory(new PropertyValueFactory<>("applicantName"));
-        
+
         applyTimeColumn.setCellValueFactory(cellData -> {
             LocalDateTime time = cellData.getValue().getApplyTime();
             return new javafx.beans.property.SimpleStringProperty(time != null ? time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "");
         });
-        
+
         totalNumColumn.setCellValueFactory(new PropertyValueFactory<>("totalNum"));
         totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
-        
+
         statusColumn.setCellValueFactory(cellData -> {
             Integer status = cellData.getValue().getStatus();
             return new javafx.beans.property.SimpleStringProperty(getStatusName(status));
         });
-        
+
         statusColumn.setCellFactory(col -> new TableCell<OutOrder, String>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -130,17 +130,19 @@ public class OutOrderListController extends ToolController {
                 }
             }
         });
-        
+
         auditUserNameColumn.setCellValueFactory(new PropertyValueFactory<>("auditUserName"));
-        
+
         auditTimeColumn.setCellValueFactory(cellData -> {
             LocalDateTime time = cellData.getValue().getAuditTime();
             return new javafx.beans.property.SimpleStringProperty(time != null ? time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "");
         });
-        
+
         remarkColumn.setCellValueFactory(new PropertyValueFactory<>("remark"));
 
         outOrderTable.setItems(outOrderList);
+
+        outOrderTable.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.SINGLE);
 
         typeComboBox.getItems().addAll("全部", "领料出库", "销售出库", "报损出库", "其他出库");
         typeComboBox.setValue("全部");
@@ -198,7 +200,7 @@ public class OutOrderListController extends ToolController {
                 final String currentType = typeComboBox.getValue();
                 final String currentApplicantName = applicantNameField.getText();
                 final String currentOrderNo = searchOrderNoField.getText();
-                
+
                 StringBuilder urlBuilder = new StringBuilder(HttpRequestUtil.serverUrl + "/api/stockOut/getAllStockOutList");
                 boolean hasParam = false;
 
@@ -247,13 +249,19 @@ public class OutOrderListController extends ToolController {
                     Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                     Object codeObj = resultMap.get("code");
                     int code = codeObj instanceof Number ? ((Number) codeObj).intValue() : -1;
-                    
+
                     if (code == 200 || code == 0) {
                         Map<String, Object> dataMap = (Map<String, Object>) resultMap.get("data");
                         List<Map<String, Object>> dataList = (List<Map<String, Object>>) dataMap.get("records");
                         if (dataList != null) {
                             System.out.println("成功加载 " + dataList.size() + " 条数据");
                             
+                            // 打印第一条数据的 totalAmount，用于调试
+                            if (!dataList.isEmpty()) {
+                                System.out.println("第一条数据的 totalAmount: " + dataList.get(0).get("totalAmount"));
+                                System.out.println("第一条数据的 totalNum: " + dataList.get(0).get("totalNum"));
+                            }
+
                             List<OutOrder> list = new ArrayList<>();
                             for (Map<String, Object> map : dataList) {
                                 OutOrder order = new OutOrder();
@@ -262,26 +270,63 @@ public class OutOrderListController extends ToolController {
                                 order.setOutType(((Number) map.get("outType")).intValue());
                                 order.setApplicantId(((Number) map.get("applicantId")).intValue());
                                 order.setApplicantName((String) map.get("applicantName"));
-                                
+
                                 String applyTimeStr = (String) map.get("applyTime");
                                 if (applyTimeStr != null) {
                                     order.setApplyTime(java.time.LocalDateTime.parse(applyTimeStr));
                                 }
-                                
+
                                 order.setStatus(((Number) map.get("status")).intValue());
                                 order.setAuditUserId(map.get("auditUserId") != null ? ((Number) map.get("auditUserId")).intValue() : null);
-                                order.setAuditUserName((String) map.get("auditUserName"));
                                 
+                                // 处理审批人名称
+                                String auditUserName = (String) map.get("auditUserName");
+                                if (auditUserName == null || auditUserName.isEmpty()) {
+                                    Integer auditUserId = map.get("auditUserId") != null ? ((Number) map.get("auditUserId")).intValue() : null;
+                                    if (auditUserId != null) {
+                                        auditUserName = "管理员";
+                                    }
+                                }
+                                order.setAuditUserName(auditUserName);
+
                                 String auditTimeStr = (String) map.get("auditTime");
                                 if (auditTimeStr != null) {
                                     order.setAuditTime(java.time.LocalDateTime.parse(auditTimeStr));
                                 }
-                                
+
                                 order.setRemark((String) map.get("remark"));
                                 order.setRejectReason((String) map.get("rejectReason"));
                                 
+                                // 优先使用后端返回的 totalAmount
+                                if (map.get("totalAmount") != null) {
+                                    Object amountObj = map.get("totalAmount");
+                                    if (amountObj instanceof Number) {
+                                        order.setTotalAmount(new java.math.BigDecimal(amountObj.toString()));
+                                    } else {
+                                        order.setTotalAmount(java.math.BigDecimal.ZERO);
+                                    }
+                                } else {
+                                    // 后端未返回，暂时设置为 0
+                                    order.setTotalAmount(java.math.BigDecimal.ZERO);
+                                }
+                                
+                                // 使用后端返回的 totalNum
+                                if (map.get("totalNum") != null) {
+                                    Object numObj = map.get("totalNum");
+                                    if (numObj instanceof Number) {
+                                        order.setTotalNum(((Number) numObj).intValue());
+                                    } else {
+                                        order.setTotalNum(0);
+                                    }
+                                } else {
+                                    // 后端未返回，设置为 0
+                                    order.setTotalNum(0);
+                                }
+
                                 list.add(order);
                             }
+
+                            // 后端已返回 totalNum，不需要异步加载明细
                             
                             javafx.application.Platform.runLater(() -> {
                                 outOrderList.setAll(list);
@@ -330,7 +375,7 @@ public class OutOrderListController extends ToolController {
 
     @FXML
     protected void onSearchButtonClick() {
-        loadOutOrderList();
+
     }
 
     @FXML
@@ -348,8 +393,7 @@ public class OutOrderListController extends ToolController {
             OutOrderEditDialog dialog = OutOrderEditDialog.createNewDialog();
             if (dialog != null) {
                 dialog.showAndWait();
-                
-                // 延迟500毫秒后再刷新，确保数据库事务已提交
+
                 new Thread(() -> {
                     try {
                         Thread.sleep(500);
@@ -409,9 +453,9 @@ public class OutOrderListController extends ToolController {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("驳回理由");
             alert.setHeaderText("该出库单已被驳回");
-            String message = rejectReason != null && !rejectReason.isEmpty() 
-                ? "驳回理由：\n\n" + rejectReason + "\n\n点击确定后进入编辑模式"
-                : "该出库单已被驳回\n\n点击确定后进入编辑模式";
+            String message = rejectReason != null && !rejectReason.isEmpty()
+                    ? "驳回理由：\n\n" + rejectReason + "\n\n点击确定后进入编辑模式"
+                    : "该出库单已被驳回\n\n点击确定后进入编辑模式";
             alert.setContentText(message);
             alert.showAndWait();
         }
@@ -465,7 +509,7 @@ public class OutOrderListController extends ToolController {
             return;
         }
 
-        int ret = MessageDialog.choiceDialog("确认删除出库单 " + selected.getOrderNo() + "？");
+        int ret = MessageDialog.choiceDialog("确认删除出库单" + selected.getOrderNo() + "？");
         if (ret != MessageDialog.CHOICE_YES) return;
 
         try {
@@ -479,7 +523,8 @@ public class OutOrderListController extends ToolController {
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                if (result.get("code").equals(200) || result.get("code").equals(0)) {
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (code == 200 || code == 0) {
                     MessageDialog.showDialog("删除成功");
                     loadOutOrderList();
                 } else {
@@ -511,153 +556,138 @@ public class OutOrderListController extends ToolController {
             return;
         }
 
-        TextInputDialog remarkDialog = new TextInputDialog();
-        remarkDialog.setTitle("审批出库单");
-        remarkDialog.setHeaderText("出库单号：" + selected.getOrderNo());
-        remarkDialog.setContentText("请输入审批意见（可选）：");
+        showApproveDialog(selected);
+    }
 
-        remarkDialog.showAndWait().ifPresent(remark -> {
-            try {
-                Map<String, Object> requestBody = new HashMap<>();
-                requestBody.put("orderId", selected.getId());
-                requestBody.put("approved", true);
-                if (remark != null && !remark.trim().isEmpty()) {
-                    requestBody.put("remark", remark);
+    private void showApproveDialog(OutOrder outOrder) {
+        Dialog<Boolean> dialog = new Dialog<>();
+        dialog.setTitle("出库单审批");
+        dialog.setHeaderText("审批出库单：" + outOrder.getOrderNo());
+
+        ButtonType approveButtonType = new ButtonType("批准", ButtonBar.ButtonData.OK_DONE);
+        ButtonType rejectButtonType = new ButtonType("驳回", ButtonBar.ButtonData.OTHER);
+        ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        dialog.getDialogPane().getButtonTypes().addAll(approveButtonType, rejectButtonType, cancelButtonType);
+
+        TextArea rejectReasonArea = new TextArea();
+        rejectReasonArea.setPromptText("请输入驳回理由（仅驳回时需要）");
+        rejectReasonArea.setPrefRowCount(4);
+        rejectReasonArea.setPrefWidth(400);
+
+        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(10);
+        content.setPadding(new javafx.geometry.Insets(10));
+        content.getChildren().addAll(
+                new Label("申请人：" + outOrder.getApplicantName()),
+                new Label("出库类型：" + getOutTypeName(outOrder.getOutType())),
+                new Label("总金额：" + outOrder.getTotalAmount()),
+                new Label("申请时间：" + outOrder.getApplyTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))),
+                new javafx.scene.control.Separator(),
+                new Label("驳回理由："),
+                rejectReasonArea
+        );
+
+        dialog.getDialogPane().setContent(content);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == approveButtonType) {
+                return true;
+            } else if (dialogButton == rejectButtonType) {
+                return false;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(approved -> {
+            if (approved) {
+                approveOutOrder(outOrder, true, null);
+            } else {
+                String rejectReason = rejectReasonArea.getText();
+                if (rejectReason == null || rejectReason.trim().isEmpty()) {
+                    MessageDialog.showDialog("请填写驳回理由");
+                    return;
                 }
-
-                HttpRequest httpRequest = HttpRequest.newBuilder()
-                        .uri(URI.create(HttpRequestUtil.serverUrl + "/api/stockOut/approve"))
-                        .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                        .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
-                        .build();
-
-                HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200) {
-                    Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                    if (result.get("code").equals(200) || result.get("code").equals(0)) {
-                        MessageDialog.showDialog("审批通过");
-                        loadOutOrderList();
-                    } else {
-                        MessageDialog.showDialog("审批失败：" + result.get("msg"));
-                    }
-                } else {
-                    MessageDialog.showDialog("审批失败");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                MessageDialog.showDialog("审批异常：" + e.getMessage());
+                approveOutOrder(outOrder, false, rejectReason);
             }
         });
     }
 
-    @FXML
-    protected void onRejectButtonClick() {
-        if (!isAdmin) {
-            MessageDialog.showDialog("只有管理员可以驳回");
-            return;
-        }
-
-        OutOrder selected = outOrderTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            MessageDialog.showDialog("请选择要驳回的出库单");
-            return;
-        }
-        if (!"0".equals(String.valueOf(selected.getStatus()))) {
-            MessageDialog.showDialog("只能驳回待审批状态的出库单");
-            return;
-        }
-
-        TextInputDialog remarkDialog = new TextInputDialog();
-        remarkDialog.setTitle("驳回出库单");
-        remarkDialog.setHeaderText("出库单号：" + selected.getOrderNo());
-        remarkDialog.setContentText("请输入驳回理由（必填）：");
-
-        remarkDialog.showAndWait().ifPresent(remark -> {
-            if (remark == null || remark.trim().isEmpty()) {
-                MessageDialog.showDialog("驳回理由不能为空");
-                return;
-            }
-
-            try {
-                Map<String, Object> requestBody = new HashMap<>();
-                requestBody.put("orderId", selected.getId());
-                requestBody.put("approved", false);
-                requestBody.put("rejectReason", remark);
-
-                HttpRequest httpRequest = HttpRequest.newBuilder()
-                        .uri(URI.create(HttpRequestUtil.serverUrl + "/api/stockOut/approve"))
-                        .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                        .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
-                        .build();
-
-                HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-                if (response.statusCode() == 200) {
-                    Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                    if (result.get("code").equals(200) || result.get("code").equals(0)) {
-                        MessageDialog.showDialog("驳回成功");
-                        loadOutOrderList();
-                    } else {
-                        MessageDialog.showDialog("驳回失败：" + result.get("msg"));
-                    }
-                } else {
-                    MessageDialog.showDialog("驳回失败");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                MessageDialog.showDialog("驳回异常：" + e.getMessage());
-            }
-        });
-    }
-
-    @FXML
-    protected void onCompleteButtonClick() {
-        if (!isAdmin) {
-            MessageDialog.showDialog("只有管理员可以确认出库");
-            return;
-        }
-
-        OutOrder selected = outOrderTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            MessageDialog.showDialog("请选择要确认出库的出库单");
-            return;
-        }
-        if (!"1".equals(String.valueOf(selected.getStatus()))) {
-            MessageDialog.showDialog("只能确认已审批通过的出库单");
-            return;
-        }
-
-        int ret = MessageDialog.choiceDialog("确认出库单 " + selected.getOrderNo() + " 已完成出库？");
-        if (ret != MessageDialog.CHOICE_YES) return;
-
+    private void approveOutOrder(OutOrder outOrder, boolean approved, String rejectReason) {
         try {
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("orderId", selected.getId());
+            requestBody.put("orderId", outOrder.getId());
+            requestBody.put("status", approved ? 1 : 2);
+            if (rejectReason != null && !rejectReason.trim().isEmpty()) {
+                requestBody.put("rejectReason", rejectReason);
+            }
+
+            System.out.println("\n=== [前端] 出库单审批请求 ===");
+            System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/api/stockOut/approve");
+            System.out.println("请求方法: PUT");
+            System.out.println("Token: " + AppStore.getJwt().getToken());
+            System.out.println("Token长度: " + (AppStore.getJwt().getToken() != null ? AppStore.getJwt().getToken().length() : 0));
+            System.out.println("请求体: " + gson.toJson(requestBody));
+            System.out.println("出库单号: " + outOrder.getOrderNo());
+            System.out.println("审批结果: " + (approved ? "批准(status=1)" : "驳回(status=2)"));
 
             HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(HttpRequestUtil.serverUrl + "/api/stockOut/complete"))
+                    .uri(URI.create(HttpRequestUtil.serverUrl + "/api/stockOut/approve"))
                     .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
                     .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                     .build();
 
+            System.out.println("发送请求...");
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("接收响应...");
+            System.out.println("响应状态码: " + response.statusCode());
+            System.out.println("响应头: " + response.headers().map());
+            System.out.println("响应内容: " + response.body());
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                if (result.get("code").equals(200) || result.get("code").equals(0)) {
-                    MessageDialog.showDialog("确认出库成功");
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                System.out.println("解析后的结果: code=" + code + ", msg=" + result.get("msg"));
+
+                if (code == 200 || code == 0) {
+                    MessageDialog.showDialog(approved ? "审批通过" : "已驳回该出库单");
+                    System.out.println("✅ 审批成功");
                     loadOutOrderList();
                 } else {
-                    MessageDialog.showDialog("确认失败：" + result.get("msg"));
+                    MessageDialog.showDialog("审批失败：" + result.get("msg"));
+                    System.out.println("❌ 业务错误: " + result.get("msg"));
                 }
             } else {
-                MessageDialog.showDialog("确认失败");
+                String errorMsg = "请求失败，状态码：" + response.statusCode();
+                if (response.body() != null && !response.body().isEmpty()) {
+                    try {
+                        Map<String, Object> errorResult = gson.fromJson(response.body(), Map.class);
+                        if (errorResult.get("msg") != null) {
+                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                        }
+                    } catch (Exception e) {
+                        errorMsg += "\n响应内容：" + response.body();
+                    }
+                }
+                MessageDialog.showDialog(errorMsg);
+                System.out.println("❌ HTTP错误: " + errorMsg);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            MessageDialog.showDialog("确认异常：" + e.getMessage());
+            MessageDialog.showDialog("审批异常：" + e.getMessage());
+            System.out.println("❌ 网络异常: " + e.getMessage());
+            System.out.println("异常类型: " + e.getClass().getName());
         }
+    }
+
+    @FXML
+    protected void onRejectButtonClick() {
+        MessageDialog.showDialog("请使用审批功能进行驳回操作");
+    }
+
+    @FXML
+    protected void onCompleteButtonClick() {
+        MessageDialog.showDialog("审批通过后即自动出库，无需额外确认");
     }
 
     @FXML
@@ -680,9 +710,10 @@ public class OutOrderListController extends ToolController {
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                if (result.get("code").equals(200) || result.get("code").equals(0)) {
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (code == 200 || code == 0) {
                     List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
-                    
+
                     StringBuilder detail = new StringBuilder();
                     detail.append("出库单号：").append(selected.getOrderNo()).append("\n");
                     detail.append("出库类型：").append(getOutTypeName(selected.getOutType())).append("\n");
@@ -690,7 +721,7 @@ public class OutOrderListController extends ToolController {
                     detail.append("申请时间：").append(selected.getApplyTime()).append("\n");
                     detail.append("状态：").append(getStatusName(selected.getStatus())).append("\n");
                     detail.append("\n=== 出库明细 ===\n\n");
-                    
+
                     if (data != null && !data.isEmpty()) {
                         int index = 1;
                         for (Map<String, Object> item : data) {
@@ -703,9 +734,9 @@ public class OutOrderListController extends ToolController {
                     } else {
                         detail.append("暂无明细");
                     }
-                    
+
                     detail.append("\n备注：").append(selected.getRemark() != null ? selected.getRemark() : "无");
-                    
+
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("出库单明细");
                     alert.setHeaderText("出库单详情");

@@ -1,5 +1,6 @@
 package com.teach.javafx.controller.base;
 
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.teach.javafx.AppStore;
@@ -125,6 +126,7 @@ public class OutOrderEditDialog {
                     showMaterialSelectionDialog(detail);
                 });
             }
+
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
@@ -248,16 +250,16 @@ public class OutOrderEditDialog {
         System.out.println("isNew: " + isNew);
         System.out.println("outOrder: " + outOrder);
         System.out.println("materialList 初始状态: " + materialList);
-        
+
         CountDownLatch latch = new CountDownLatch(1);
         System.out.println("=== 调用 loadMaterialListWithLatch ===");
         loadMaterialListWithLatch(latch);
-        
+
         try {
             System.out.println("=== 等待物资列表加载完成（最多15秒）===");
             boolean completed = latch.await(15, TimeUnit.SECONDS);
             if (!completed) {
-                System.err.println("⚠️ 物资列表加载超时！");
+                System.err.println("⚠️ 物资列表加载超时");
                 Platform.runLater(() -> {
                     MessageDialog.showDialog("加载物资列表超时，请检查网络连接");
                 });
@@ -268,12 +270,12 @@ public class OutOrderEditDialog {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
-            System.err.println("️ 等待被中断");
+            System.err.println("❌ 等待被中断");
             Platform.runLater(() -> {
                 MessageDialog.showDialog("加载物资列表被中断");
             });
         }
-        
+
         if (!isNew) {
             System.out.println("=== 加载出库单明细 ===");
             loadDetailList();
@@ -291,7 +293,7 @@ public class OutOrderEditDialog {
                 String url = HttpRequestUtil.serverUrl + "/api/material/list";
                 System.out.println("请求URL: " + url);
                 System.out.println("Token: " + AppStore.getJwt().getToken());
-                
+
                 // 使用 POST 请求，发送空的 JSON 对象
                 String requestBody = "{}";
                 HttpRequest request = HttpRequest.newBuilder()
@@ -309,9 +311,10 @@ public class OutOrderEditDialog {
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), Map.class);
 
-                    if (result.get("code").equals(200.0) || result.get("code").equals(0)) {
+                    int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                    if (c == 200 || c == 0) {
                         Object dataObj = result.get("data");
-                        
+
                         if (dataObj instanceof List) {
                             // 格式1：直接返回 List
                             System.out.println("物资列表加载成功（格式1-直接List）");
@@ -384,7 +387,8 @@ public class OutOrderEditDialog {
 
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                    if (result.get("code").equals(200) || result.get("code").equals(0)) {
+                    int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                    if (c == 200 || c == 0) {
                         List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
                         Platform.runLater(() -> {
                             if (data != null) {
@@ -445,6 +449,18 @@ public class OutOrderEditDialog {
                     if (((Number) mat.get("id")).intValue() == selectedMaterial.getId()) {
                         detail.setGoodsSpec((String) mat.getOrDefault("spec", "默认规格"));
                         detail.setUnit((String) mat.getOrDefault("unit", "件"));
+                        Object priceObj = mat.get("price");
+                        if (priceObj != null) {
+                            try {
+                                detail.setUnitPrice(new BigDecimal(priceObj.toString()));
+                            } catch (NumberFormatException ex) {
+                                detail.setUnitPrice(BigDecimal.ZERO);
+                            }
+                        } else {
+                            detail.setUnitPrice(BigDecimal.ZERO);
+                        }
+                        updateAmount(detail);
+                        calculateTotalAmount();
                         break;
                     }
                 }
@@ -483,11 +499,17 @@ public class OutOrderEditDialog {
 
     private void calculateTotalAmount() {
         BigDecimal total = BigDecimal.ZERO;
+        int totalQty = 0;
         for (OutOrderDetail detail : detailList) {
             if (detail.getTotalPrice() != null) {
                 total = total.add(detail.getTotalPrice());
             }
+            if (detail.getOutNum() != null) {
+                totalQty += detail.getOutNum();
+            }
         }
+        outOrder.setTotalAmount(total);
+        outOrder.setTotalNum(totalQty);
         totalAmountLabel.setText("总金额：" + total);
     }
 
@@ -521,19 +543,27 @@ public class OutOrderEditDialog {
                 requestBody.put("id", outOrder.getId());
             }
             requestBody.put("outType", getOutTypeValue(outType));
-            
+
             // 确保备注不为空
             String remark = remarkArea.getText();
             if (remark == null || remark.trim().isEmpty()) {
                 remark = "无";
             }
             requestBody.put("remark", remark);
-            
+
             // 添加申请人ID（从登录信息中获取）
             Integer applicantId = AppStore.getJwt().getId();
             if (applicantId != null) {
                 requestBody.put("applyUserId", applicantId);
             }
+
+            // 添加申请人名称（从登录信息中获取）
+            String applicantName = AppStore.getJwt().getUsername();
+            if (applicantName != null && !applicantName.isEmpty()) {
+                requestBody.put("applicantName", applicantName);
+            }
+            requestBody.put("totalNum", outOrder.getTotalNum());
+            requestBody.put("totalAmount", outOrder.getTotalAmount());
 
             List<Map<String, Object>> items = new ArrayList<>();
             for (OutOrderDetail detail : detailList) {
@@ -555,21 +585,36 @@ public class OutOrderEditDialog {
             }
             requestBody.put("items", items);
 
-            String url = isNew ? "/api/stockOut/submitApply" : "/api/stockOut/update";
-            
+            String url;
+            HttpRequest request;
+
+            if (isNew) {
+                // 新增：POST /api/stockOut/submitApply
+                url = "/api/stockOut/submitApply";
+                request = HttpRequest.newBuilder()
+                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
+                        .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                        .headers("Content-Type", "application/json")
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
+            } else {
+                // 编辑：PUT /api/stockOut/update/{id}
+                url = "/api/stockOut/update/" + outOrder.getId();
+                request = HttpRequest.newBuilder()
+                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
+                        .method("PUT", HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                        .headers("Content-Type", "application/json")
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
+            }
+
             System.out.println("========================================");
             System.out.println("=== 开始提交出库单 ===");
             System.out.println("========================================");
+            System.out.println("请求方法: " + request.method());
             System.out.println("URL: " + HttpRequestUtil.serverUrl + url);
             System.out.println("Token: " + AppStore.getJwt().getToken());
             System.out.println("请求体: " + gson.toJson(requestBody));
-            
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(HttpRequestUtil.serverUrl + url))
-                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                    .headers("Content-Type", "application/json")
-                    .headers("satoken", AppStore.getJwt().getToken())
-                    .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -579,14 +624,15 @@ public class OutOrderEditDialog {
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                if (result.get("code").equals(200) || result.get("code").equals(0)) {
+                int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (c == 200 || c == 0) {
                     MessageDialog.showDialog(isNew ? "提交成功" : "更新成功");
                     dialog.close();
                 } else {
                     MessageDialog.showDialog("失败：" + result.get("msg"));
                 }
             } else {
-                System.err.println("HTTP请求失败！");
+                System.err.println("HTTP请求失败：");
                 System.err.println("状态码: " + response.statusCode());
                 System.err.println("响应内容: " + response.body());
                 MessageDialog.showDialog("请求失败，状态码：" + response.statusCode() + "\n请查看控制台获取详细信息");
@@ -614,14 +660,15 @@ public class OutOrderEditDialog {
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                if (result.get("code").equals(200) || result.get("code").equals(0)) {
+                int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (c == 200 || c == 0) {
                     Map<String, Object> data = (Map<String, Object>) result.get("data");
                     Integer currentStock = (Integer) data.getOrDefault("currentStock", 0);
                     String materialName = (String) data.get("materialName");
 
                     if (currentStock < detail.getOutNum()) {
-                        MessageDialog.showDialog("库存不足！\n物资：" + materialName + 
-                                "\n当前库存：" + currentStock + 
+                        MessageDialog.showDialog("库存不足：\n物资：" + materialName +
+                                "\n当前库存：" + currentStock +
                                 "\n需要出库：" + detail.getOutNum());
                         return false;
                     }
