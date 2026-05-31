@@ -29,12 +29,12 @@
             <HBox spacing="10">
                 <Button text="新增入库单" onAction="#onAddButtonClick"
                         style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
-                <Button text="编辑" onAction="#onEditButtonClick"/>
+                <Button fx:id="editButton" text="编辑" onAction="#onEditButtonClick"/>
                 <Button text="删除" onAction="#onDeleteButtonClick"
                         style="-fx-background-color: #f44336; -fx-text-fill: white;"/>
-                <Button text="审批" onAction="#onApproveButtonClick"
+                <Button fx:id="approveButton" text="审批" onAction="#onApproveButtonClick"
                         style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
-                <Button text="确认入库" onAction="#onCompleteButtonClick"
+                <Button fx:id="completeButton" text="确认入库" onAction="#onCompleteButtonClick"
                         style="-fx-background-color: #FF9800; -fx-text-fill: white;"/>
             </HBox>
         </VBox>
@@ -43,7 +43,7 @@
     <center>
         <TableView fx:id="stockInTable" BorderPane.alignment="CENTER">
             <columns>
-                <TableColumn fx:id="idColumn" text="编号" prefWidth="60"/>
+                <TableColumn fx:id="serialNumberColumn" text="编号" prefWidth="60"/>
                 <TableColumn fx:id="inCodeColumn" text="入库单号" prefWidth="150"/>
                 <TableColumn fx:id="typeColumn" text="入库类型" prefWidth="100"/>
                 <TableColumn fx:id="totalAmountColumn" text="总金额" prefWidth="100"/>
