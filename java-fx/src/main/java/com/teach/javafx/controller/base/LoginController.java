@@ -14,6 +14,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-        vbox.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
+        //vbox.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
         passwordInputControl = passwordField;
     }
 
@@ -70,12 +71,12 @@ public class LoginController {
 
         login(username, password, false);
     }
-
     @FXML
     protected void onRegisterButtonClick() {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/register-view.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), -1, -1);
+            scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
             MainApplication.resetStage("用户注册", scene);
         } catch (IOException e) {
             e.printStackTrace();
@@ -86,41 +87,31 @@ public class LoginController {
     @FXML
     protected void togglePasswordVisibility() {
         passwordVisible = !passwordVisible;
-        GridPane parent = (GridPane) passwordInputControl.getParent();
-        Integer rowIndex = GridPane.getRowIndex(passwordInputControl);
-        Integer columnIndex = GridPane.getColumnIndex(passwordInputControl);
-        int row = (rowIndex == null) ? 1 : rowIndex;
-        int col = (columnIndex == null) ? 1 : columnIndex;
 
-        String pwdText = passwordInputControl.getText();
-        String pwdStyle = passwordInputControl.getStyle();
-        String pwdId = passwordInputControl.getId();
-        String pwdPrompt = passwordInputControl.getPromptText();
-
-        parent.getChildren().remove(passwordInputControl);
+        HBox parentHBox = (HBox) passwordInputControl.getParent();
 
         if (passwordVisible) {
             TextField textField = new TextField();
-            textField.setText(pwdText);
-            textField.setId(pwdId);
-            textField.setStyle(pwdStyle);
-            textField.setPromptText(pwdPrompt);
-            GridPane.setRowIndex(textField, row);
-            GridPane.setColumnIndex(textField, col);
-            parent.getChildren().add(textField);
+            textField.setText(passwordInputControl.getText());
+            textField.setId(passwordInputControl.getId());
+            textField.setPromptText(passwordInputControl.getPromptText());
+
+            int index = parentHBox.getChildren().indexOf(passwordInputControl);
+            parentHBox.getChildren().remove(passwordInputControl);
+            parentHBox.getChildren().add(index, textField);
             passwordInputControl = textField;
             passwordToggleBtn.setText("🔓");
         } else {
             PasswordField newPwdField = new PasswordField();
-            newPwdField.setText(pwdText);
-            newPwdField.setId(pwdId);
-            newPwdField.setStyle(pwdStyle);
-            newPwdField.setPromptText(pwdPrompt);
-            GridPane.setRowIndex(newPwdField, row);
-            GridPane.setColumnIndex(newPwdField, col);
-            parent.getChildren().add(newPwdField);
+            newPwdField.setText(passwordInputControl.getText());
+            newPwdField.setId(passwordInputControl.getId());
+            newPwdField.setPromptText(passwordInputControl.getPromptText());
+
+            int index = parentHBox.getChildren().indexOf(passwordInputControl);
+            parentHBox.getChildren().remove(passwordInputControl);
+            parentHBox.getChildren().add(index, newPwdField);
             passwordInputControl = newPwdField;
-            passwordToggleBtn.setText("👁");
+            passwordToggleBtn.setText("");
         }
     }
 
@@ -184,7 +175,7 @@ public class LoginController {
                     jwt.setUsername(userName);
                     jwt.setRole(role);
                     jwt.setLoginId(loginId);
-                    
+
                     // 设置用户ID（Integer类型）
                     if (loginId != null) {
                         try {
@@ -193,9 +184,9 @@ public class LoginController {
                             System.err.println("解析用户ID失败: " + loginId);
                         }
                     }
-                    
+
                     AppStore.setJwt(jwt);
-                    
+
                     // 添加调试日志
                     System.out.println("\n=== [登录成功] 用户信息 ===");
                     System.out.println("用户名: " + userName);
@@ -203,10 +194,11 @@ public class LoginController {
                     System.out.println("用户ID: " + jwt.getId());
                     System.out.println("loginId: " + loginId);
 
-                    MessageDialog.showDialog("登录成功");
+                    MessageDialog.showDialog("登录成功！");
 
                     FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/main-frame.fxml"));
-                    Scene scene = new Scene(fxmlLoader.load(), -1, -1);
+                    Scene scene = new Scene(fxmlLoader.load(), 1200, 800);
+                    scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
                     AppStore.setMainFrameController(fxmlLoader.getController());
                     MainApplication.resetStage("仓储管理系统", scene);
                 } else {

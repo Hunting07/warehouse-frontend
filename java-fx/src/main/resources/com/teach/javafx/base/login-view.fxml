@@ -9,52 +9,46 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.FlowPane?>
-<VBox fx:id="vbox" alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.teach.javafx.controller.base.LoginController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
+<VBox fx:id="vbox" alignment="CENTER" spacing="25.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.LoginController"
+      style="-fx-background-image: url('login-bg.jpg'); -fx-background-size: cover; -fx-background-position: center;">
 
-    <Label text="仓储管理系统" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2196F3;"/>
+    <VBox styleClass="login-card" alignment="CENTER" spacing="20">
+        <Label text="仓储管理系统" styleClass="title"/>
 
-    <HBox>
-        <GridPane>
+        <Label text="Warehouse Management System"
+               style="-fx-text-fill: #7f8c8d; -fx-font-size: 12px;"/>
+
+        <GridPane hgap="10" vgap="15">
             <columnConstraints>
-                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="95.0" minWidth="10.0" prefWidth="59.5" />
-                <ColumnConstraints hgrow="SOMETIMES" maxWidth="140.5" minWidth="10.0" prefWidth="140.5" />
-                <ColumnConstraints halignment="LEFT" minWidth="40"/>
+                <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="80" minWidth="80" />
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="200" prefWidth="250" />
             </columnConstraints>
-            <rowConstraints>
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-            </rowConstraints>
-            <children>
-                <Label text="用户名">
-                    <GridPane.margin>
-                        <Insets right="5.0" />
-                    </GridPane.margin></Label>
-                <TextField fx:id="usernameField" GridPane.columnIndex="1" />
-                <Label text="密码" GridPane.rowIndex="1">
-                    <GridPane.margin>
-                        <Insets right="5.0" />
-                    </GridPane.margin>
-                </Label>
-                <PasswordField fx:id="passwordField" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                <Button fx:id="passwordToggleBtn" text="👁" onAction="#togglePasswordVisibility"
-                        style="-fx-background-color: transparent; -fx-cursor: hand;" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-            </children>
-        </GridPane>
-    </HBox>
 
-    <VBox spacing="10" alignment="CENTER">
-        <HBox spacing="10" alignment="CENTER">
+            <Label text="用户名" GridPane.columnIndex="0" GridPane.rowIndex="0"
+                   style="-fx-text-fill: #2c3e50; -fx-font-size: 14px;"/>
+            <TextField fx:id="usernameField" GridPane.columnIndex="1" GridPane.rowIndex="0"
+                       promptText="请输入用户名" styleClass="text-field"/>
+
+            <Label text="密码" GridPane.columnIndex="0" GridPane.rowIndex="1"
+                   style="-fx-text-fill: #2c3e50; -fx-font-size: 14px;"/>
+            <HBox GridPane.columnIndex="1" GridPane.rowIndex="1" spacing="5">
+                <PasswordField fx:id="passwordField" HBox.hgrow="ALWAYS"
+                               promptText="请输入密码" styleClass="password-field"/>
+                <Button fx:id="passwordToggleBtn" text="👁" onAction="#togglePasswordVisibility"
+                        styleClass="secondary" prefWidth="40"/>
+            </HBox>
+        </GridPane>
+
+        <VBox spacing="12" alignment="CENTER">
             <Button onAction="#onAdminLoginButtonClick" text="管理员登录"
-                    style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
+                    styleClass="button" prefWidth="250" prefHeight="45"/>
+
             <Button onAction="#onEmployeeLoginButtonClick" text="员工登录"
-                    style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
-        </HBox>
-        <Button onAction="#onRegisterButtonClick" text="用户注册"
-                style="-fx-background-color: #FF9800; -fx-text-fill: white; -fx-font-size: 14px; -fx-min-width: 120;"/>
+                    styleClass="button success" prefWidth="250" prefHeight="45"/>
+
+            <Button onAction="#onRegisterButtonClick" text="用户注册"
+                    styleClass="button warning" prefWidth="250" prefHeight="45"/>
+        </VBox>
     </VBox>
 </VBox>

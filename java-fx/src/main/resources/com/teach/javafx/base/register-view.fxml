@@ -3,37 +3,40 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.teach.javafx.controller.base.RegisterController"
-      alignment="CENTER" spacing="20" style="-fx-background-image: url('shanda1.jpg'); -fx-background-size: cover;">
+      alignment="CENTER" spacing="0"
+      style="-fx-background-image: url('register-bg.jpg'); -fx-background-size: cover; -fx-background-position: center;">
 
-    <padding>
-        <Insets top="40" right="40" bottom="40" left="40"/>
-    </padding>
 
-    <Label text="用户注册" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+    <VBox styleClass="login-card" alignment="CENTER" spacing="20" maxWidth="500">
+        <Label text="用户注册" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #4a90d9;"/>
 
-    <TitledPane text="选择注册类型" expanded="true" style="-fx-font-size: 14px;">
-        <VBox spacing="15" style="-fx-padding: 15px;">
-            <RadioButton fx:id="staffRadio" text="员工注册（无需审批，注册后可直接登录）" selected="true"/>
-            <RadioButton fx:id="adminRadio" text="管理员注册（需要管理员审批）"/>
+        <VBox spacing="15" style="-fx-padding: 10;">
+            <Label text="选择注册类型" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #2c3e50;"/>
+            <HBox spacing="20">
+                <RadioButton fx:id="staffRadio" text="员工注册（无需审批）" selected="true"
+                             style="-fx-text-fill: #2c3e50; -fx-font-size: 14px;"/>
+                <RadioButton fx:id="adminRadio" text="管理员注册（需审批）"
+                             style="-fx-text-fill: #2c3e50; -fx-font-size: 14px;"/>
+            </HBox>
         </VBox>
-    </TitledPane>
 
-    <VBox spacing="10" style="-fx-padding: 10px;">
-        <Label text="用户名" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
-        <TextField fx:id="usernameField" promptText="请输入用户名" style="-fx-font-size: 14px;"/>
+        <VBox spacing="12">
+            <Label text="用户名" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <TextField fx:id="usernameField" promptText="请输入用户名" styleClass="text-field" style="-fx-font-size: 14px;"/>
 
-        <Label text="密码" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
-        <PasswordField fx:id="passwordField" promptText="请输入密码" style="-fx-font-size: 14px;"/>
+            <Label text="密码" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <PasswordField fx:id="passwordField" promptText="请输入密码" styleClass="password-field" style="-fx-font-size: 14px;"/>
 
-        <Label text="确认密码" style="-fx-text-fill: white; -fx-font-size: 14px;"/>
-        <PasswordField fx:id="confirmPasswordField" promptText="请再次输入密码" style="-fx-font-size: 14px;"/>
+            <Label text="确认密码" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <PasswordField fx:id="confirmPasswordField" promptText="请再次输入密码" styleClass="password-field" style="-fx-font-size: 14px;"/>
+        </VBox>
+
+        <HBox spacing="15" alignment="CENTER">
+            <Button text="注册" onAction="#handleRegister" styleClass="button" prefWidth="120" prefHeight="42" style="-fx-font-size: 14px;"/>
+            <Button text="返回登录" onAction="#handleBack" styleClass="button secondary" prefWidth="120" prefHeight="42" style="-fx-font-size: 14px;"/>
+        </HBox>
     </VBox>
-
-    <HBox spacing="15" alignment="CENTER">
-        <Button text="注册" onAction="#handleRegister" style="-fx-font-size: 14px; -fx-pref-width: 100px;"/>
-        <Button text="返回登录" onAction="#handleBack" style="-fx-font-size: 14px; -fx-pref-width: 100px;"/>
-    </HBox>
 
 </VBox>

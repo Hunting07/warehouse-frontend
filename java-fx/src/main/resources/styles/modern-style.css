@@ -1,0 +1,422 @@
+/* src/main/resources/styles/modern-style.css */
+
+/* ========================================
+   仓储管理系统 - 现代化UI样式表
+   设计风格：扁平化、简洁、专业
+   ======================================== */
+
+/* ... existing code ... */
+
+/* 全局根变量 */
+.root {
+    -fx-primary-color: #4a90d9;
+    -fx-primary-dark: #3a7bc8;
+    -fx-primary-light: #6ba3e6;
+    -fx-success-color: #4caf7d;
+    -fx-success-dark: #3d9969;
+    -fx-warning-color: #f0b84d;
+    -fx-warning-dark: #e6a23c;
+    -fx-danger-color: #e87070;
+    -fx-danger-dark: #d95a5a;
+    -fx-info-color: #4db6ac;
+    -fx-bg-color: #f5f7fa;
+    -fx-card-background: #ffffff;
+    -fx-border-clr: #e0e6ed;
+    -fx-text-primary: #2c3e50;
+    -fx-text-secondary: #7f8c8d;
+    -fx-text-light: #bdc3c7;
+    -fx-font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+}
+
+/* ========================================
+   通用按钮样式
+   ======================================== */
+
+.button {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 20 8 20;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 2);
+}
+
+.button:hover {
+    -fx-background-color: -fx-primary-dark;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 6, 0, 0, 3);
+    -fx-translate-y: -1;
+}
+
+.button:pressed {
+    -fx-translate-y: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 2, 0, 0, 1);
+}
+
+.button.success {
+    -fx-background-color: -fx-success-color;
+}
+
+.button.success:hover {
+    -fx-background-color: -fx-success-dark;
+}
+
+.button.warning {
+    -fx-background-color: -fx-warning-color;
+}
+
+.button.warning:hover {
+    -fx-background-color: -fx-warning-dark;
+}
+
+.button.danger {
+    -fx-background-color: -fx-danger-color;
+}
+
+.button.danger:hover {
+    -fx-background-color: -fx-danger-dark;
+}
+
+.button.secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-primary-color;
+    -fx-border-color: -fx-primary-color;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+}
+
+.button.secondary:hover {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+}
+
+.button:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
+}
+
+/* ========================================
+   输入框样式
+   ======================================== */
+
+.text-field, .password-field {
+    -fx-background-color: white;
+    -fx-text-fill: -fx-text-primary;
+    -fx-prompt-text-fill: -fx-text-light;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 6;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: -fx-primary-color;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.2), 8, 0, 0, 0);
+}
+
+/* ========================================
+   标签样式
+   ======================================== */
+
+.label {
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 13px;
+}
+
+.label.title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-primary-color;
+}
+
+.label.subtitle {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-secondary;
+}
+
+/* ========================================
+   表格样式
+   ======================================== */
+
+.table-view, .tree-table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+
+.table-view .column-header-background,
+.tree-table-view .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #4a90d9, #3a7bc8);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+
+.table-view .column-header .label,
+.tree-table-view .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 12 5 12 5;
+}
+
+.table-view .column-header,
+.tree-table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.table-view .table-row-cell:selected,
+.tree-table-view .tree-table-row-cell:selected {
+    -fx-background-color: linear-gradient(to right, #ebf5fb, #d6eaf8);
+    -fx-text-fill: -fx-text-primary;
+}
+
+.table-view .table-row-cell:hover,
+.tree-table-view .tree-table-row-cell:hover {
+    -fx-background-color: #f8f9fa;
+}
+
+.table-view .table-cell,
+.tree-table-view .tree-table-cell {
+    -fx-padding: 10 12 10 12;
+    -fx-text-fill: -fx-text-primary;
+    -fx-border-color: transparent;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #fafbfc;
+}
+
+.table-row-cell:even {
+    -fx-background-color: white;
+}
+
+.table-view .scroll-bar:vertical,
+.tree-table-view .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+.table-view .scroll-bar:vertical .thumb,
+.tree-table-view .scroll-bar:vertical .thumb {
+    -fx-background-color: #bdc3c7;
+    -fx-background-radius: 5;
+}
+
+/* ========================================
+   下拉框样式
+   ======================================== */
+
+.combo-box {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+    -fx-padding: 4 8 4 8;
+}
+
+.combo-box:focused {
+    -fx-border-color: -fx-primary-color;
+    -fx-border-width: 2;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 3);
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: -fx-primary-light;
+    -fx-text-fill: white;
+}
+
+/* ========================================
+   树形视图样式
+   ======================================== */
+
+.tree-view {
+    -fx-background-color: white;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+.tree-cell {
+    -fx-padding: 12 15 12 15;
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 14px;
+    -fx-background-color: transparent;
+}
+
+.tree-cell:selected {
+    -fx-background-color: linear-gradient(to right, #4a90d9, #6ba3e6);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.tree-cell:hover {
+    -fx-background-color: #f0f4f8;
+}
+
+/* ========================================
+   菜单栏样式
+   ======================================== */
+
+.menu-bar {
+    -fx-background-color: white;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 5 10 5 10;
+}
+
+.menu-bar .menu:hover {
+    -fx-background-color: #f0f4f8;
+    -fx-background-radius: 6;
+}
+
+/* ========================================
+   选项卡样式
+   ======================================== */
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 0 0 2 0;
+}
+
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+
+.tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-padding: 10 25 10 25;
+    -fx-background-radius: 8 8 0 0;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: linear-gradient(to bottom, #4a90d9, #3a7bc8);
+}
+
+.tab-pane .tab .tab-label {
+    -fx-text-fill: -fx-text-secondary;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.tab-pane .tab:selected .tab-label {
+    -fx-text-fill: white;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: #f0f4f8;
+}
+
+/* ========================================
+   登录页面专用样式
+   ======================================== */
+
+.login-container {
+    -fx-background-color: linear-gradient(to bottom right, #667eea, #764ba2);
+    -fx-padding: 40;
+    -fx-spacing: 25;
+    -fx-alignment: center;
+}
+
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 30, 0, 0, 5);
+    -fx-padding: 40;
+    -fx-max-width: 450;
+}
+
+/* ========================================
+   布局容器样式
+   ======================================== */
+
+.border-pane {
+    -fx-background-color: transparent;
+}
+
+.search-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 15;
+    -fx-spacing: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);
+}
+
+.action-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 15;
+    -fx-spacing: 10;
+}
+
+.status-bar {
+    -fx-background-color: white;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 2 0 0 0;
+    -fx-padding: 8 15 8 15;
+}
+
+/* ========================================
+   对话框样式
+   ======================================== */
+
+.dialog-pane {
+    -fx-background-color: white;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: -fx-primary-color;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.dialog-pane .content {
+    -fx-padding: 20;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+}
+
+/* ========================================
+   滚动条样式
+   ======================================== */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #bdc3c7;
+    -fx-background-radius: 5;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: #95a5a6;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}

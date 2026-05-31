@@ -103,6 +103,7 @@ public class RegisterController {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), -1, -1);
+            scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
             MainApplication.resetStage("仓储管理系统 - 登录", scene);
         } catch (IOException e) {
             e.printStackTrace();

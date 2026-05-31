@@ -25,21 +25,20 @@ public class MessageController {
     /**
      * 页面加载对象创建完成初始话方法，页面中控件属性的设置，初始数据显示等初始操作都在这里完成，其他代码都事件处理方法里
      */
+
     @FXML
     public void initialize() {
         text = new Text("");
-        text.setFill(Color.BLACK);
-        text.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        text.setFill(Color.web("#2c3e50"));
+        text.setFont(Font.font("Microsoft YaHei", FontWeight.BOLD, 18));
+        text.setTextOrigin(javafx.geometry.VPos.TOP);
+        text.textAlignmentProperty().set(javafx.scene.text.TextAlignment.CENTER);
         textFLow.getChildren().add(text);
         textFLow.setLineSpacing(5);
         textFLow.setDisable(false);
-        textFLow.setStyle("-fx-padding: 10;" +
-                "-fx-border-style: solid inside;" +
-                "-fx-border-width: 1;" +
-                "-fx-border-insets: 5;" +
-                "-fx-border-radius: 5;" +
-                "-fx-border-color: black;");
+        textFLow.setStyle("-fx-padding: 0;");
     }
+
 
     @FXML
     public void okButtonClick(){

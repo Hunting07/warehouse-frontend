@@ -21,37 +21,37 @@ public class MainApplication extends Application {
 
     private static boolean canClose=true;
 
+    // ... existing code ...
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-//        scene.getStylesheets().add(getClass().getResource("css/styles.css").toExternalForm());
+        Scene scene = new Scene(fxmlLoader.load(), 500, 600);
+        scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
         stage.setTitle("登录");
         stage.setScene(scene);
+        stage.setResizable(true);
         stage.show();
         stage.setOnCloseRequest(event -> {
             if(canClose) {
-               HttpRequestUtil.close();
-           }else {
-               event.consume();
-           }
+                HttpRequestUtil.close();
+            }else {
+                event.consume();
+            }
         });
         mainStage = stage;
     }
+
 
     /**
      * 给舞台设置新的Scene
      * @param name 标题
      * @param scene 新的场景对象
      */
-    public static void resetStage(String name, Scene scene) {
-        if(stageWidth > 0) {
-            mainStage.setWidth(stageWidth);
-            mainStage.setHeight(stageHeight);
-            mainStage.setX(0);
-            mainStage.setY(0);
 
-        }
+    public static void resetStage(String name, Scene scene) {
+        mainStage.setMaximized(false);
+        mainStage.setWidth(1200);
+        mainStage.setHeight(800);
         mainStage.setTitle(name);
         mainStage.setScene(scene);
         mainStage.setMaximized(true);

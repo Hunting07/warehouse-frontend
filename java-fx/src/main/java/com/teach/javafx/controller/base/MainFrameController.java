@@ -189,8 +189,9 @@ public class MainFrameController {
         addUserCenterToTree(role);
 
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
-        contentTabPane.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
+        contentTabPane.setStyle("-fx-background-image: url('main-bg.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
     }
+
 
     private void addUserCenterToTree(String role) {
         TreeItem<MyTreeNode> root = menuTree.getRoot();
@@ -278,6 +279,7 @@ public class MainFrameController {
                 FXMLLoader fxmlLoader = new FXMLLoader(fxmlUrl);
                 try {
                     scene = new Scene(fxmlLoader.load(), 1024, 768);
+                    scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
                     sceneMap.put(fxmlPath, scene);
                 } catch (IOException e) {
                     System.err.println("加载 FXML 失败: " + e.getMessage());
