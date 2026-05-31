@@ -1,7 +1,9 @@
 package com.teach.javafx.controller.base;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.teach.javafx.AppStore;
+import com.teach.javafx.bean.OutOrder;
 import com.teach.javafx.bean.OutOrderDetail;
 import com.teach.javafx.request.HttpRequestUtil;
 import com.teach.javafx.request.OptionItem;
@@ -19,6 +21,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -123,7 +127,6 @@ public class OutboundApplyController {
                 String url = HttpRequestUtil.serverUrl + "/api/material/list";
                 System.out.println("请求URL: " + url);
 
-                // 使用 POST 请求，发送空的 JSON 对象
                 String requestBody = "{}";
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
@@ -147,11 +150,9 @@ public class OutboundApplyController {
                         final List<Map<String, Object>> data;
 
                         if (dataObj instanceof List) {
-                            // 格式1：直接返回 List
                             System.out.println("物资列表加载成功（格式1-直接List）");
                             data = (List<Map<String, Object>>) dataObj;
                         } else if (dataObj instanceof Map) {
-                            // 格式2：分页数据
                             System.out.println("物资列表加载成功（格式2-分页数据）");
                             Map<String, Object> dataMap = (Map<String, Object>) dataObj;
                             data = (List<Map<String, Object>>) dataMap.get("records");
@@ -306,7 +307,34 @@ public class OutboundApplyController {
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("outType", getOutTypeValue(outType));
-        requestBody.put("remark", remarkField.getText());
+
+        String remark = remarkField.getText();
+        if (remark == null || remark.trim().isEmpty()) {
+            remark = "无";
+        }
+        requestBody.put("remark", remark);
+
+        java.math.BigDecimal totalAmount = java.math.BigDecimal.ZERO;
+        int totalNum = 0;
+        for (OutOrderDetail detail : detailList) {
+            if (detail.getOutNum() != null) {
+                totalNum += detail.getOutNum();
+                if (detail.getUnitPrice() != null) {
+                    totalAmount = totalAmount.add(detail.getUnitPrice().multiply(java.math.BigDecimal.valueOf(detail.getOutNum())));
+                }
+            }
+        }
+        requestBody.put("totalNum", totalNum);
+        requestBody.put("totalAmount", totalAmount);
+
+        Integer userId = AppStore.getJwt().getId();
+        String userName = AppStore.getJwt().getUsername();
+        if (userId != null) {
+            requestBody.put("applicantId", userId);
+        }
+        if (userName != null && !userName.isEmpty()) {
+            requestBody.put("applicantName", userName);
+        }
 
         List<Map<String, Object>> items = new ArrayList<>();
         for (OutOrderDetail detail : detailList) {
@@ -321,13 +349,20 @@ public class OutboundApplyController {
         requestBody.put("items", items);
 
         try {
+            System.out.println("\n=== [出库申请] 提交数据 ===");
+            System.out.println("请求体: " + gson.toJson(requestBody));
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(HttpRequestUtil.serverUrl + "/api/stockOut/submitApply"))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                    .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
+                    .headers("Content-Type", "application/json")
+                    .headers("satoken", AppStore.getJwt().getToken())
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("响应状态码: " + response.statusCode());
+            System.out.println("响应内容: " + response.body());
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
@@ -354,7 +389,7 @@ public class OutboundApplyController {
             case "销售出库": return 2;
             case "报损出库": return 3;
             case "其他出库": return 4;
-            default: return 0;
+            default: return 1;
         }
     }
 }

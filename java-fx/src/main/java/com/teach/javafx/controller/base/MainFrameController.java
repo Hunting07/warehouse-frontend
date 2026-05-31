@@ -250,7 +250,7 @@ public class MainFrameController {
             fxmlPath = "/com/teach/javafx/base/stockin-panel";
         } else if (name.contains("stockout") || name.contains("outbound")) {
             fxmlPath = "/com/teach/javafx/base/outbound-panel";
-        } else if (name.contains("outorder")) {
+        } else if (name.contains("outorder") || name.contains("审批") || name.contains("approve")) {
             fxmlPath = "/com/teach/javafx/base/outorder-list-panel";
         } else if (name.contains("user-audit") || name.contains("user-approve")) {
             fxmlPath = "/com/teach/javafx/base/user-audit";
@@ -260,8 +260,6 @@ public class MainFrameController {
             fxmlPath = "/com/teach/javafx/base/password-panel";
         } else if (name.contains("dictionary")) {
             fxmlPath = "/com/teach/javafx/base/dictionary-panel";
-        } else if (name.contains("apply")) {
-            fxmlPath = "/com/teach/javafx/base/outbound-apply";
         }
 
         Tab tab = tabMap.get(fxmlPath);

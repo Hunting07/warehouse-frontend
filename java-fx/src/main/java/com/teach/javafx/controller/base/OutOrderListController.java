@@ -82,6 +82,12 @@ public class OutOrderListController extends ToolController {
     public void initialize() {
         String role = AppStore.getJwt().getRole();
         isAdmin = role != null && (role.toLowerCase().contains("admin") || role.contains("管理"));
+        
+        // 添加调试日志
+        System.out.println("\n=== [出库列表] 初始化 ===");
+        System.out.println("当前用户角色: " + role);
+        System.out.println("是否管理员: " + isAdmin);
+        System.out.println("用户ID: " + (AppStore.getJwt() != null ? AppStore.getJwt().getId() : "null"));
 
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         orderNoColumn.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
@@ -204,9 +210,24 @@ public class OutOrderListController extends ToolController {
                 StringBuilder urlBuilder = new StringBuilder(HttpRequestUtil.serverUrl + "/api/stockOut/getAllStockOutList");
                 boolean hasParam = false;
 
+                // 添加调试日志
+                System.out.println("\n=== [出库列表] 加载数据 ===");
+                System.out.println("当前用户角色: " + AppStore.getJwt().getRole());
+                System.out.println("是否管理员: " + isAdmin);
+                System.out.println("用户ID: " + AppStore.getJwt().getId());
+                
+                // 调试：打印 JwtResponse 的所有信息
+                System.out.println("完整 JwtResponse 对象: " + AppStore.getJwt());
+
                 if (!isAdmin && AppStore.getJwt() != null && AppStore.getJwt().getId() != null) {
                     urlBuilder.append(hasParam ? "&" : "?").append("userId=").append(AppStore.getJwt().getId());
                     hasParam = true;
+                    System.out.println("添加 userId 参数（非管理员，只看自己的数据）");
+                } else if (!isAdmin) {
+                    // 非管理员但 ID 为 null，尝试从 Token 获取
+                    System.out.println("警告：非管理员但用户ID为null，不添加userId参数");
+                } else {
+                    System.out.println("不添加 userId 参数（管理员，看所有数据）");
                 }
 
                 if (currentStatus != null && !currentStatus.equals("全部")) {

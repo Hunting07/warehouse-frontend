@@ -553,8 +553,18 @@ public class OutOrderEditDialog {
 
             // 添加申请人ID（从登录信息中获取）
             Integer applicantId = AppStore.getJwt().getId();
+            
+            // 如果 id 为 null，尝试从 loginId 获取
+            if (applicantId == null && AppStore.getJwt().getLoginId() != null) {
+                try {
+                    applicantId = Integer.parseInt(AppStore.getJwt().getLoginId());
+                } catch (NumberFormatException e) {
+                    System.err.println("从 loginId 解析用户ID失败: " + AppStore.getJwt().getLoginId());
+                }
+            }
+            
             if (applicantId != null) {
-                requestBody.put("applyUserId", applicantId);
+                requestBody.put("applicantId", applicantId);
             }
 
             // 添加申请人名称（从登录信息中获取）
@@ -562,6 +572,14 @@ public class OutOrderEditDialog {
             if (applicantName != null && !applicantName.isEmpty()) {
                 requestBody.put("applicantName", applicantName);
             }
+            
+            // 添加调试日志
+            System.out.println("\n=== [创建出库单] 申请人信息 ===");
+            System.out.println("当前登录用户ID: " + applicantId);
+            System.out.println("当前登录用户名: " + applicantName);
+            System.out.println("设置到请求体中的 applicantId: " + requestBody.get("applicantId"));
+            System.out.println("设置到请求体中的 applicantName: " + requestBody.get("applicantName"));
+            
             requestBody.put("totalNum", outOrder.getTotalNum());
             requestBody.put("totalAmount", outOrder.getTotalAmount());
 
