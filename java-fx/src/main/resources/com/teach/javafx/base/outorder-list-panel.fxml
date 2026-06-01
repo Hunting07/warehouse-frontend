@@ -37,8 +37,6 @@
                         style="-fx-background-color: #f44336; -fx-text-fill: white;"/>
                 <Button text="审批" onAction="#onApproveButtonClick"
                         style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
-                <Button text="确认出库" onAction="#onCompleteButtonClick"
-                        style="-fx-background-color: #FF9800; -fx-text-fill: white;"/>
             </HBox>
         </VBox>
     </top>

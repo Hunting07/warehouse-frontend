@@ -202,12 +202,12 @@ public class StockInController extends ToolController {
                     System.out.println("业务错误: " + resultMap.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + response.statusCode();
+                String errorMsg = "";
                 if (response.body() != null && !response.body().isEmpty()) {
                     try {
                         Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                         if (errorResult.get("msg") != null) {
-                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                            errorMsg = String.valueOf(errorResult.get("msg"));
                         }
                     } catch (Exception e) {
                         errorMsg += "\n响应内容：" + response.body();
@@ -482,7 +482,7 @@ public class StockInController extends ToolController {
                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
                 alert.setTitle("错误");
                 alert.setHeaderText(null);
-                alert.setContentText("请求失败，状态码：" + response.statusCode());
+                alert.setContentText("请求失败");
                 alert.showAndWait();
             }
         } catch (Exception e) {
@@ -620,12 +620,12 @@ public class StockInController extends ToolController {
                     MessageDialog.showDialog("审批失败：" + resultMap.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + response.statusCode();
+                String errorMsg = "";
                 if (response.body() != null && !response.body().isEmpty()) {
                     try {
                         Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                         if (errorResult.get("msg") != null) {
-                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                            errorMsg = String.valueOf(errorResult.get("msg"));
                         }
                     } catch (Exception e) {
                         errorMsg += "\n响应内容：" + response.body();
@@ -675,12 +675,12 @@ public class StockInController extends ToolController {
                     MessageDialog.showDialog("操作失败：" + approveResult.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + approveResponse.statusCode();
+                String errorMsg = "";
                 if (approveResponse.body() != null && !approveResponse.body().isEmpty()) {
                     try {
                         Map<String, Object> errorResult = gson.fromJson(approveResponse.body(), new TypeToken<Map<String, Object>>(){}.getType());
                         if (errorResult.get("msg") != null) {
-                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                            errorMsg = String.valueOf(errorResult.get("msg"));
                         }
                     } catch (Exception e) {
                         errorMsg += "\n响应内容：" + approveResponse.body();

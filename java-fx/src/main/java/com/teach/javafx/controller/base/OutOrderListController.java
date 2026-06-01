@@ -83,11 +83,10 @@ public class OutOrderListController extends ToolController {
 
         // 序号列：显示行号
         indexColumn.setCellValueFactory(data -> {
-            int index = outOrderTable.getItems().indexOf(data.getValue()) + 1;
-            return new javafx.beans.property.SimpleIntegerProperty(index).asObject();
+            int index = outOrderTable.getItems().indexOf(data.getValue());
+            int total = outOrderTable.getItems().size();
+            return new javafx.beans.property.SimpleIntegerProperty(total - index).asObject();
         });
-        
-        orderNoColumn.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
         outTypeColumn.setCellValueFactory(new PropertyValueFactory<>("outTypeName"));
         applicantNameColumn.setCellValueFactory(new PropertyValueFactory<>("applicantName"));
         materialNamesColumn.setCellValueFactory(new PropertyValueFactory<>("materialNames"));
@@ -349,12 +348,12 @@ public class OutOrderListController extends ToolController {
                     }
 
                 } else {
-                    String errorMsg = "请求失败，状态码：" + response.statusCode();
+                    String errorMsg = "";
                     if (response.body() != null && !response.body().isEmpty()) {
                         try {
                             Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                             if (errorResult.get("msg") != null) {
-                                errorMsg += "\n错误信息：" + errorResult.get("msg");
+                                errorMsg = String.valueOf(errorResult.get("msg"));
                             }
                         } catch (Exception e) {
                             errorMsg += "\n响应内容：" + response.body();
@@ -768,12 +767,12 @@ public class OutOrderListController extends ToolController {
                     System.out.println("❌ 业务错误: " + result.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + response.statusCode();
+                String errorMsg = "";
                 if (response.body() != null && !response.body().isEmpty()) {
                     try {
                         Map<String, Object> errorResult = gson.fromJson(response.body(), Map.class);
                         if (errorResult.get("msg") != null) {
-                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                            errorMsg = String.valueOf(errorResult.get("msg"));
                         }
                     } catch (Exception e) {
                         errorMsg += "\n响应内容：" + response.body();
@@ -793,11 +792,6 @@ public class OutOrderListController extends ToolController {
     @FXML
     protected void onRejectButtonClick() {
         MessageDialog.showDialog("请使用审批功能进行驳回操作");
-    }
-
-    @FXML
-    protected void onCompleteButtonClick() {
-        MessageDialog.showDialog("审批通过后即自动出库，无需额外确认");
     }
 
     @FXML
