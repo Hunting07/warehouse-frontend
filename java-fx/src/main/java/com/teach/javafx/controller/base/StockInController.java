@@ -562,10 +562,33 @@ public class StockInController extends ToolController {
             } else {
                 String rejectReason = rejectReasonArea.getText();
                 if (rejectReason == null || rejectReason.trim().isEmpty()) {
-                    MessageDialog.showDialog("请填写驳回理由");
+                    // 使用标准 Alert，阻塞等待用户点击确认
+                    Alert warningAlert = new Alert(Alert.AlertType.WARNING);
+                    warningAlert.setTitle("提示");
+                    warningAlert.setHeaderText(null);
+                    warningAlert.setContentText("请填写驳回理由");
+                    warningAlert.showAndWait();
+                    
+                    // 用户点击确认后，重新显示审批对话框
+                    showApproveDialog(stockIn);
                     return;
                 }
-                approveStockIn(stockIn, false, rejectReason);
+                
+                // 显示确认对话框
+                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                confirmAlert.setTitle("确认驳回");
+                confirmAlert.setHeaderText("确认要驳回该入库单吗？");
+                confirmAlert.setContentText("驳回理由：\n" + rejectReason);
+                
+                confirmAlert.showAndWait().ifPresent(buttonType -> {
+                    if (buttonType == ButtonType.OK) {
+                        // 用户确认驳回，执行驳回操作
+                        approveStockIn(stockIn, false, rejectReason);
+                    } else {
+                        // 用户取消驳回，重新显示审批对话框
+                        showApproveDialog(stockIn);
+                    }
+                });
             }
         });
     }
