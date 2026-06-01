@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.AdminApproveController"
+      spacing="15"
+      style="-fx-background-color: #f5f7fa;">
+
+    <padding>
+        <Insets top="20" right="30" bottom="20" left="30"/>
+    </padding>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="管理员审批" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="刷新" onAction="#loadUserList"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-background-radius: 5; -fx-cursor: hand;" prefWidth="100"/>
+    </HBox>
+
+    <Separator style="-fx-background-color: #e0e6ed;"/>
+
+    <Label text="待审批的管理员" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+
+    <TableView fx:id="pendingAdminTable" VBox.vgrow="ALWAYS" prefHeight="250"
+               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-radius: 8;">
+        <columns>
+            <TableColumn fx:id="pendingIdColumn" text="ID" prefWidth="60"/>
+            <TableColumn fx:id="pendingUsernameColumn" text="账号" prefWidth="120"/>
+            <TableColumn fx:id="pendingRealNameColumn" text="姓名" prefWidth="100"/>
+            <TableColumn fx:id="pendingPhoneColumn" text="电话" prefWidth="130"/>
+            <TableColumn fx:id="pendingRoleColumn" text="角色" prefWidth="80"/>
+            <TableColumn fx:id="pendingStatusColumn" text="状态" prefWidth="100"/>
+            <TableColumn fx:id="pendingTimeColumn" text="申请时间" prefWidth="160"/>
+            <TableColumn fx:id="pendingActionColumn" text="操作" prefWidth="150"/>
+        </columns>
+    </TableView>
+
+    <Label text="已审批的管理员" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+
+    <TableView fx:id="approvedAdminTable" VBox.vgrow="ALWAYS" prefHeight="250"
+               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-radius: 8;">
+        <columns>
+            <TableColumn fx:id="approvedIdColumn" text="ID" prefWidth="60"/>
+            <TableColumn fx:id="approvedUsernameColumn" text="账号" prefWidth="120"/>
+            <TableColumn fx:id="approvedRealNameColumn" text="姓名" prefWidth="100"/>
+            <TableColumn fx:id="approvedPhoneColumn" text="电话" prefWidth="130"/>
+            <TableColumn fx:id="approvedRoleColumn" text="角色" prefWidth="80"/>
+            <TableColumn fx:id="approvedStatusColumn" text="状态" prefWidth="100"/>
+            <TableColumn fx:id="approvedTimeColumn" text="审批时间" prefWidth="160"/>
+        </columns>
+    </TableView>
+</VBox>

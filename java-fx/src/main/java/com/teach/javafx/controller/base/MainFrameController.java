@@ -188,6 +188,8 @@ public class MainFrameController {
         String role = AppStore.getJwt().getRole();
         addUserCenterToTree(role);
 
+        addCustomMenus(role);
+
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
         contentTabPane.setStyle("-fx-background-image: url('main-bg.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
     }
@@ -210,6 +212,45 @@ public class MainFrameController {
                 new MyTreeNode(null, "base/profile-panel", "个人中心", 0)
         );
         root.getChildren().add(profileItem);
+    }
+
+    private void addCustomMenus(String role) {
+        TreeItem<MyTreeNode> root = menuTree.getRoot();
+        if (root == null) {
+            return;
+        }
+
+        if ("admin".equals(role)) {
+            TreeItem<MyTreeNode> userManageItem = new TreeItem<>(
+                    new MyTreeNode(null, "", "用户管理", 1)
+            );
+
+            TreeItem<MyTreeNode> employeeViewItem = new TreeItem<>(
+                    new MyTreeNode(null, "employee-view", "员工管理", 0)
+            );
+            TreeItem<MyTreeNode> adminViewItem = new TreeItem<>(
+                    new MyTreeNode(null, "admin-view", "管理员查看", 0)
+            );
+
+            userManageItem.getChildren().add(employeeViewItem);
+            userManageItem.getChildren().add(adminViewItem);
+            root.getChildren().add(userManageItem);
+
+            TreeItem<MyTreeNode> adminApproveItem = new TreeItem<>(
+                    new MyTreeNode(null, "admin-approve", "管理员审批", 1)
+            );
+            root.getChildren().add(adminApproveItem);
+
+            TreeItem<MyTreeNode> statisticsItem = new TreeItem<>(
+                    new MyTreeNode(null, "statistics", "金额统计", 1)
+            );
+            root.getChildren().add(statisticsItem);
+        } else if ("employee".equals(role)) {
+            TreeItem<MyTreeNode> statisticsItem = new TreeItem<>(
+                    new MyTreeNode(null, "statistics", "金额统计", 1)
+            );
+            root.getChildren().add(statisticsItem);
+        }
     }
 
     protected void logout() {
@@ -253,14 +294,24 @@ public class MainFrameController {
             fxmlPath = "/com/teach/javafx/base/outbound-panel";
         } else if (name.contains("outorder") || name.contains("出库审批")) {
             fxmlPath = "/com/teach/javafx/base/outorder-list-panel";
-        } else if (name.contains("user-audit") || name.contains("user-approve") || name.contains("用户注册审批")) {
+        } else if (name.contains("user-audit") || name.contains("用户注册审批")) {
             fxmlPath = "/com/teach/javafx/base/user-audit";
+        } else if (name.contains("admin-approve") || name.contains("管理员审批")) {
+            fxmlPath = "/com/teach/javafx/base/admin-approve";
+        } else if (name.contains("employee-view") || name.contains("员工管理")) {
+            fxmlPath = "/com/teach/javafx/base/employee-view";
+        } else if (name.contains("admin-view") || name.contains("管理员查看")) {
+            fxmlPath = "/com/teach/javafx/base/admin-view";
+        } else if (name.contains("statistics") || name.contains("金额统计")) {
+            fxmlPath = "/com/teach/javafx/base/statistics-panel";
         } else if (name.contains("profile")) {
             fxmlPath = "/com/teach/javafx/base/profile-panel";
         } else if (name.contains("password")) {
             fxmlPath = "/com/teach/javafx/base/password-panel";
         } else if (name.contains("dictionary")) {
             fxmlPath = "/com/teach/javafx/base/dictionary-panel";
+        } else {
+            return;
         }
 
         Tab tab = tabMap.get(fxmlPath);
