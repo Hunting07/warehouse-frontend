@@ -9,6 +9,9 @@ public class StockIn {
     private String inCode;
     private Integer type;
     private String typeName;
+    private String materialName;
+    private BigDecimal price;
+    private Integer quantity;
     private BigDecimal totalAmount;
     private Integer status;
     private String statusName;
@@ -35,6 +38,32 @@ public class StockIn {
 
     public String getTypeName() { return typeName; }
     public void setTypeName(String typeName) { this.typeName = typeName; }
+
+    public String getMaterialName() { return materialName; }
+    public void setMaterialName(String materialName) { this.materialName = materialName; }
+
+    // 兼容后端返回的 unitPrice 字段
+    private BigDecimal unitPrice;
+    
+    public BigDecimal getPrice() { 
+        // 如果 price 为空，返回 unitPrice
+        return price != null ? price : unitPrice; 
+    }
+    
+    public void setPrice(BigDecimal price) { 
+        this.price = price; 
+    }
+
+    public void setUnitPrice(BigDecimal unitPrice) { 
+        this.unitPrice = unitPrice; 
+        // 同时设置 price，确保兼容性
+        if (this.price == null) {
+            this.price = unitPrice;
+        }
+    }
+
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
     public BigDecimal getTotalAmount() { return totalAmount; }
     public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }

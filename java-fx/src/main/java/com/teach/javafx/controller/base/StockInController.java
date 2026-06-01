@@ -47,6 +47,15 @@ public class StockInController extends ToolController {
     private TableColumn<StockIn, String> typeColumn;
 
     @FXML
+    private TableColumn<StockIn, String> materialNameColumn;
+
+    @FXML
+    private TableColumn<StockIn, BigDecimal> priceColumn;
+
+    @FXML
+    private TableColumn<StockIn, Integer> quantityColumn;
+
+    @FXML
     private TableColumn<StockIn, BigDecimal> totalAmountColumn;
 
     @FXML
@@ -67,9 +76,6 @@ public class StockInController extends ToolController {
     @FXML
     private Button approveButton;
 
-    @FXML
-    private Button completeButton;
-
     private final ObservableList<StockIn> stockInList = FXCollections.observableArrayList();
     private final Gson gson = GsonUtil.getGson();
     private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -80,17 +86,14 @@ public class StockInController extends ToolController {
         String role = AppStore.getJwt().getRole();
         isAdmin = "admin".equals(role);
 
-        // 根据角色控制按钮显示
         if (isAdmin) {
             // 管理员：隐藏编辑按钮
             editButton.setVisible(false);
             editButton.setManaged(false);
         } else {
-            // 员工：隐藏审批和确认入库按钮
+            // 员工：隐藏审批和驳回按钮
             approveButton.setVisible(false);
             approveButton.setManaged(false);
-            completeButton.setVisible(false);
-            completeButton.setManaged(false);
         }
 
         serialNumberColumn.setCellValueFactory(new PropertyValueFactory<>("serialNumber"));
@@ -100,6 +103,12 @@ public class StockInController extends ToolController {
             String typeName = getTypeName(stockIn.getType());
             return new javafx.beans.property.SimpleStringProperty(typeName);
         });
+        
+        // 新添加的三个列
+        materialNameColumn.setCellValueFactory(new PropertyValueFactory<>("materialName"));
+        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        
         totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         statusColumn.setCellValueFactory(cellData -> {
             StockIn stockIn = cellData.getValue();
@@ -135,9 +144,9 @@ public class StockInController extends ToolController {
         if (status == null) return "";
         switch (status) {
             case 0: return "待审批";
-            case 1: return "已批准";
+            case 1: return "已入库";
             case 2: return "已驳回";
-            case 3: return "已完成";
+            case 3: return "已入库";
             default: return "未知";
         }
     }
@@ -513,7 +522,7 @@ public class StockInController extends ToolController {
         dialog.setTitle("入库单审批");
         dialog.setHeaderText("审批入库单：" + stockIn.getInCode());
 
-        ButtonType approveButtonType = new ButtonType("批准", ButtonBar.ButtonData.OK_DONE);
+        ButtonType approveButtonType = new ButtonType("批准并入库", ButtonBar.ButtonData.OK_DONE);
         ButtonType rejectButtonType = new ButtonType("驳回", ButtonBar.ButtonData.OTHER);
         ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
 
@@ -548,7 +557,8 @@ public class StockInController extends ToolController {
 
         dialog.showAndWait().ifPresent(approved -> {
             if (approved) {
-                approveStockIn(stockIn, true, null);
+                // 批准并直接完成入库
+                approveAndCompleteStockIn(stockIn);
             } else {
                 String rejectReason = rejectReasonArea.getText();
                 if (rejectReason == null || rejectReason.trim().isEmpty()) {
@@ -569,40 +579,22 @@ public class StockInController extends ToolController {
                 requestBody.put("rejectReason", rejectReason);
             }
 
-            System.out.println("\n=== [前端] 审批请求 ===");
-            System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/stock-in/approve");
-            System.out.println("请求方法: POST");
-            System.out.println("Token: " + AppStore.getJwt().getToken());
-            System.out.println("Token长度: " + (AppStore.getJwt().getToken() != null ? AppStore.getJwt().getToken().length() : 0));
-            System.out.println("请求体: " + gson.toJson(requestBody));
-            System.out.println("入库单号: " + stockIn.getInCode());
-            System.out.println("审批结果: " + (approved ? "批准" : "驳回"));
-
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(HttpRequestUtil.serverUrl + "/stock-in/approve"))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
                     .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                     .build();
 
-            System.out.println("发送请求...");
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("接收响应...");
-            System.out.println("响应状态码: " + response.statusCode());
-            System.out.println("响应头: " + response.headers().map());
-            System.out.println("响应内容: " + response.body());
 
             if (response.statusCode() == 200) {
                 Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
-                System.out.println("解析后的结果: code=" + resultMap.get("code") + ", msg=" + resultMap.get("msg"));
                 
                 if (resultMap.get("code").equals(200.0)) {
-                    MessageDialog.showDialog(approved ? "审批通过，库存已自动更新" : "已驳回该入库单");
-                    System.out.println("✅ 审批成功");
+                    MessageDialog.showDialog(approved ? "审批通过" : "已驳回该入库单");
                     loadStockInList();
                 } else {
                     MessageDialog.showDialog("审批失败：" + resultMap.get("msg"));
-                    System.out.println("❌ 业务错误: " + resultMap.get("msg"));
                 }
             } else {
                 String errorMsg = "请求失败，状态码：" + response.statusCode();
@@ -617,98 +609,65 @@ public class StockInController extends ToolController {
                     }
                 }
                 MessageDialog.showDialog(errorMsg);
-                System.out.println("❌ HTTP错误: " + errorMsg);
             }
         } catch (Exception e) {
             e.printStackTrace();
             MessageDialog.showDialog("审批异常：" + e.getMessage());
-            System.out.println("❌ 网络异常: " + e.getMessage());
-            System.out.println("异常类型: " + e.getClass().getName());
         }
     }
 
-    @FXML
-    protected void onCompleteButtonClick() {
-        if (!isAdmin) {
-            MessageDialog.showDialog("只有管理员可以确认入库");
-            return;
-        }
-
-        StockIn selected = stockInTable.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            MessageDialog.showDialog("请选择要入库的入库单");
-            return;
-        }
-
-        if (selected.getStatus() != 1) {
-            MessageDialog.showDialog("只能确认已批准状态的入库单");
-            return;
-        }
-
-        int ret = MessageDialog.choiceDialog("确认完成入库 " + selected.getInCode() + "？");
-        if (ret != MessageDialog.CHOICE_YES) return;
-
+    private void approveAndCompleteStockIn(StockIn stockIn) {
         try {
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("stockInId", selected.getId());
+            System.out.println("========== 开始批准并入库 ==========");
+            System.out.println("入库单ID: " + stockIn.getId());
+            System.out.println("入库单号: " + stockIn.getInCode());
+            System.out.println("当前状态: " + stockIn.getStatus());
+            
+            // 调用approve接口，后端会完成批准+入库的操作
+            Map<String, Object> approveBody = new HashMap<>();
+            approveBody.put("stockInId", stockIn.getId());
+            approveBody.put("approved", true);
 
-            System.out.println("\n=== [前端] 确认入库请求 ===");
-            System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/stock-in/complete");
-            System.out.println("请求方法: POST");
-            System.out.println("Token: " + AppStore.getJwt().getToken());
-            System.out.println("请求体: " + gson.toJson(requestBody));
-            System.out.println("入库单号: " + selected.getInCode());
-            System.out.println("入库单ID: " + selected.getId());
-
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(HttpRequestUtil.serverUrl + "/stock-in/complete"))
-                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+            String approveUrl = HttpRequestUtil.serverUrl + "/stock-in/approve";
+            System.out.println("批准请求URL: " + approveUrl);
+            System.out.println("请求参数: " + gson.toJson(approveBody));
+            
+            HttpRequest approveRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(approveUrl))
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(approveBody)))
                     .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                     .build();
 
-            System.out.println("发送请求...");
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> approveResponse = httpClient.send(approveRequest, HttpResponse.BodyHandlers.ofString());
+            System.out.println("批准响应状态码: " + approveResponse.statusCode());
+            System.out.println("批准响应内容: " + approveResponse.body());
 
-            System.out.println("接收响应...");
-            System.out.println("响应状态码: " + response.statusCode());
-            System.out.println("响应头: " + response.headers().map());
-            System.out.println("响应内容: " + response.body());
-
-            if (response.statusCode() == 200) {
-                Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
-                System.out.println("解析后的结果: code=" + resultMap.get("code") + ", msg=" + resultMap.get("msg"));
+            if (approveResponse.statusCode() == 200) {
+                Map<String, Object> approveResult = gson.fromJson(approveResponse.body(), new TypeToken<Map<String, Object>>(){}.getType());
                 
-                if (resultMap.get("code").equals(200.0)) {
-                    MessageDialog.showDialog("入库完成");
-                    System.out.println("✅ 入库成功");
+                if (approveResult.get("code").equals(200.0)) {
+                    MessageDialog.showDialog("批准成功，库存已更新");
                     loadStockInList();
                 } else {
-                    MessageDialog.showDialog("入库失败：" + resultMap.get("msg"));
-                    System.out.println("❌ 业务错误: " + resultMap.get("msg"));
+                    MessageDialog.showDialog("操作失败：" + approveResult.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + response.statusCode();
-                if (response.body() != null && !response.body().isEmpty()) {
+                String errorMsg = "请求失败，状态码：" + approveResponse.statusCode();
+                if (approveResponse.body() != null && !approveResponse.body().isEmpty()) {
                     try {
-                        Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                        Map<String, Object> errorResult = gson.fromJson(approveResponse.body(), new TypeToken<Map<String, Object>>(){}.getType());
                         if (errorResult.get("msg") != null) {
                             errorMsg += "\n错误信息：" + errorResult.get("msg");
                         }
-                        if (errorResult.get("data") != null) {
-                            errorMsg += "\n详细信息：" + errorResult.get("data");
-                        }
                     } catch (Exception e) {
-                        errorMsg += "\n响应内容：" + response.body();
+                        errorMsg += "\n响应内容：" + approveResponse.body();
                     }
                 }
                 MessageDialog.showDialog(errorMsg);
-                System.out.println("❌ HTTP错误: " + errorMsg);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            MessageDialog.showDialog("入库异常：" + e.getMessage());
-            System.out.println("❌ 网络异常: " + e.getMessage());
-            System.out.println("异常类型: " + e.getClass().getName());
+            MessageDialog.showDialog("操作异常：" + e.getMessage());
         }
     }
 
