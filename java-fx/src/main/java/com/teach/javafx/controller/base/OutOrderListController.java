@@ -100,6 +100,7 @@ public class OutOrderListController extends ToolController {
         remarkColumn.setCellValueFactory(new PropertyValueFactory<>("remark"));
 
         outOrderTable.setItems(outOrderList);
+        outOrderTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         outOrderTable.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.SINGLE);
 

@@ -97,6 +97,7 @@ public class OutboundApplyController {
         });
 
         detailTableView.setItems(detailList);
+        detailTableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         initOutTypeComboBox();
         loadUserInfo();
