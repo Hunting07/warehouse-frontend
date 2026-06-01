@@ -151,6 +151,12 @@ public class StockInEditDialog extends Stage {
         // 初始化入库类型
         typeComboBox.getItems().addAll("采购入库", "退货入库", "其他入库");
         typeComboBox.setValue("采购入库");
+        
+        // 监听入库类型变化
+        typeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            boolean isReturn = "退货入库".equals(newVal);
+            updateTableCellsEditable(isReturn);
+        });
 
         // 初始化表格
         itemTable.setItems(itemList);
@@ -206,6 +212,12 @@ public class StockInEditDialog extends Stage {
                         } else {
                             textField.clear();
                         }
+                        
+                        // 根据入库类型控制是否可编辑
+                        boolean isReturn = "退货入库".equals(typeComboBox.getValue());
+                        textField.setEditable(!isReturn);
+                        textField.setDisable(isReturn);
+                        
                         setGraphic(container);
                         setText(null);
                     }
@@ -213,52 +225,172 @@ public class StockInEditDialog extends Stage {
             };
         });
 
-        // 数量列 - 可编辑
+        // 数量列 - 可编辑（使用 TextField）
         quantityColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("quantity"));
-        quantityColumn.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        quantityColumn.setOnEditCommit(event -> {
-            StockInItem item = event.getRowValue();
-            Integer newQuantity = event.getNewValue();
-            if (newQuantity != null && newQuantity > 0) {
-                item.setQuantity(newQuantity);
-                updateAmount(item);
-                calculateTotal();
-            } else {
-                MessageDialog.showDialog("数量必须大于0");
-                itemTable.refresh();
-            }
+        quantityColumn.setCellFactory(col -> {
+            return new TableCell<StockInItem, Integer>() {
+                private final TextField textField = new TextField();
+                
+                {
+                    textField.setEditable(true);
+                    textField.setPromptText("数量");
+                    
+                    // 失去焦点时保存
+                    textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (!newVal) { // 失去焦点
+                            StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
+                            if (item != null) {
+                                try {
+                                    String text = textField.getText().trim();
+                                    if (!text.isEmpty()) {
+                                        Integer newQuantity = Integer.parseInt(text);
+                                        if (newQuantity > 0) {
+                                            item.setQuantity(newQuantity);
+                                            updateAmount(item);
+                                            calculateTotal();
+                                        } else {
+                                            MessageDialog.showDialog("数量必须大于0");
+                                            itemTable.refresh();
+                                        }
+                                    }
+                                } catch (NumberFormatException e) {
+                                    MessageDialog.showDialog("请输入有效的数字");
+                                    itemTable.refresh();
+                                }
+                            }
+                        }
+                    });
+                    
+                    // 按回车键也保存
+                    textField.setOnAction(e -> {
+                        StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (item != null) {
+                            try {
+                                String text = textField.getText().trim();
+                                if (!text.isEmpty()) {
+                                    Integer newQuantity = Integer.parseInt(text);
+                                    if (newQuantity > 0) {
+                                        item.setQuantity(newQuantity);
+                                        updateAmount(item);
+                                        calculateTotal();
+                                    } else {
+                                        MessageDialog.showDialog("数量必须大于0");
+                                        itemTable.refresh();
+                                    }
+                                }
+                            } catch (NumberFormatException e2) {
+                                MessageDialog.showDialog("请输入有效的数字");
+                                itemTable.refresh();
+                            }
+                        }
+                    });
+                }
+                
+                @Override
+                protected void updateItem(Integer quantity, boolean empty) {
+                    super.updateItem(quantity, empty);
+                    
+                    if (empty || getTableRow().getItem() == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        if (quantity != null && quantity > 0) {
+                            textField.setText(String.valueOf(quantity));
+                        } else {
+                            textField.clear();
+                        }
+                        setGraphic(textField);
+                        setText(null);
+                    }
+                }
+            };
         });
 
-        // 单价列 - 可编辑
+        // 单价列 - 可编辑（使用 TextField）
         priceColumn.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("price"));
-        priceColumn.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<BigDecimal>() {
-            @Override
-            public String toString(BigDecimal object) {
-                return object == null ? "" : object.toPlainString();
-            }
-
-            @Override
-            public BigDecimal fromString(String string) {
-                if (string == null || string.isEmpty()) return BigDecimal.ZERO;
-                try {
-                    return new BigDecimal(string);
-                } catch (NumberFormatException e) {
-                    return BigDecimal.ZERO;
+        priceColumn.setCellFactory(col -> {
+            return new TableCell<StockInItem, BigDecimal>() {
+                private final TextField textField = new TextField();
+                
+                {
+                    textField.setEditable(true);
+                    textField.setPromptText("单价");
+                    
+                    // 失去焦点时保存
+                    textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (!newVal) { // 失去焦点
+                            StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
+                            if (item != null) {
+                                try {
+                                    String text = textField.getText().trim();
+                                    if (!text.isEmpty()) {
+                                        BigDecimal newPrice = new BigDecimal(text);
+                                        if (newPrice.compareTo(BigDecimal.ZERO) >= 0) {
+                                            item.setPrice(newPrice);
+                                            updateAmount(item);
+                                            calculateTotal();
+                                        } else {
+                                            MessageDialog.showDialog("单价不能为负数");
+                                            itemTable.refresh();
+                                        }
+                                    }
+                                } catch (NumberFormatException e) {
+                                    MessageDialog.showDialog("请输入有效的数字");
+                                    itemTable.refresh();
+                                }
+                            }
+                        }
+                    });
+                    
+                    // 按回车键也保存
+                    textField.setOnAction(e -> {
+                        StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (item != null) {
+                            try {
+                                String text = textField.getText().trim();
+                                if (!text.isEmpty()) {
+                                    BigDecimal newPrice = new BigDecimal(text);
+                                    if (newPrice.compareTo(BigDecimal.ZERO) >= 0) {
+                                        item.setPrice(newPrice);
+                                        updateAmount(item);
+                                        calculateTotal();
+                                    } else {
+                                        MessageDialog.showDialog("单价不能为负数");
+                                        itemTable.refresh();
+                                    }
+                                }
+                            } catch (NumberFormatException e2) {
+                                MessageDialog.showDialog("请输入有效的数字");
+                                itemTable.refresh();
+                            }
+                        }
+                    });
                 }
-            }
-        }));
-
-        priceColumn.setOnEditCommit(event -> {
-            StockInItem item = event.getRowValue();
-            BigDecimal newPrice = event.getNewValue();
-            if (newPrice != null && newPrice.compareTo(BigDecimal.ZERO) >= 0) {
-                item.setPrice(newPrice);
-                updateAmount(item);
-                calculateTotal();
-            } else {
-                MessageDialog.showDialog("单价不能为负数");
-                itemTable.refresh();
-            }
+                
+                @Override
+                protected void updateItem(BigDecimal price, boolean empty) {
+                    super.updateItem(price, empty);
+                    
+                    if (empty || getTableRow().getItem() == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        if (price != null && price.compareTo(BigDecimal.ZERO) > 0) {
+                            textField.setText(price.toPlainString());
+                        } else {
+                            textField.clear();
+                        }
+                        
+                        // 根据入库类型控制是否可编辑
+                        boolean isReturn = "退货入库".equals(typeComboBox.getValue());
+                        textField.setEditable(!isReturn);
+                        textField.setDisable(isReturn);
+                        
+                        setGraphic(textField);
+                        setText(null);
+                    }
+                }
+            };
         });
 
         // 金额列（只读）
@@ -292,6 +424,15 @@ public class StockInEditDialog extends Stage {
         
         // 加载物资列表
         loadMaterialList();
+    }
+    
+    /**
+     * 更新表格单元格的可编辑状态
+     */
+    private void updateTableCellsEditable(boolean isReturn) {
+        // 刷新表格以应用新的编辑状态
+        itemTable.refresh();
+        
     }
 
     /**
@@ -340,6 +481,16 @@ public class StockInEditDialog extends Stage {
             // 用户选择了物资
             item.setMaterialId(selectedMaterial.getId());
             item.setMaterialName(selectedMaterial.getName());
+            
+            // 如果是退货入库，直接使用已加载的单价
+            boolean isReturn = "退货入库".equals(typeComboBox.getValue());
+            if (isReturn && selectedMaterial.getPrice() != null) {
+                item.setPrice(selectedMaterial.getPrice());
+                updateAmount(item);
+                calculateTotal();
+                System.out.println("已自动填充单价: " + selectedMaterial.getPrice());
+            }
+            
             System.out.println("已选择物资: " + selectedMaterial.getName() + " (ID: " + selectedMaterial.getId() + ")");
             
             // 刷新表格
@@ -393,10 +544,7 @@ public class StockInEditDialog extends Stage {
 
     private void loadMaterialList() {
         try {
-            System.out.println("=== 开始加载物资列表 ===");
             String url = HttpRequestUtil.serverUrl + "/api/material/list";
-            System.out.println("请求URL: " + url);
-            System.out.println("Token: " + AppStore.getJwt().getToken());
 
             // 使用 POST 方法，发送空的 JSON 对象
             Map<String, Object> emptyBody = new HashMap<>();
@@ -409,12 +557,8 @@ public class StockInEditDialog extends Stage {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            System.out.println("物资列表响应状态码: " + response.statusCode());
-            System.out.println("物资列表响应内容: " + response.body());
-
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                System.out.println("解析后的结果: " + result);
                 
                 if (result.get("code").equals(200.0)) {
                     List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
@@ -423,10 +567,19 @@ public class StockInEditDialog extends Stage {
                         OptionItem option = new OptionItem();
                         option.setId(((Number) item.get("id")).intValue());
                         option.setName((String) item.get("name"));
+                        
+                        // 加载单价字段（兼容 price 和 unitPrice）
+                        Object priceObj = item.get("price");
+                        if (priceObj == null) {
+                            priceObj = item.get("unitPrice");
+                        }
+                        if (priceObj != null) {
+                            option.setPrice(new BigDecimal(priceObj.toString()));
+                        }
+                        
                         materialList.add(option);
                     }
                     updateMaterialComboBox();
-                    System.out.println("成功加载 " + materialList.size() + " 个物资");
                     
                     // 刷新表格，让 ComboBox 显示最新的物资列表
                     itemTable.refresh();
@@ -490,122 +643,137 @@ public class StockInEditDialog extends Stage {
             return;
         }
 
-        try {
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("type", getTypeValue(typeComboBox.getValue()));
-
-            List<Map<String, Object>> items = new ArrayList<>();
-            for (StockInItem item : itemList) {
-                // 检查：必须有物资名称
-                if (item.getMaterialName() == null || item.getMaterialName().trim().isEmpty()) {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-                    alert.setTitle("警告");
-                    alert.setHeaderText(null);
-                    alert.setContentText("请填写物资名称");
-                    alert.showAndWait();
-                    return;
-                }
-                
-                if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-                    alert.setTitle("警告");
-                    alert.setHeaderText(null);
-                    alert.setContentText("物资数量必须大于0");
-                    alert.showAndWait();
-                    return;
-                }
-                
-                if (item.getPrice() == null) {
-                    item.setPrice(BigDecimal.ZERO);
-                }
-                
-                // 计算金额
-                BigDecimal amount = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-                item.setAmount(amount);
-                
-                Map<String, Object> itemMap = new HashMap<>();
-                
-                // 如果选择了物资（有materialId），则提交materialId
-                if (item.getMaterialId() != null) {
-                    itemMap.put("materialId", item.getMaterialId());
-                }
-                
-                // 始终提交物资名称
-                itemMap.put("materialName", item.getMaterialName());
-                itemMap.put("quantity", item.getQuantity());
-                itemMap.put("price", item.getPrice());
-                itemMap.put("amount", amount);
-                
-                // 如果有其他字段，也一并提交
-                if (item.getMaterialCode() != null && !item.getMaterialCode().isEmpty()) {
-                    itemMap.put("materialCode", item.getMaterialCode());
-                }
-                if (item.getMaterialSpec() != null && !item.getMaterialSpec().isEmpty()) {
-                    itemMap.put("materialSpec", item.getMaterialSpec());
-                }
-                if (item.getId() != null) {
-                    itemMap.put("id", item.getId());
-                }
-                
-                items.add(itemMap);
-            }
-            requestBody.put("items", items);
-
-            String url;
-            HttpRequest request;
-            
-            if (editingStockIn == null) {
-                // 新增：POST /stock-in/create
-                url = HttpRequestUtil.serverUrl + "/stock-in/create";
-                request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                        .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
-                        .build();
-            } else {
-                // 编辑：PUT /stock-in/update/{id}
-                url = HttpRequestUtil.serverUrl + "/stock-in/update/" + editingStockIn.getId();
-                request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .method("PUT", HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                        .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
-                        .build();
-            }
-
-            System.out.println("提交请求: " + request.method() + " " + url);
-            System.out.println("请求体: " + gson.toJson(requestBody));
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("响应状态码: " + response.statusCode());
-            System.out.println("响应内容: " + response.body());
-
-            if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                if (result.get("code").equals(200.0)) {
-                    String message = editingStockIn == null ? "入库单提交成功" : "入库单更新成功";
-                    
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-                    alert.setTitle("成功");
-                    alert.setHeaderText(null);
-                    alert.setContentText(message);
-                    alert.showAndWait();
-                    
-                    this.close();
-                } else {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                    alert.setTitle("错误");
-                    alert.setHeaderText(null);
-                    alert.setContentText("提交失败：" + result.get("msg"));
-                    alert.showAndWait();
-                }
-            } else {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                alert.setTitle("错误");
+        // 验证所有物资
+        for (StockInItem item : itemList) {
+            if (item.getMaterialName() == null || item.getMaterialName().trim().isEmpty()) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+                alert.setTitle("警告");
                 alert.setHeaderText(null);
-                alert.setContentText("提交失败：" + response.body());
+                alert.setContentText("请填写物资名称");
                 alert.showAndWait();
+                return;
             }
+            
+            if (item.getQuantity() == null || item.getQuantity() <= 0) {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+                alert.setTitle("警告");
+                alert.setHeaderText(null);
+                alert.setContentText("物资数量必须大于0");
+                alert.showAndWait();
+                return;
+            }
+        }
+
+        try {
+            int successCount = 0;
+            int failCount = 0;
+            StringBuilder errorMsg = new StringBuilder();
+            
+            // 遍历每个物资，创建独立的入库单
+            for (StockInItem item : itemList) {
+                try {
+                    // 计算金额
+                    BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
+                    BigDecimal amount = price.multiply(BigDecimal.valueOf(item.getQuantity()));
+                    
+                    // 构建单个物资的请求体
+                    Map<String, Object> requestBody = new HashMap<>();
+                    requestBody.put("type", getTypeValue(typeComboBox.getValue()));
+                    
+                    List<Map<String, Object>> items = new ArrayList<>();
+                    Map<String, Object> itemMap = new HashMap<>();
+                    
+                    // 如果选择了物资（有materialId），则提交materialId
+                    if (item.getMaterialId() != null) {
+                        itemMap.put("materialId", item.getMaterialId());
+                    }
+                    
+                    // 始终提交物资名称
+                    itemMap.put("materialName", item.getMaterialName());
+                    itemMap.put("quantity", item.getQuantity());
+                    itemMap.put("price", price);
+                    itemMap.put("amount", amount);
+                    
+                    // 如果有其他字段，也一并提交
+                    if (item.getMaterialCode() != null && !item.getMaterialCode().isEmpty()) {
+                        itemMap.put("materialCode", item.getMaterialCode());
+                    }
+                    if (item.getMaterialSpec() != null && !item.getMaterialSpec().isEmpty()) {
+                        itemMap.put("materialSpec", item.getMaterialSpec());
+                    }
+                    if (item.getId() != null) {
+                        itemMap.put("id", item.getId());
+                    }
+                    
+                    items.add(itemMap);
+                    requestBody.put("items", items);
+                    
+                    String url = HttpRequestUtil.serverUrl + "/stock-in/create";
+                    HttpRequest request = HttpRequest.newBuilder()
+                            .uri(URI.create(url))
+                            .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                            .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
+                            .build();
+                    
+                    System.out.println("提交入库单 " + (successCount + 1) + ": " + item.getMaterialName());
+                    
+                    HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                    
+                    if (response.statusCode() == 200) {
+                        Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                        if (result.get("code").equals(200.0)) {
+                            successCount++;
+                            System.out.println("入库单 " + (successCount) + " 提交成功");
+                        } else {
+                            failCount++;
+                            errorMsg.append("物资「").append(item.getMaterialName()).append("」提交失败: ")
+                                    .append(result.get("msg")).append("\n");
+                            System.err.println("入库单提交失败: " + result.get("msg"));
+                        }
+                    } else {
+                        failCount++;
+                        errorMsg.append("物资「").append(item.getMaterialName()).append("」HTTP错误: ")
+                                .append(response.statusCode()).append("\n");
+                        System.err.println("HTTP错误: " + response.statusCode());
+                    }
+                    
+                    // 稍微延迟，避免请求过快
+                    Thread.sleep(100);
+                    
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    failCount++;
+                    errorMsg.append("物资「").append(item.getMaterialName()).append("」被中断\n");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    failCount++;
+                    errorMsg.append("物资「").append(item.getMaterialName()).append("」异常: ")
+                            .append(e.getMessage()).append("\n");
+                }
+            }
+            
+            // 显示提交结果
+            StringBuilder resultMsg = new StringBuilder();
+            resultMsg.append("提交完成！\n");
+            resultMsg.append("成功: ").append(successCount).append(" 个\n");
+            resultMsg.append("失败: ").append(failCount).append(" 个");
+            
+            if (errorMsg.length() > 0) {
+                resultMsg.append("\n\n失败详情:\n").append(errorMsg.toString());
+            }
+            
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+                failCount == 0 ? javafx.scene.control.Alert.AlertType.INFORMATION : javafx.scene.control.Alert.AlertType.WARNING);
+            alert.setTitle("提交结果");
+            alert.setHeaderText(null);
+            alert.setContentText(resultMsg.toString());
+            alert.showAndWait();
+            
+            // 如果全部成功，关闭对话框
+            if (failCount == 0) {
+                this.close();
+            }
+            
         } catch (Exception e) {
             e.printStackTrace();
             javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);

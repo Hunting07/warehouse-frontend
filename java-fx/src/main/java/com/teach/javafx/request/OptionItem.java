@@ -1,5 +1,6 @@
 package com.teach.javafx.request;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -10,6 +11,7 @@ import java.util.Map;
 public class OptionItem {
     private Integer id;
     private String name;
+    private BigDecimal price;
 
     public OptionItem() {
 
@@ -25,6 +27,15 @@ public class OptionItem {
             Object idObj = map.get("id");
             this.id = idObj != null ? ((Number) idObj).intValue() : null;
             this.name = (String) map.get("name");
+            
+            // 尝试获取价格字段
+            Object priceObj = map.get("price");
+            if (priceObj == null) {
+                priceObj = map.get("unitPrice");
+            }
+            if (priceObj != null) {
+                this.price = new BigDecimal(priceObj.toString());
+            }
         }
     }
 
@@ -42,6 +53,14 @@ public class OptionItem {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 
     @Override

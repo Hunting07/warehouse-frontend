@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.StatisticsController"
+      spacing="20"
+      style="-fx-background-color: #f5f7fa;">
+
+    <padding>
+        <Insets top="20" right="30" bottom="20" left="30"/>
+    </padding>
+
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <Label text="金额统计" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="刷新" onAction="#loadStatistics"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-background-radius: 5; -fx-cursor: hand;" prefWidth="100"/>
+    </HBox>
+
+    <GridPane hgap="20" vgap="20">
+        <VBox GridPane.columnIndex="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 2);" maxWidth="Infinity">
+            <Label text="入库总金额" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
+            <Label fx:id="stockInAmountLabel" text="¥0.00" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #27ae60; -fx-padding: 10 0 0 0;"/>
+        </VBox>
+
+        <VBox GridPane.columnIndex="1" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 2);" maxWidth="Infinity">
+            <Label text="出库总金额" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
+            <Label fx:id="stockOutAmountLabel" text="¥0.00" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #e74c3c; -fx-padding: 10 0 0 0;"/>
+        </VBox>
+
+        <VBox GridPane.columnIndex="2" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 2);" maxWidth="Infinity">
+            <Label text="净金额" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
+            <Label fx:id="netAmountLabel" text="¥0.00" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #3498db; -fx-padding: 10 0 0 0;"/>
+        </VBox>
+    </GridPane>
+
+    <VBox style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 2);">
+        <Label text="统计说明" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 15 0;"/>
+        <VBox spacing="10">
+            <Label text="• 入库金额：所有已审核通过的入库单总金额" style="-fx-font-size: 13px; -fx-text-fill: #5a6c7d;"/>
+            <Label text="• 出库金额：所有已审核通过的出库单总金额（不包含已驳回的）" style="-fx-font-size: 13px; -fx-text-fill: #5a6c7d;"/>
+            <Label text="• 净金额：入库金额 - 出库金额" style="-fx-font-size: 13px; -fx-text-fill: #5a6c7d;"/>
+        </VBox>
+    </VBox>
+</VBox>

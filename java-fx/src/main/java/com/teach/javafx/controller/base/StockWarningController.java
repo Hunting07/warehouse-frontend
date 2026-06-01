@@ -147,7 +147,7 @@ public class StockWarningController {
                     Button settingBtn = new Button("设置");
                     settingBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;");
                     settingBtn.setOnAction(e -> {
-                        WarningNode warning = getTableView().getSelectionModel().getSelectedItem();
+                        WarningNode warning = getTableRow().getItem();
                         editWarningSetting(warning);
                     });
                     setGraphic(settingBtn);
