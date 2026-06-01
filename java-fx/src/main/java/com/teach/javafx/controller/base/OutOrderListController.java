@@ -88,6 +88,7 @@ public class OutOrderListController extends ToolController {
             return new javafx.beans.property.SimpleIntegerProperty(total - index).asObject();
         });
         outTypeColumn.setCellValueFactory(new PropertyValueFactory<>("outTypeName"));
+        orderNoColumn.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
         applicantNameColumn.setCellValueFactory(new PropertyValueFactory<>("applicantName"));
         materialNamesColumn.setCellValueFactory(new PropertyValueFactory<>("materialNames"));
         applyTimeColumn.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
