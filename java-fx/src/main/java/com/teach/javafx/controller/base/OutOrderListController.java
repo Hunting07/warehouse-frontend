@@ -578,6 +578,14 @@ public class OutOrderListController extends ToolController {
         rejectReasonArea.setPrefRowCount(4);
         rejectReasonArea.setPrefWidth(400);
 
+        javafx.scene.control.Button rejectBtn = (javafx.scene.control.Button) dialog.getDialogPane().lookupButton(rejectButtonType);
+        rejectBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (rejectReasonArea.getText() == null || rejectReasonArea.getText().trim().isEmpty()) {
+                MessageDialog.showDialog("请填写驳回理由");
+                event.consume();
+            }
+        });
+
         // 创建明细信息文本区域（使用 TextArea 可以自动换行）
         TextArea detailArea = new TextArea();
         detailArea.setEditable(false);
@@ -709,12 +717,7 @@ public class OutOrderListController extends ToolController {
             if (approved) {
                 approveOutOrder(outOrder, true, null);
             } else {
-                String rejectReason = rejectReasonArea.getText();
-                if (rejectReason == null || rejectReason.trim().isEmpty()) {
-                    MessageDialog.showDialog("请填写驳回理由");
-                    return;
-                }
-                approveOutOrder(outOrder, false, rejectReason);
+                approveOutOrder(outOrder, false, rejectReasonArea.getText());
             }
         });
     }

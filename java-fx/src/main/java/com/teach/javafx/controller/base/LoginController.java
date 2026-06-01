@@ -228,10 +228,10 @@ public class LoginController {
                             MessageDialog.showDialog("登录失败：" + msg);
                         }
                     } else {
-                        MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
+                        MessageDialog.showDialog("请求失败");
                     }
                 } catch (Exception e) {
-                    MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
+                    MessageDialog.showDialog("请求失败");
                 }
             }
         } catch (Exception e) {

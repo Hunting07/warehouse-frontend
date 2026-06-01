@@ -90,7 +90,7 @@ public class RegisterController {
                     MessageDialog.showDialog("注册失败：" + result.get("msg"));
                 }
             } else {
-                MessageDialog.showDialog("请求失败，状态码：" + response.statusCode());
+                MessageDialog.showDialog("请求失败");
             }
         } catch (Exception e) {
             e.printStackTrace();

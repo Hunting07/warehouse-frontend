@@ -357,7 +357,7 @@ public class OutOrderEditDialog {
                         materialMapList = new ArrayList<>();
                     }
                 } else {
-                    System.err.println("HTTP请求失败，状态码：" + response.statusCode());
+                    System.err.println("HTTP请求失败：" + response.statusCode());
                     materialList = new ArrayList<>();
                     materialMapList = new ArrayList<>();
                 }
@@ -376,7 +376,12 @@ public class OutOrderEditDialog {
     private void loadDetailList() {
         new Thread(() -> {
             try {
-                String url = HttpRequestUtil.serverUrl + "/api/stockOut/getDetails/" + outOrder.getId();
+                System.out.println("\n=== [编辑对话框] 开始加载出库单明细 ===");
+                System.out.println("出库单ID: " + outOrder.getId());
+                String url = HttpRequestUtil.serverUrl + "/api/stockOut/getDetail/" + outOrder.getId();
+                System.out.println("请求URL: " + url);
+                System.out.println("Token: " + AppStore.getJwt().getToken());
+                
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
                         .GET()
@@ -384,22 +389,100 @@ public class OutOrderEditDialog {
                         .build();
 
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                
+                System.out.println("响应状态码: " + response.statusCode());
+                System.out.println("响应内容: " + response.body());
 
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), Map.class);
                     int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                    System.out.println("解析结果: code=" + c);
+                    
                     if (c == 200 || c == 0) {
-                        List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+                        // getDetail 接口返回的是 {data: {items: [...]}}
+                        Map<String, Object> data = (Map<String, Object>) result.get("data");
+                        final List<Map<String, Object>> finalItems;
+                        
+                        if (data != null) {
+                            @SuppressWarnings("unchecked")
+                            List<Map<String, Object>> rawItems = (List<Map<String, Object>>) data.get("items");
+                            finalItems = rawItems;
+                        } else {
+                            finalItems = null;
+                        }
+                        
+                        System.out.println("明细数量: " + (finalItems != null ? finalItems.size() : 0));
+                        
                         Platform.runLater(() -> {
-                            if (data != null) {
-                                List<OutOrderDetail> list = gson.fromJson(gson.toJson(data), new TypeToken<List<OutOrderDetail>>(){}.getType());
+                            if (finalItems != null && !finalItems.isEmpty()) {
+                                // 需要将后端字段映射到 OutOrderDetail
+                                List<OutOrderDetail> list = new ArrayList<>();
+                                for (Map<String, Object> itemMap : finalItems) {
+                                    OutOrderDetail detail = new OutOrderDetail();
+                                    
+                                    // 字段映射：后端使用 materialId, materialName, outQuantity 等
+                                    Object materialId = itemMap.get("materialId");
+                                    if (materialId != null) {
+                                        detail.setGoodsId(((Number) materialId).intValue());
+                                    }
+                                    
+                                    detail.setGoodsName((String) itemMap.get("materialName"));
+                                    detail.setGoodsSpec((String) itemMap.get("materialCode"));
+                                    detail.setUnit((String) itemMap.get("unit"));
+                                    
+                                    Object outQuantity = itemMap.get("outQuantity");
+                                    if (outQuantity != null) {
+                                        detail.setOutNum(((Number) outQuantity).intValue());
+                                    }
+                                    
+                                    Object unitPrice = itemMap.get("unitPrice");
+                                    if (unitPrice != null) {
+                                        try {
+                                            detail.setUnitPrice(new BigDecimal(unitPrice.toString()));
+                                        } catch (NumberFormatException e) {
+                                            detail.setUnitPrice(BigDecimal.ZERO);
+                                        }
+                                    } else {
+                                        detail.setUnitPrice(BigDecimal.ZERO);
+                                    }
+                                    
+                                    // 计算总价
+                                    if (detail.getOutNum() != null && detail.getUnitPrice() != null) {
+                                        detail.setTotalPrice(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getOutNum())));
+                                    } else {
+                                        detail.setTotalPrice(BigDecimal.ZERO);
+                                    }
+                                    
+                                    list.add(detail);
+                                }
+                                
+                                System.out.println("转换后的明细列表大小: " + list.size());
                                 detailList.addAll(list);
+                                calculateTotalAmount();
+                                System.out.println("✅ 明细加载成功");
+                            } else {
+                                System.out.println("⚠️ 没有明细数据");
+                                MessageDialog.showDialog("该出库单暂无明细数据");
                             }
                         });
+                    } else {
+                        System.err.println("❌ 业务错误: " + result.get("msg"));
+                        Platform.runLater(() -> {
+                            MessageDialog.showDialog("加载明细失败：" + result.get("msg"));
+                        });
                     }
+                } else {
+                    System.err.println("❌ HTTP错误: " + response.statusCode());
+                    Platform.runLater(() -> {
+                        MessageDialog.showDialog("加载明细失败：HTTP " + response.statusCode());
+                    });
                 }
             } catch (Exception e) {
+                System.err.println("❌ 加载明细数据异常: " + e.getMessage());
                 e.printStackTrace();
+                Platform.runLater(() -> {
+                    MessageDialog.showDialog("加载明细异常：" + e.getMessage());
+                });
             }
         }).start();
     }
@@ -661,7 +744,7 @@ public class OutOrderEditDialog {
                 System.err.println("HTTP请求失败：");
                 System.err.println("状态码: " + response.statusCode());
                 System.err.println("响应内容: " + response.body());
-                MessageDialog.showDialog("请求失败，状态码：" + response.statusCode() + "\n请查看控制台获取详细信息");
+                MessageDialog.showDialog("请求失败" + "\n请查看控制台获取详细信息");
             }
         } catch (Exception e) {
             System.err.println("提交出库单异常！");

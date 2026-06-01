@@ -225,10 +225,10 @@ public class UserAuditController {
                     if (msg != null && !msg.isEmpty()) {
                         MessageDialog.showDialog("审批失败：" + msg);
                     } else {
-                        MessageDialog.showDialog("审批失败，状态码：" + response.statusCode());
+                        MessageDialog.showDialog("审批失败");
                     }
                 } catch (Exception e) {
-                    MessageDialog.showDialog("审批失败，状态码：" + response.statusCode());
+                    MessageDialog.showDialog("审批失败");
                 }
             }
         } catch (Exception e) {

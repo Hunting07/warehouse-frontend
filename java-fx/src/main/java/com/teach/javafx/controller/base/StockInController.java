@@ -193,12 +193,12 @@ public class StockInController extends ToolController {
                     System.out.println("业务错误: " + resultMap.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + response.statusCode();
+                String errorMsg = "";
                 if (response.body() != null && !response.body().isEmpty()) {
                     try {
                         Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                         if (errorResult.get("msg") != null) {
-                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                            errorMsg = (String) errorResult.get("msg");
                         }
                     } catch (Exception e) {
                         errorMsg += "\n响应内容：" + response.body();
@@ -605,12 +605,12 @@ public class StockInController extends ToolController {
                     System.out.println("❌ 业务错误: " + resultMap.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + response.statusCode();
+                String errorMsg = "";
                 if (response.body() != null && !response.body().isEmpty()) {
                     try {
                         Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                         if (errorResult.get("msg") != null) {
-                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                            errorMsg = (String) errorResult.get("msg");
                         }
                     } catch (Exception e) {
                         errorMsg += "\n响应内容：" + response.body();
@@ -687,12 +687,12 @@ public class StockInController extends ToolController {
                     System.out.println("❌ 业务错误: " + resultMap.get("msg"));
                 }
             } else {
-                String errorMsg = "请求失败，状态码：" + response.statusCode();
+                String errorMsg = "";
                 if (response.body() != null && !response.body().isEmpty()) {
                     try {
                         Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                         if (errorResult.get("msg") != null) {
-                            errorMsg += "\n错误信息：" + errorResult.get("msg");
+                            errorMsg = (String) errorResult.get("msg");
                         }
                         if (errorResult.get("data") != null) {
                             errorMsg += "\n详细信息：" + errorResult.get("data");

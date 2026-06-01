@@ -184,7 +184,7 @@ public class OutboundApplyController {
                         System.err.println("接口返回错误：code=" + result.get("code") + ", msg=" + result.get("msg"));
                     }
                 } else {
-                    System.err.println("HTTP请求失败，状态码：" + response.statusCode());
+                    System.err.println("HTTP请求失败：" + response.statusCode());
                 }
             } catch (Exception e) {
                 System.err.println("加载物资列表失败：" + e.getMessage());
