@@ -83,7 +83,7 @@ public class CategoryController extends ToolController {
     }
 
     private void setupTreeTable() {
-        idCol.setCellFactory(col -> new TreeTableCell<CategoryNode, Integer>() {
+        idCol.setCellFactory(col -> new TreeTableCell<>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
@@ -311,6 +311,15 @@ public class CategoryController extends ToolController {
     }
 
     @FXML
+    private void refreshData() {
+        searchField.clear();
+        if (statusFilter != null) {
+            statusFilter.setValue("全部");
+        }
+        loadCategoryTree();
+    }
+
+    @FXML
     private void addCategory() {
         if (!isAdmin) {
             showError("权限不足", "只有管理员可以新增分类");
@@ -470,13 +479,15 @@ public class CategoryController extends ToolController {
         statusCol.setCellValueFactory(param -> param.getValue().statusProperty());
         statusCol.setPrefWidth(80);
 
-        materialTable.getColumns().addAll(idCol, nameCol, codeCol, unitCol, currentStockCol, safetyStockCol, warningCol, statusCol);
-
         @SuppressWarnings("unchecked")
+        TableColumn<MaterialNode, ?>[] columns = new TableColumn[]{idCol, nameCol, codeCol, unitCol, currentStockCol, safetyStockCol, warningCol, statusCol};
+        materialTable.getColumns().addAll(columns);
+
         List<Map<String, Object>> materialList = gson.fromJson(
                 gson.toJson(data),
                 new TypeToken<List<Map<String, Object>>>(){}.getType()
         );
+
 
         if (materialList != null) {
             for (Map<String, Object> material : materialList) {
@@ -552,8 +563,17 @@ public class CategoryController extends ToolController {
                 }
             }
             if (map.get("status") != null) {
-                node.setStatus(map.get("status").toString());
+            Object statusObj = map.get("status");
+            String statusText;
+            if (statusObj instanceof Number number) {
+                statusText = (number.intValue() == 1) ? "启用" : "禁用";
+            } else {
+                String statusStr = statusObj.toString();
+                statusText = ("1".equals(statusStr) || "启用".equals(statusStr)) ? "启用" : "禁用";
             }
+            node.setStatus(statusText);
+        }
+
         } catch (Exception e) {
             logger.log(Level.WARNING, "转换物资数据失败", e);
             return null;
@@ -574,6 +594,7 @@ public class CategoryController extends ToolController {
         private final ObjectProperty<java.math.BigDecimal> price = new SimpleObjectProperty<>(java.math.BigDecimal.ZERO);
         private final StringProperty status = new SimpleStringProperty("启用");
 
+        @SuppressWarnings("unused")
         public IntegerProperty getIdProperty() { return id; }
         public void setId(int value) { id.set(value); }
 
@@ -583,9 +604,11 @@ public class CategoryController extends ToolController {
         public StringProperty codeProperty() { return code; }
         public void setCode(String value) { code.set(value); }
 
+        @SuppressWarnings("unused")
         public IntegerProperty categoryIdProperty() { return categoryId; }
         public void setCategoryId(int value) { categoryId.set(value); }
 
+        @SuppressWarnings("unused")
         public StringProperty categoryNameProperty() { return categoryName; }
         public void setCategoryName(String value) { categoryName.set(value); }
 
@@ -600,11 +623,13 @@ public class CategoryController extends ToolController {
         public int getSafetyStock() { return safetyStock.get(); }
         public void setSafetyStock(int value) { safetyStock.set(value); }
 
+        @SuppressWarnings("unused")
         public ObjectProperty<java.math.BigDecimal> priceProperty() { return price; }
         public void setPrice(java.math.BigDecimal value) { price.set(value); }
 
         public StringProperty statusProperty() { return status; }
         public void setStatus(String value) { status.set(value); }
+
 
     }
 

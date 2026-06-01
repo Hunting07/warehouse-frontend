@@ -90,7 +90,6 @@ public class MaterialController extends ToolController {
         if (jwt != null && jwt.getRole() != null) {
             isAdmin = "admin".equals(jwt.getRole()) || "管理员".equals(jwt.getRole());
         }
-        System.out.println("物资管理-当前用户角色: " + (jwt != null ? jwt.getRole() : "null") + ", 是否管理员: " + isAdmin);
     }
 
     private void applyRolePermissions() {
@@ -99,9 +98,6 @@ public class MaterialController extends ToolController {
                 addMaterialBtn.setVisible(false);
                 addMaterialBtn.setManaged(false);
             }
-            System.out.println("物资管理-当前为普通员工，仅查看权限");
-        } else {
-            System.out.println("物资管理-当前为管理员，拥有完整操作权限");
         }
     }
 
@@ -175,14 +171,14 @@ public class MaterialController extends ToolController {
                             Button editBtn = new Button("编辑");
                             editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;");
                             editBtn.setOnAction(e -> {
-                                MaterialNode material = getTableView().getSelectionModel().getSelectedItem();
+                                MaterialNode material = getTableView().getItems().get(getIndex());
                                 editMaterial(material);
                             });
 
                             Button deleteBtn = new Button("删除");
                             deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-cursor: hand;");
                             deleteBtn.setOnAction(e -> {
-                                MaterialNode material = getTableView().getSelectionModel().getSelectedItem();
+                                MaterialNode material = getTableView().getItems().get(getIndex());
                                 deleteMaterial(material);
                             });
 
@@ -323,20 +319,14 @@ public class MaterialController extends ToolController {
                     Object priceObj = map.get("price");
                     BigDecimal price;
 
-                    if (priceObj instanceof BigDecimal) {
-                        price = (BigDecimal) priceObj;
-                    } else if (priceObj instanceof Double) {
-                        price = BigDecimal.valueOf((Double) priceObj);
-                    } else if (priceObj instanceof Float) {
-                        price = BigDecimal.valueOf((Float) priceObj);
-                    } else if (priceObj instanceof Integer) {
-                        price = BigDecimal.valueOf((Integer) priceObj);
-                    } else if (priceObj instanceof Long) {
-                        price = BigDecimal.valueOf((Long) priceObj);
-                    } else if (priceObj instanceof Number) {
-                        price = BigDecimal.valueOf(((Number) priceObj).doubleValue());
-                    } else {
-                        price = new BigDecimal(priceObj.toString());
+                    switch (priceObj) {
+                        case BigDecimal bd -> price = bd;
+                        case Double d -> price = BigDecimal.valueOf(d);
+                        case Float f -> price = BigDecimal.valueOf(f);
+                        case Integer i -> price = BigDecimal.valueOf(i);
+                        case Long l -> price = BigDecimal.valueOf(l);
+                        case Number n -> price = BigDecimal.valueOf(n.doubleValue());
+                        default -> price = new BigDecimal(priceObj.toString());
                     }
 
                     node.setPrice(price);
@@ -345,16 +335,18 @@ public class MaterialController extends ToolController {
                     node.setPrice(BigDecimal.ZERO);
                 }
             }
-
+            
             if (map.get("status") != null) {
                 Object statusObj = map.get("status");
-                if (statusObj instanceof String) {
-                    node.setStatus((String) statusObj);
-                } else if (statusObj instanceof Number) {
-                    node.setStatus(String.valueOf(((Number) statusObj).intValue()));
+                String statusText;
+                if (statusObj instanceof Number) {
+                    int statusValue = ((Number) statusObj).intValue();
+                    statusText = (statusValue == 1) ? "启用" : "停用";
                 } else {
-                    node.setStatus(statusObj.toString());
+                    String statusStr = statusObj.toString();
+                    statusText = ("1".equals(statusStr) || "启用".equals(statusStr)) ? "启用" : "停用";
                 }
+                node.setStatus(statusText);
             }
 
             if (map.get("createTime") != null) {
@@ -389,60 +381,110 @@ public class MaterialController extends ToolController {
             }
             if (stockStatus != null && !"全部".equals(stockStatus)) {
                 request.put("stockStatus", stockStatus);
-                System.out.println("库存状态筛选: " + stockStatus);
             }
-            if (materialStatus != null && !"全部".equals(materialStatus)) {
-                int statusCode = "启用".equals(materialStatus) ? 1 : 0;
-                request.put("status", statusCode);
-                System.out.println("物资状态转换: " + materialStatus + " -> " + statusCode);
-            }
-
-            System.out.println("====== 物资搜索请求 ======");
-            System.out.println("请求URL: /api/material/search");
-            System.out.println("请求参数: " + gson.toJson(request.getParams()));
 
             DataResponse response = HttpRequestUtil.request("/api/material/search", request);
 
-            System.out.println("响应结果: " + (response != null ? gson.toJson(response) : "null"));
-
             if (response != null && response.getCode() == 200) {
-                // 如果后端不支持 stockStatus 参数，在前端进行过滤
-                if (stockStatus != null && !"全部".equals(stockStatus)) {
-                    Platform.runLater(() -> {
-                        List<Map<String, Object>> allMaterials = gson.fromJson(
-                            gson.toJson(response.getData()),
-                            new TypeToken<List<Map<String, Object>>>(){}.getType()
-                        );
+                Platform.runLater(() -> {
+                    List<Map<String, Object>> allMaterials = gson.fromJson(
+                        gson.toJson(response.getData()),
+                        new TypeToken<List<Map<String, Object>>>(){}.getType()
+                    );
 
-                        List<Map<String, Object>> filteredMaterials = new java.util.ArrayList<>();
-                        for (Map<String, Object> material : allMaterials) {
-                            try {
+                    if (allMaterials == null) {
+                        buildDataList(null);
+                        return;
+                    }
+
+                    List<Map<String, Object>> filteredMaterials = new java.util.ArrayList<>();
+
+                    for (Map<String, Object> material : allMaterials) {
+                        try {
+                            boolean matchesStockFilter = true;
+                            if (stockStatus != null && !"全部".equals(stockStatus)) {
                                 int currentStock = ((Number) material.get("currentStock")).intValue();
                                 int safetyStock = ((Number) material.get("safetyStock")).intValue();
-
                                 boolean isWarning = currentStock < safetyStock;
-                                boolean matchesFilter = false;
 
                                 if ("预警".equals(stockStatus)) {
-                                    matchesFilter = isWarning;
+                                    matchesStockFilter = isWarning;
                                 } else if ("正常".equals(stockStatus)) {
-                                    matchesFilter = !isWarning;
+                                    matchesStockFilter = !isWarning;
                                 }
-
-                                if (matchesFilter) {
-                                    filteredMaterials.add(material);
-                                }
-                            } catch (Exception e) {
-                                logger.log(Level.WARNING, "过滤物资数据失败", e);
                             }
-                        }
 
-                        System.out.println("前端过滤后物资数量: " + filteredMaterials.size() + " / " + allMaterials.size());
-                        buildDataList(filteredMaterials);
-                    });
-                } else {
-                    Platform.runLater(() -> buildDataList(response.getData()));
-                }
+                            boolean matchesStatusFilter = true;
+                            if (materialStatus != null && !"全部".equals(materialStatus)) {
+                                int materialStatusCode = 0;
+                                if (material.get("status") != null) {
+                                    Object statusObj = material.get("status");
+                                    if (statusObj instanceof Number) {
+                                        materialStatusCode = ((Number) statusObj).intValue();
+                                    } else {
+                                        String statusStr = statusObj.toString();
+                                        materialStatusCode = ("1".equals(statusStr) || "启用".equals(statusStr)) ? 1 : 0;
+                                    }
+                                }
+
+                                String categoryName = (String) material.get("categoryName");
+
+                                if (categoryName == null || categoryName.isEmpty()) {
+                                    // 无分类物资：根据自身状态决定
+                                    if ("启用".equals(materialStatus)) {
+                                        matchesStatusFilter = (materialStatusCode == 1);
+                                    } else {
+                                        matchesStatusFilter = (materialStatusCode == 0);
+                                    }
+                                } else {
+                                    // 有分类物资：查找分类状态
+                                    int categoryStatusCode = -1;
+                                    boolean foundCategory = false;
+
+                                    if (categoryListCache != null) {
+                                        for (Map<String, Object> cat : categoryListCache) {
+                                            if (categoryName.equals(cat.get("name"))) {
+                                                Object catStatusObj = cat.get("status");
+                                                if (catStatusObj instanceof Number) {
+                                                    categoryStatusCode = ((Number) catStatusObj).intValue();
+                                                } else {
+                                                    String catStatusStr = catStatusObj.toString();
+                                                    categoryStatusCode = ("1".equals(catStatusStr) || "启用".equals(catStatusStr)) ? 1 : 0;
+                                                }
+                                                foundCategory = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    // 如果缓存中没找到，默认为停用状态
+                                    if (!foundCategory) {
+                                        categoryStatusCode = 0;
+                                    }
+
+                                    // 有分类物资：只有分类和自身状态都为启用时才显示在"启用"结果
+                                    // 其他情况一律显示在"停用"结果
+                                    if ("启用".equals(materialStatus)) {
+                                        matchesStatusFilter = (materialStatusCode == 1 && categoryStatusCode == 1);
+                                    } else {
+                                        // 停用筛选：只要不是"分类和自身都为启用"的情况
+                                        matchesStatusFilter = !(materialStatusCode == 1 && categoryStatusCode == 1);
+                                    }
+
+                                }
+                            }
+
+
+                            if (matchesStockFilter && matchesStatusFilter) {
+                                filteredMaterials.add(material);
+                            }
+                        } catch (Exception e) {
+                            logger.log(Level.WARNING, "过滤物资数据失败", e);
+                        }
+                    }
+
+                    buildDataList(filteredMaterials);
+                });
             } else {
                 String errorMsg = response != null ? response.getMsg() : "网络错误";
                 System.out.println("搜索失败: " + errorMsg);
@@ -462,6 +504,19 @@ public class MaterialController extends ToolController {
         if (materialStatusFilter != null) {
             materialStatusFilter.setValue("全部");
         }
+        loadMaterials();
+    }
+
+    @FXML
+    private void refreshData() {
+        searchField.clear();
+        categoryFilter.setValue("全部分类");
+        stockStatusFilter.setValue("全部");
+        if (materialStatusFilter != null) {
+            materialStatusFilter.setValue("全部");
+        }
+        categoryFilter.getItems().clear();
+        loadCategoryOptions();
         loadMaterials();
     }
 
@@ -505,20 +560,13 @@ public class MaterialController extends ToolController {
                     DataRequest request = new DataRequest();
                     request.put("id", material.getId());
 
-                    System.out.println("====== 物资删除请求 ======");
-                    System.out.println("请求URL: /api/material/delete");
-                    System.out.println("请求参数: " + gson.toJson(request.getParams()));
-
                     DataResponse resp = HttpRequestUtil.request("/api/material/delete", request);
-
-                    System.out.println("响应结果: " + (resp != null ? gson.toJson(resp) : "null"));
 
                     if (resp != null && resp.getCode() == 200) {
                         showInfo("删除成功", "物资已删除");
                         loadMaterials();
                     } else {
                         String errorMsg = resp != null ? resp.getMsg() : "网络错误";
-                        System.out.println("删除失败: " + errorMsg);
                         showError("删除失败", "后端返回错误: " + errorMsg);
                     }
                 } catch (Exception e) {
@@ -651,20 +699,18 @@ public class MaterialController extends ToolController {
                 } else {
                     request.put("price", BigDecimal.ZERO);
                 }
-                request.put("status", statusCombo.getValue());
+
+                String statusValue = statusCombo.getValue();
+                int statusCode = "启用".equals(statusValue) ? 1 : 0;
+                request.put("status", statusCode);
 
                 if (material != null) {
                     request.put("id", material.getId());
                 }
 
                 String url = material == null ? "/api/material/add" : "/api/material/update";
-                System.out.println("====== 物资保存请求 ======");
-                System.out.println("请求URL: " + url);
-                System.out.println("请求参数: " + gson.toJson(request.getParams()));
 
                 DataResponse response = HttpRequestUtil.request(url, request);
-
-                System.out.println("响应结果: " + (response != null ? gson.toJson(response) : "null"));
 
                 if (response != null && response.getCode() == 200) {
                     showInfo("操作成功", material == null ? "物资已创建" : "物资已更新");
@@ -672,7 +718,6 @@ public class MaterialController extends ToolController {
                     loadMaterials();
                 } else {
                     String errorMsg = response != null ? response.getMsg() : "网络错误";
-                    System.out.println("保存失败: " + errorMsg);
                     showError("操作失败", "后端返回错误: " + errorMsg);
                 }
             } catch (Exception ex) {
@@ -769,6 +814,7 @@ public class MaterialController extends ToolController {
         private final StringProperty status = new SimpleStringProperty("启用");
         private final ObjectProperty<LocalDateTime> createTime = new SimpleObjectProperty<>();
 
+        @SuppressWarnings("unused")
         public IntegerProperty getIdProperty() { return id; }
         public int getId() { return id.get(); }
         public void setId(int value) { id.set(value); }
