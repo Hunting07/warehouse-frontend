@@ -265,6 +265,19 @@
 
 .tree-cell:hover {
     -fx-background-color: #f0f4f8;
+    -fx-text-fill: #2c3e50;
+}
+
+.tree-cell .tree-disclosure-node .arrow {
+    -fx-background-color: -fx-text-secondary;
+}
+
+.tree-cell:expanded .tree-disclosure-node .arrow {
+    -fx-background-color: -fx-primary-color;
+}
+
+.tree-cell:hover .tree-disclosure-node .arrow {
+    -fx-background-color: -fx-primary-color;
 }
 
 /* ========================================

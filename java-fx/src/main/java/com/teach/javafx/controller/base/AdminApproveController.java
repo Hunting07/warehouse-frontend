@@ -24,7 +24,9 @@ public class AdminApproveController {
     @FXML
     private TableView<AdminInfo> pendingAdminTable;
     @FXML
-    private TableColumn<AdminInfo, Integer> pendingIdColumn;
+    private TableColumn<AdminInfo, Integer> pendingNoColumn;
+    @FXML
+    private TableColumn<AdminInfo, String> pendingEmployeeNoColumn;
     @FXML
     private TableColumn<AdminInfo, String> pendingUsernameColumn;
     @FXML
@@ -43,7 +45,9 @@ public class AdminApproveController {
     @FXML
     private TableView<AdminInfo> approvedAdminTable;
     @FXML
-    private TableColumn<AdminInfo, Integer> approvedIdColumn;
+    private TableColumn<AdminInfo, Integer> approvedNoColumn;
+    @FXML
+    private TableColumn<AdminInfo, String> approvedEmployeeNoColumn;
     @FXML
     private TableColumn<AdminInfo, String> approvedUsernameColumn;
     @FXML
@@ -70,7 +74,8 @@ public class AdminApproveController {
     }
 
     private void setupPendingTable() {
-        pendingIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        pendingNoColumn.setCellValueFactory(new PropertyValueFactory<>("rowNum"));
+        pendingEmployeeNoColumn.setCellValueFactory(new PropertyValueFactory<>("employeeNo"));
         pendingUsernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
         pendingRealNameColumn.setCellValueFactory(new PropertyValueFactory<>("realName"));
         pendingPhoneColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
@@ -116,7 +121,8 @@ public class AdminApproveController {
     }
 
     private void setupApprovedTable() {
-        approvedIdColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        approvedNoColumn.setCellValueFactory(new PropertyValueFactory<>("rowNum"));
+        approvedEmployeeNoColumn.setCellValueFactory(new PropertyValueFactory<>("employeeNo"));
         approvedUsernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
         approvedRealNameColumn.setCellValueFactory(new PropertyValueFactory<>("realName"));
         approvedPhoneColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
@@ -149,9 +155,11 @@ public class AdminApproveController {
                         List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
 
                         if (data != null) {
+                            int pendingIndex = 1;
+                            int approvedIndex = 1;
+
                             for (Map<String, Object> item : data) {
                                 AdminInfo info = new AdminInfo();
-                                info.setId(((Number) item.get("id")).intValue());
                                 info.setUsername((String) item.get("username"));
 
                                 String realName = (String) item.get("realName");
@@ -160,14 +168,17 @@ public class AdminApproveController {
                                 }
                                 info.setRealName(realName);
 
+                                info.setEmployeeNo((String) item.getOrDefault("employeeNo", ""));
                                 info.setPhone((String) item.getOrDefault("phone", ""));
                                 info.setRole((String) item.get("role"));
                                 info.setStatus((String) item.get("status"));
                                 info.setCreateTime((String) item.getOrDefault("createTime", ""));
 
                                 if ("pending".equals(info.getStatus())) {
+                                    info.setRowNum(pendingIndex++);
                                     pendingList.add(info);
                                 } else {
+                                    info.setRowNum(approvedIndex++);
                                     approvedList.add(info);
                                 }
                             }
@@ -229,7 +240,9 @@ public class AdminApproveController {
     }
 
     public static class AdminInfo {
+        private Integer rowNum;
         private int id;
+        private String employeeNo;
         private String username;
         private String realName;
         private String phone;
@@ -237,8 +250,14 @@ public class AdminApproveController {
         private String status;
         private String createTime;
 
+        public Integer getRowNum() { return rowNum; }
+        public void setRowNum(Integer rowNum) { this.rowNum = rowNum; }
+
         public int getId() { return id; }
         public void setId(int id) { this.id = id; }
+
+        public String getEmployeeNo() { return employeeNo; }
+        public void setEmployeeNo(String employeeNo) { this.employeeNo = employeeNo; }
 
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }

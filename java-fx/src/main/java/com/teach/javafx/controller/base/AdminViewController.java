@@ -22,9 +22,21 @@ public class AdminViewController {
     @FXML
     private TableView<AdminInfo> adminTable;
     @FXML
-    private TableColumn<AdminInfo, Integer> colAdminId;
+    private TableColumn<AdminInfo, Integer> colRowNum;
     @FXML
-    private TableColumn<AdminInfo, String> colAdminAccount, colAdminName, colAdminPhone, colAdminRole, colAdminStatus, colAdminTime;
+    private TableColumn<AdminInfo, String> colAdminNo;
+    @FXML
+    private TableColumn<AdminInfo, String> colAdminAccount;
+    @FXML
+    private TableColumn<AdminInfo, String> colAdminName;
+    @FXML
+    private TableColumn<AdminInfo, String> colAdminPhone;
+    @FXML
+    private TableColumn<AdminInfo, String> colAdminRole;
+    @FXML
+    private TableColumn<AdminInfo, String> colAdminStatus;
+    @FXML
+    private TableColumn<AdminInfo, String> colAdminTime;
 
     private final ObservableList<AdminInfo> adminList = FXCollections.observableArrayList();
     private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -32,7 +44,8 @@ public class AdminViewController {
 
     @FXML
     public void initialize() {
-        colAdminId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colRowNum.setCellValueFactory(new PropertyValueFactory<>("rowNum"));
+        colAdminNo.setCellValueFactory(new PropertyValueFactory<>("employeeNo"));
         colAdminAccount.setCellValueFactory(new PropertyValueFactory<>("account"));
         colAdminName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colAdminPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
@@ -65,13 +78,15 @@ public class AdminViewController {
                         List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
 
                         if (data != null) {
-                            for (Map<String, Object> item : data) {
+                            for (int i = 0; i < data.size(); i++) {
+                                Map<String, Object> item = data.get(i);
                                 String status = (String) item.get("status");
 
-                                // 只显示已批准的管理员
                                 if ("approved".equals(status) || "active".equals(status)) {
                                     AdminInfo info = new AdminInfo();
-                                    info.setId(((Number) item.get("id")).intValue());
+                                    info.setRowNum(i + 1);
+
+                                    info.setEmployeeNo((String) item.getOrDefault("employeeNo", ""));
 
                                     String account = (String) item.get("username");
                                     if (account == null) account = (String) item.get("account");
@@ -109,7 +124,8 @@ public class AdminViewController {
 
 
     public static class AdminInfo {
-        private Integer id;
+        private Integer rowNum;
+        private String employeeNo;
         private String account;
         private String name;
         private String phone;
@@ -117,18 +133,27 @@ public class AdminViewController {
         private String status;
         private String applyTime;
 
-        public Integer getId() { return id; }
-        public void setId(Integer id) { this.id = id; }
+        public Integer getRowNum() { return rowNum; }
+        public void setRowNum(Integer rowNum) { this.rowNum = rowNum; }
+
+        public String getEmployeeNo() { return employeeNo; }
+        public void setEmployeeNo(String employeeNo) { this.employeeNo = employeeNo; }
+
         public String getAccount() { return account; }
         public void setAccount(String account) { this.account = account; }
+
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
+
         public String getRole() { return role; }
         public void setRole(String role) { this.role = role; }
+
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
+
         public String getApplyTime() { return applyTime; }
         public void setApplyTime(String applyTime) { this.applyTime = applyTime; }
     }

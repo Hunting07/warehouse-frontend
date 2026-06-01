@@ -22,33 +22,36 @@ public class EmployeeViewController {
     @FXML
     private TableView<EmployeeInfo> employeeTable;
     @FXML
-    private TableColumn<EmployeeInfo, Integer> idColumn;
+    private TableColumn<EmployeeInfo, Integer> colRowNum;
     @FXML
-    private TableColumn<EmployeeInfo, String> usernameColumn;
+    private TableColumn<EmployeeInfo, String> colEmployeeNo;
     @FXML
-    private TableColumn<EmployeeInfo, String> realNameColumn;
+    private TableColumn<EmployeeInfo, String> colEmployeeAccount;
     @FXML
-    private TableColumn<EmployeeInfo, String> phoneColumn;
+    private TableColumn<EmployeeInfo, String> colEmployeeName;
     @FXML
-    private TableColumn<EmployeeInfo, String> roleColumn;
+    private TableColumn<EmployeeInfo, String> colEmployeePhone;
     @FXML
-    private TableColumn<EmployeeInfo, String> statusColumn;
+    private TableColumn<EmployeeInfo, String> colEmployeeRole;
     @FXML
-    private TableColumn<EmployeeInfo, String> createTimeColumn;
+    private TableColumn<EmployeeInfo, String> colEmployeeStatus;
+    @FXML
+    private TableColumn<EmployeeInfo, String> colEmployeeTime;
 
-    private ObservableList<EmployeeInfo> employeeList = FXCollections.observableArrayList();
+    private final ObservableList<EmployeeInfo> employeeList = FXCollections.observableArrayList();
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
     @FXML
     public void initialize() {
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
-        realNameColumn.setCellValueFactory(new PropertyValueFactory<>("realName"));
-        phoneColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
-        roleColumn.setCellValueFactory(new PropertyValueFactory<>("role"));
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-        createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTime"));
+        colRowNum.setCellValueFactory(new PropertyValueFactory<>("rowNum"));
+        colEmployeeNo.setCellValueFactory(new PropertyValueFactory<>("employeeNo"));
+        colEmployeeAccount.setCellValueFactory(new PropertyValueFactory<>("account"));
+        colEmployeeName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colEmployeePhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
+        colEmployeeRole.setCellValueFactory(new PropertyValueFactory<>("role"));
+        colEmployeeStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        colEmployeeTime.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
 
         employeeTable.setItems(employeeList);
         loadEmployeeList();
@@ -60,12 +63,12 @@ public class EmployeeViewController {
 
         new Thread(() -> {
             try {
-                System.out.println("=== [前端] 加载员工列表 ===");
-                System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/user/list?role=employee");
+                System.out.println("\n========== [员工管理] 开始加载 ==========");
+                System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/user/list?role=staff");
                 System.out.println("Token: " + AppStore.getJwt().getTokenValue());
 
                 HttpRequest httpRequest = HttpRequest.newBuilder()
-                        .uri(URI.create(HttpRequestUtil.serverUrl + "/user/list?role=employee"))
+                        .uri(URI.create(HttpRequestUtil.serverUrl + "/user/list?role=staff"))
                         .GET()
                         .headers("satoken", AppStore.getJwt().getTokenValue())
                         .build();
@@ -79,63 +82,89 @@ public class EmployeeViewController {
                     Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
 
                     if (result.get("code").equals(200.0)) {
-                        List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+                        Object dataObj = result.get("data");
+                        System.out.println("data 类型: " + (dataObj != null ? dataObj.getClass().getName() : "null"));
+                        System.out.println("data 内容: " + dataObj);
 
-                        if (data != null) {
+                        if (dataObj instanceof List) {
+                            List<Map<String, Object>> data = (List<Map<String, Object>>) dataObj;
                             System.out.println("员工数量: " + data.size());
-                            for (Map<String, Object> item : data) {
-                                EmployeeInfo info = new EmployeeInfo();
-                                info.setId(((Number) item.get("id")).intValue());
-                                info.setUsername((String) item.get("username"));
 
-                                String realName = (String) item.get("realName");
-                                if (realName == null || realName.isEmpty()) {
-                                    realName = info.getUsername();
+                            if (data.isEmpty()) {
+                                System.out.println("️ 员工列表为空！");
+                            }
+
+                            for (int i = 0; i < data.size(); i++) {
+                                Map<String, Object> item = data.get(i);
+                                EmployeeInfo info = new EmployeeInfo();
+                                info.setRowNum(i + 1);
+
+                                info.setEmployeeNo((String) item.getOrDefault("employeeNo", ""));
+
+                                String account = (String) item.get("username");
+                                if (account == null) account = (String) item.get("account");
+                                info.setAccount(account);
+
+                                String name = (String) item.get("realName");
+                                if (name == null || name.isEmpty()) {
+                                    name = account;
                                 }
-                                info.setRealName(realName);
+                                info.setName(name);
 
                                 info.setPhone((String) item.getOrDefault("phone", ""));
                                 info.setRole((String) item.get("role"));
                                 info.setStatus((String) item.get("status"));
-                                info.setCreateTime((String) item.getOrDefault("createTime", ""));
+                                info.setApplyTime((String) item.getOrDefault("createTime", ""));
 
                                 javafx.application.Platform.runLater(() -> employeeList.add(info));
                             }
-                            System.out.println("员工列表加载完成");
+                            System.out.println("✅ 员工列表加载完成");
+                        } else {
+                            System.out.println("️ data 不是 List 类型！");
                         }
                     } else {
+                        System.out.println("️ 接口返回错误：code=" + result.get("code") + ", msg=" + result.get("msg"));
                         javafx.application.Platform.runLater(() ->
                                 MessageDialog.showDialog("获取列表失败：" + result.get("msg"))
                         );
                     }
+                } else {
+                    System.out.println("⚠️ HTTP请求失败，状态码：" + response.statusCode());
                 }
             } catch (Exception e) {
+                System.out.println("️ 异常信息：" + e.getMessage());
                 e.printStackTrace();
                 javafx.application.Platform.runLater(() ->
                         MessageDialog.showDialog("获取列表异常：" + e.getMessage())
                 );
+            } finally {
+                System.out.println("========== [员工管理] 加载结束 ==========\n");
             }
         }).start();
     }
 
 
     public static class EmployeeInfo {
-        private int id;
-        private String username;
-        private String realName;
+        private Integer rowNum;
+        private String employeeNo;
+        private String account;
+        private String name;
         private String phone;
         private String role;
         private String status;
-        private String createTime;
+        private String applyTime;
 
-        public int getId() { return id; }
-        public void setId(int id) { this.id = id; }
+        public Integer getRowNum() { return rowNum; }
+        public void setRowNum(Integer rowNum) { this.rowNum = rowNum; }
 
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
+        public String getEmployeeNo() { return employeeNo; }
+        public void setEmployeeNo(String employeeNo) { this.employeeNo = employeeNo; }
 
-        public String getRealName() { return realName; }
-        public void setRealName(String realName) { this.realName = realName; }
+        public String getAccount() { return account; }
+        public void setAccount(String account) { this.account = account; }
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
 
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
@@ -146,7 +175,7 @@ public class EmployeeViewController {
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
 
-        public String getCreateTime() { return createTime; }
-        public void setCreateTime(String createTime) { this.createTime = createTime; }
+        public String getApplyTime() { return applyTime; }
+        public void setApplyTime(String applyTime) { this.applyTime = applyTime; }
     }
 }

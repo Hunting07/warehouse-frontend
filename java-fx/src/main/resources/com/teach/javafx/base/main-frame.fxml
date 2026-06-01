@@ -7,17 +7,32 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.control.TreeView?>
 <!-- 前端应用主框架FXML配置文件 对应页面交互控制类 com.teach.javafx.controller.base.MainFrameController -->
 <BorderPane fx:id="mainBorderPane"
             xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.teach.javafx.controller.base.MainFrameController"
-            style="-fx-background-image: url('main-bg.jpg'); -fx-background-size: cover; -fx-background-position: center;">
+            style="-fx-background-image: url('main-bg.jpg'); -fx-background-size: contain; -fx-background-position: center; -fx-background-repeat: no-repeat;">
 
 
   <top>
-    <MenuBar fx:id="menuBar" styleClass="menu-bar" />
+    <VBox>
+      <HBox alignment="CENTER_LEFT" style="-fx-padding: 15 30 10 30; -fx-background-color: #6ba5e8; -fx-background-radius: 0;">
+        <Label text="仓储管理系统" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: white;">
+          <font>
+            <Font name="Microsoft YaHei UI Bold" size="26" />
+          </font>
+        </Label>
+        <Label text="Warehouse Management System" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 0 15;">
+          <font>
+            <Font name="Microsoft YaHei UI" size="16" />
+          </font>
+        </Label>
+      </HBox>
+      <MenuBar fx:id="menuBar" styleClass="menu-bar" />
+    </VBox>
   </top>
   <left>
     <TreeView fx:id="menuTree" prefWidth="200" styleClass="tree-view"/>
