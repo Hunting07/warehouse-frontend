@@ -178,6 +178,7 @@ public class MainFrameController {
         });
     }
 
+
     private String getMenuIcon(String name, String title) {
         if (title == null) return "";
 
@@ -187,8 +188,8 @@ public class MainFrameController {
         if (title.contains("出库")) return "📤";
         if (title.contains("库存预警") || title.contains("预警")) return "⚠";
         if (title.contains("个人中心") || title.contains("个人")) return "👤";
-        if (title.contains("用户管理") || title.contains("用户")) return "";
-        if (title.contains("员工管理") || title.contains("员工")) return "👨‍💼";
+        if (title.contains("用户管理") || title.contains("用户")) return "👥";
+        if (title.contains("员工管理") || title.contains("员工")) return "💼";
         if (title.contains("管理员查看")) return "👑";
         if (title.contains("审批")) return "✅";
         if (title.contains("金额统计") || title.contains("统计")) return "💰";
@@ -220,8 +221,8 @@ public class MainFrameController {
         addCustomMenus(role);
 
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
-        contentTabPane.setStyle("-fx-background-image: url('main-bg.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
     }
+
 
 
     private void addUserCenterToTree(String role) {
@@ -255,7 +256,7 @@ public class MainFrameController {
             );
 
             TreeItem<MyTreeNode> employeeViewItem = new TreeItem<>(
-                    new MyTreeNode(null, "employee-view", "‍💼  员工管理", 0)
+                    new MyTreeNode(null, "employee-view", "💼  员工管理", 0)
             );
             TreeItem<MyTreeNode> adminViewItem = new TreeItem<>(
                     new MyTreeNode(null, "admin-view", "👑  管理员查看", 0)

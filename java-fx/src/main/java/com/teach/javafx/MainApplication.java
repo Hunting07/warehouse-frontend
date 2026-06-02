@@ -21,11 +21,10 @@ public class MainApplication extends Application {
 
     private static boolean canClose=true;
 
-    // ... existing code ...
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 500, 600);
+        Scene scene = new Scene(fxmlLoader.load(), 1000, 600);
         scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
         stage.setTitle("登录");
         stage.setScene(scene);

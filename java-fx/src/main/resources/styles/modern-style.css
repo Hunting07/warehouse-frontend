@@ -335,9 +335,6 @@
     -fx-background-color: #f0f4f8;
 }
 
-/* ========================================
-   登录页面专用样式
-   ======================================== */
 
 .login-container {
     -fx-background-color: linear-gradient(to bottom right, #667eea, #764ba2);
@@ -349,14 +346,10 @@
 .login-card {
     -fx-background-color: white;
     -fx-background-radius: 15;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 30, 0, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 20, 0, 0, 3);
     -fx-padding: 40;
     -fx-max-width: 450;
 }
-
-/* ========================================
-   布局容器样式
-   ======================================== */
 
 .border-pane {
     -fx-background-color: transparent;

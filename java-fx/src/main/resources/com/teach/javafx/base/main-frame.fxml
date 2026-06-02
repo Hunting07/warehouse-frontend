@@ -10,24 +10,25 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.control.TreeView?>
+<?import javafx.scene.layout.StackPane?>
 <!-- 前端应用主框架FXML配置文件 对应页面交互控制类 com.teach.javafx.controller.base.MainFrameController -->
 <BorderPane fx:id="mainBorderPane"
             xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.teach.javafx.controller.base.MainFrameController"
-            style="-fx-background-image: url('main-bg.jpg'); -fx-background-size: contain; -fx-background-position: center; -fx-background-repeat: no-repeat;">
+            style="-fx-background-color: #f8f9fa;">
 
 
   <top>
     <VBox>
-      <HBox alignment="CENTER_LEFT" style="-fx-padding: 15 30 10 30; -fx-background-color: #6ba5e8; -fx-background-radius: 0;">
-        <Label text="仓储管理系统" style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: white;">
+      <HBox alignment="CENTER_LEFT" style="-fx-padding: 12 30 8 30; -fx-background-color: #4a90d9;">
+        <Label text="仓储管理系统" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;">
           <font>
-            <Font name="Microsoft YaHei UI Bold" size="26" />
+            <Font name="Microsoft YaHei UI Bold" size="22" />
           </font>
         </Label>
-        <Label text="Warehouse Management System" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 0 15;">
+        <Label text="Warehouse Management System" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 0 0 0 15;">
           <font>
-            <Font name="Microsoft YaHei UI" size="16" />
+            <Font name="Microsoft YaHei UI" size="14" />
           </font>
         </Label>
       </HBox>
@@ -38,7 +39,7 @@
     <TreeView fx:id="menuTree" prefWidth="200" styleClass="tree-view"/>
   </left>
   <center>
-    <TabPane fx:id="contentTabPane" styleClass="tab-pane" tabClosingPolicy="UNAVAILABLE" BorderPane.alignment="CENTER">
+    <TabPane fx:id="contentTabPane" styleClass="tab-pane" tabClosingPolicy="UNAVAILABLE">
     </TabPane>
   </center>
   <bottom>
