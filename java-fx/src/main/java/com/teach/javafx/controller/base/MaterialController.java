@@ -100,9 +100,15 @@ public class MaterialController extends ToolController {
             }
         }
     }
-
     private void setupTable() {
+        if (isAdmin) {
+            actionCol.setPrefWidth(150);
+        } else {
+            actionCol.setVisible(false);
+        }
+
         idCol.setCellValueFactory(param -> {
+
             int rowIndex = materialTable.getItems().indexOf(param.getValue()) + 1;
             return new SimpleIntegerProperty(rowIndex).asObject();
         });
@@ -576,7 +582,6 @@ public class MaterialController extends ToolController {
             }
         });
     }
-
 
     private void showEditDialog(MaterialNode material) {
         Stage dialog = new Stage();

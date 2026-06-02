@@ -81,7 +81,6 @@ public class CategoryController extends ToolController {
             }
         }
     }
-
     private void setupTreeTable() {
         idCol.setCellFactory(col -> new TreeTableCell<>() {
             @Override
@@ -100,8 +99,6 @@ public class CategoryController extends ToolController {
         statusCol.setCellValueFactory(param -> param.getValue().getValue().statusProperty());
         materialCountCol.setCellValueFactory(param -> param.getValue().getValue().materialCountProperty().asObject());
         createTimeCol.setCellValueFactory(param -> param.getValue().getValue().createTimeProperty());
-
-
 
         actionCol.setCellFactory(new Callback<>() {
             @Override
@@ -148,7 +145,8 @@ public class CategoryController extends ToolController {
                                 box.setPadding(new Insets(5));
                                 setGraphic(box);
                             } else {
-                                javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(5, viewMaterialsBtn);
+                                javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(viewMaterialsBtn);
+                                box.setAlignment(javafx.geometry.Pos.CENTER);
                                 box.setPadding(new Insets(5));
                                 setGraphic(box);
                             }
@@ -157,7 +155,6 @@ public class CategoryController extends ToolController {
                 };
             }
         });
-
 
         TreeItem<CategoryNode> root = new TreeItem<>(new CategoryNode());
         root.setExpanded(true);
@@ -420,11 +417,12 @@ public class CategoryController extends ToolController {
 
         TableView<MaterialNode> materialTable = new TableView<>();
 
-        TableColumn<MaterialNode, Integer> idCol = new TableColumn<>("ID");
+        TableColumn<MaterialNode, Integer> idCol = new TableColumn<>("编号");
         idCol.setCellValueFactory(param -> param.getValue().getIdProperty().asObject());
         idCol.setPrefWidth(60);
 
         TableColumn<MaterialNode, String> nameCol = new TableColumn<>("物资名称");
+
         nameCol.setCellValueFactory(param -> param.getValue().nameProperty());
         nameCol.setPrefWidth(150);
 
