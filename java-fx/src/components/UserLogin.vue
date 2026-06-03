@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="login-container">
     <div class="login-box">
       <h2 class="login-title">仓储管理系统</h2>
@@ -106,17 +106,7 @@ export default {
         return
       }
 
-      // 2. 打印信息，方便后续对接后端接口
-      console.log('登录信息：', {
-        role: this.userRole,
-        username: this.username,
-        password: this.password
-      })
 
-      // 3. 这里后续可以替换成后端接口请求
-      alert(
-        `登录信息：\n角色：${this.userRole === 'admin' ? '管理员' : '普通员工'}\n用户名：${this.username}\n（后续对接后端接口后替换为真实校验）`
-      )
 
       // 4. 后续：接口请求成功后，跳转到对应角色的主页
       // this.$router.push('/home')
