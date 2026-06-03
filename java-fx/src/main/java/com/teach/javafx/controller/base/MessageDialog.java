@@ -47,7 +47,7 @@ public class MessageDialog {
             messageController.setStage(stage);
 
             fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/choice-dialog.fxml"));
-            scene = new Scene(fxmlLoader.load(), 450, 220);
+            scene = new Scene(fxmlLoader.load(), 550, 320);
             stage = new Stage();
             stage.initOwner(MainApplication.getMainStage());
             stage.setAlwaysOnTop(true);

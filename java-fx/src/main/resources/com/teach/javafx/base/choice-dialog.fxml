@@ -4,39 +4,37 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
 <!-- 消息确认对话框FXML配置文件 对应页面交互控制类 com.teach.javafx.controller.base.ChoiceController -->
 <BorderPane fx:id="rootPane" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.teach.javafx.controller.base.ChoiceController">
    <center>
-      <VBox spacing="20" style="-fx-padding: 35 30 25 30;">
-         <HBox alignment="CENTER_LEFT" spacing="20">
-            <Label fx:id="iconLabel" text="❓" style="-fx-font-size: 48px;" />
-            <VBox spacing="10">
-               <children>
-                  <Label text="确认操作" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1a202c;">
-                     <font>
-                        <Font name="Microsoft YaHei UI Bold" size="20" />
-                     </font>
-                  </Label>
-                  <Label fx:id="messageLabel" text="" wrapText="true" style="-fx-font-size: 15px; -fx-text-fill: #4a5568;">
-                     <font>
-                        <Font name="Microsoft YaHei UI" size="15" />
-                     </font>
-                  </Label>
-               </children>
-            </VBox>
-         </HBox>
+      <VBox spacing="14" alignment="CENTER" style="-fx-padding: 40 40 30 40;">
+         <children>
+            <Label text="确认删除" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1a202c;">
+               <font>
+                  <Font name="Microsoft YaHei UI Bold" size="22" />
+               </font>
+            </Label>
+            <Label fx:id="messageLabel" text="" wrapText="true" alignment="CENTER" style="-fx-font-size: 15px; -fx-text-fill: #4a5568; -fx-line-spacing: 6;">
+               <font>
+                  <Font name="Microsoft YaHei UI" size="15" />
+               </font>
+            </Label>
+            <Label fx:id="warningLabel" text="此操作不可恢复，请谨慎操作" wrapText="true" alignment="CENTER" style="-fx-font-size: 13px; -fx-text-fill: #e6a23c; -fx-font-weight: bold; -fx-line-spacing: 4;">
+               <font>
+                  <Font name="Microsoft YaHei UI" size="13" />
+               </font>
+            </Label>
+         </children>
       </VBox>
    </center>
    <bottom>
-      <FlowPane alignment="CENTER_RIGHT" hgap="12" style="-fx-padding: 20 30 25 30; -fx-background-color: #f7fafc;">
+      <FlowPane alignment="CENTER" hgap="16" style="-fx-padding: 24 40 32 40; -fx-background-color: #f7fafc;">
          <children>
-            <Button fx:id="cancelButton" mnemonicParsing="false" text="取消" onAction="#cancelButtonClick" style="-fx-background-color: white; -fx-text-fill: #718096; -fx-font-size: 14px; -fx-background-radius: 8; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 8; -fx-cursor: hand; -fx-min-width: 80; -fx-min-height: 36; -fx-padding: 8 16 8 16;" />
-            <Button fx:id="noButton" mnemonicParsing="false" text="否" onAction="#noButtonClick" style="-fx-background-color: white; -fx-text-fill: #4a5568; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 8; -fx-cursor: hand; -fx-min-width: 80; -fx-min-height: 36; -fx-padding: 8 16 8 16;" />
-            <Button fx:id="yesButton" mnemonicParsing="false" text="是" onAction="#yesButtonClick" style="-fx-background-color: #4caf7d; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-min-width: 80; -fx-min-height: 36; -fx-padding: 8 16 8 16;" />
+            <Button fx:id="noButton" mnemonicParsing="false" text="否" onAction="#noButtonClick" style="-fx-background-color: white; -fx-text-fill: #4a5568; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 8; -fx-cursor: hand; -fx-min-width: 100; -fx-min-height: 40; -fx-padding: 10 20 10 20;" />
+            <Button fx:id="yesButton" mnemonicParsing="false" text="是" onAction="#yesButtonClick" style="-fx-background-color: linear-gradient(to right, #1677ff, #4096ff); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-min-width: 100; -fx-min-height: 40; -fx-padding: 10 20 10 20; -fx-effect: dropshadow(gaussian, rgba(22,119,255,0.3), 6, 0, 0, 2);" />
          </children>
       </FlowPane>
    </bottom>

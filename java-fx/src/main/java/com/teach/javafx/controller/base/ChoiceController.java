@@ -16,15 +16,13 @@ public class ChoiceController {
     @FXML
     private BorderPane rootPane;
     @FXML
-    private Label iconLabel;
-    @FXML
     private Label messageLabel;
+    @FXML
+    private Label warningLabel;
     @FXML
     private Button yesButton;
     @FXML
     private Button noButton;
-    @FXML
-    private Button cancelButton;
 
     private Stage stage;
     private int choice = 0;
@@ -80,18 +78,17 @@ public class ChoiceController {
     }
 
     public int choiceDialog(String msg) {
-        // 根据消息内容判断图标
-        if (msg.contains("驳回") || msg.contains("拒绝") || msg.contains("删除")) {
-            iconLabel.setText("❌");
-        } else if (msg.contains("通过") || msg.contains("批准") || msg.contains("同意")) {
-            iconLabel.setText("✅");
-        } else if (msg.contains("警告") || msg.contains("注意") || msg.contains("确认")) {
-            iconLabel.setText("⚠️");
-        } else {
-            iconLabel.setText("❓");
-        }
-
         messageLabel.setText(msg);
+        
+        // 根据消息内容判断是否显示警告提示
+        if (msg.contains("删除")) {
+            warningLabel.setVisible(true);
+            warningLabel.setManaged(true);
+        } else {
+            warningLabel.setVisible(false);
+            warningLabel.setManaged(false);
+        }
+        
         this.stage.showAndWait();
         return choice;
     }

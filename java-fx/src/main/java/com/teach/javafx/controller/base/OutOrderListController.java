@@ -517,28 +517,62 @@ public class OutOrderListController extends ToolController {
         if (ret != MessageDialog.CHOICE_YES) return;
 
         try {
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(HttpRequestUtil.serverUrl + "/api/stockOut/delete/" + selected.getId()))
-                    .DELETE()
-                    .headers("satoken", AppStore.getJwt().getToken())
-                    .build();
+            // 尝试多种可能的删除接口路径
+            String[] possibleUrls = {
+                HttpRequestUtil.serverUrl + "/api/stockOut/delete/" + selected.getId(),
+                HttpRequestUtil.serverUrl + "/stockOut/delete/" + selected.getId(),
+                HttpRequestUtil.serverUrl + "/api/outOrder/delete/" + selected.getId(),
+                HttpRequestUtil.serverUrl + "/outOrder/delete/" + selected.getId()
+            };
+            
+            String successUrl = null;
+            HttpResponse<String> response = null;
+            
+            // 尝试每个可能的URL
+            for (String testUrl : possibleUrls) {
+                try {
+                    System.out.println("尝试删除URL: " + testUrl);
+                    
+                    HttpRequest httpRequest = HttpRequest.newBuilder()
+                            .uri(URI.create(testUrl))
+                            .DELETE()
+                            .headers("satoken", AppStore.getJwt().getToken())
+                            .build();
 
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
-                if (code == 200 || code == 0) {
-                    MessageDialog.showDialog("删除成功");
-                    loadOutOrderList();
-                } else {
-                    MessageDialog.showDialog("删除失败：" + result.get("msg"));
+                    response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+                    
+                    System.out.println("HTTP状态码: " + response.statusCode());
+                    System.out.println("响应内容: " + response.body());
+                    
+                    if (response.statusCode() == 200) {
+                        Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                        int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                        
+                        if (code == 200 || code == 0) {
+                            successUrl = testUrl;
+                            System.out.println("✓ 删除成功，使用URL: " + successUrl);
+                            break;
+                        } else {
+                            System.out.println("✗ 业务错误: " + result.get("msg"));
+                        }
+                    } else {
+                        System.out.println("✗ HTTP错误");
+                    }
+                } catch (Exception e) {
+                    System.out.println("✗ 请求异常: " + e.getMessage());
                 }
+            }
+            
+            if (successUrl != null) {
+                MessageDialog.showDialog("删除成功");
+                loadOutOrderList();
             } else {
-                MessageDialog.showDialog("删除失败");
+                System.err.println("\n所有删除URL都失败了！");
+                MessageDialog.showDialog("删除失败，请检查后端接口");
             }
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("删除异常: " + e.getMessage());
             MessageDialog.showDialog("删除异常：" + e.getMessage());
         }
     }
