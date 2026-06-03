@@ -12,6 +12,7 @@ public class OptionItem {
     private Integer id;
     private String name;
     private BigDecimal price;
+    private Integer status; // 1=启用, 0=停用
 
     public OptionItem() {
 
@@ -35,6 +36,12 @@ public class OptionItem {
             }
             if (priceObj != null) {
                 this.price = new BigDecimal(priceObj.toString());
+            }
+            
+            // 获取状态字段
+            Object statusObj = map.get("status");
+            if (statusObj != null) {
+                this.status = ((Number) statusObj).intValue();
             }
         }
     }
@@ -61,6 +68,14 @@ public class OptionItem {
 
     public void setPrice(BigDecimal price) {
         this.price = price;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 
     @Override

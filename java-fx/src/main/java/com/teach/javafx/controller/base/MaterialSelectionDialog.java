@@ -75,10 +75,22 @@ public class MaterialSelectionDialog extends Stage {
                     setStyle("-fx-background-color: transparent;");
                 } else {
                     setText(item.getName());
-                    setStyle("-fx-background-color: white; -fx-padding: 12 16 12 16; -fx-font-size: 14px; -fx-text-fill: #2c3e50;");
-
-                    if (item == materialListView.getSelectionModel().getSelectedItem()) {
-                        setStyle("-fx-background-color: #e6f7ff; -fx-padding: 12 16 12 16; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+                    
+                    // 检查是否为停用状态
+                    boolean isDisabled = item.getStatus() != null && item.getStatus() != 1;
+                    
+                    if (isDisabled) {
+                        // 已停用的物资：灰色背景，无法点击
+                        setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #bfbfbf; -fx-padding: 12 16 12 16; -fx-font-size: 14px;");
+                        setDisable(true);
+                    } else if (item == materialListView.getSelectionModel().getSelectedItem()) {
+                        // 选中行：浅蓝色背景 + 固定黑色文字
+                        setStyle("-fx-background-color: #e6f7ff; -fx-text-fill: black; -fx-padding: 12 16 12 16; -fx-font-size: 14px; -fx-font-weight: bold;");
+                        setDisable(false);
+                    } else {
+                        // 非选中行：白色背景 + 默认文字颜色
+                        setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-padding: 12 16 12 16; -fx-font-size: 14px;");
+                        setDisable(false);
                     }
                 }
             }
