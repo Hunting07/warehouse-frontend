@@ -16,6 +16,8 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Callback;
@@ -198,6 +200,24 @@ public class MaterialController extends ToolController {
         });
 
         materialTable.setItems(dataList);
+        materialTable.setRowFactory(tv -> new TableRow<MaterialNode>() {
+            @Override
+            protected void updateItem(MaterialNode item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setStyle("");
+                } else {
+                    int index = getIndex();
+                    if (index % 2 == 0) {
+                        // 偶数行（第0, 2, 4...行）：白色
+                        setStyle("-fx-background-color: white;");
+                    } else {
+                        // 奇数行（第1, 3, 5...行）：浅蓝色
+                        setStyle("-fx-background-color: #F0F7FF;");
+                    }
+                }
+            }
+        });
     }
 
     private void setupFilters() {
@@ -560,8 +580,25 @@ public class MaterialController extends ToolController {
         confirm.setHeaderText("确定要删除物资 \"" + material.getName() + "\" 吗？");
         confirm.setContentText("删除后无法恢复！");
 
+        confirm.getDialogPane().setStyle("-fx-background-color: white;");
+        confirm.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+        ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelBtn = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirm.getButtonTypes().setAll(okBtn, cancelBtn);
+
+        Button okButton = (Button) confirm.getDialogPane().lookupButton(okBtn);
+        okButton.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+
+        Button cancelButton = (Button) confirm.getDialogPane().lookupButton(cancelBtn);
+        cancelButton.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+
+        System.out.println("=== 删除按钮被点击 ===");
+        System.out.println("isAdmin: " + isAdmin);
+        System.out.println("material: " + (material != null ? material.getName() : "null"));
+
         confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
+            if (response == okBtn) {
                 try {
                     DataRequest request = new DataRequest();
                     request.put("id", material.getId());
@@ -588,17 +625,37 @@ public class MaterialController extends ToolController {
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.setTitle(material == null ? "新增物资" : "编辑物资");
 
-        GridPane grid = new GridPane();
-        grid.setPadding(new Insets(20));
-        grid.setHgap(10);
-        grid.setVgap(10);
+        VBox mainContainer = new VBox(20);
+        mainContainer.setPadding(new Insets(30));
+        mainContainer.setStyle("-fx-background-color: white;");
 
+        VBox titleBar = new VBox(5);
+        Label titleLabel = new Label(material == null ? "新增物资" : "编辑物资");
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4A90E2;");
+        Label subtitleLabel = new Label("请填写物资信息");
+        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999;");
+        titleBar.getChildren().addAll(titleLabel, subtitleLabel);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(18);
+
+        Label nameLabel = new Label("物资名称:");
+        nameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField nameField = new TextField(material != null ? material.getName() : "");
         nameField.setPromptText("请输入物资名称");
+        nameField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        nameField.setPrefHeight(40);
 
+        Label codeLabel = new Label("物资编码:");
+        codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField codeField = new TextField(material != null ? material.getCode() : "");
         codeField.setPromptText("请输入物资编码");
+        codeField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        codeField.setPrefHeight(40);
 
+        Label categoryLabel = new Label("所属分类:");
+        categoryLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         ComboBox<String> categoryCombo = new ComboBox<>();
         categoryCombo.getItems().add("请选择分类");
 
@@ -638,47 +695,87 @@ public class MaterialController extends ToolController {
         } else {
             categoryCombo.setValue("请选择分类");
         }
+        categoryCombo.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        categoryCombo.setPrefHeight(40);
 
+        Label unitLabel = new Label("单位:");
+        unitLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField unitField = new TextField(material != null ? material.getUnit() : "");
         unitField.setPromptText("请输入单位(如:个、件、箱)");
+        unitField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        unitField.setPrefHeight(40);
 
+        Label currentStockLabel = new Label("当前库存:");
+        currentStockLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField currentStockField = new TextField(material != null ? String.valueOf(material.getCurrentStock()) : "0");
         currentStockField.setPromptText("当前库存数量");
+        currentStockField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        currentStockField.setPrefHeight(40);
 
+        Label safetyStockLabel = new Label("安全库存:");
+        safetyStockLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField safetyStockField = new TextField(material != null ? String.valueOf(material.getSafetyStock()) : "0");
         safetyStockField.setPromptText("安全库存数量");
+        safetyStockField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        safetyStockField.setPrefHeight(40);
 
+        Label priceLabel = new Label("单价:");
+        priceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField priceField = new TextField(material != null && material.getPrice() != null ? material.getPrice().toString() : "0");
         priceField.setPromptText("单价");
+        priceField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        priceField.setPrefHeight(40);
 
+        Label statusLabel = new Label("状态:");
+        statusLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         ComboBox<String> statusCombo = new ComboBox<>();
         statusCombo.getItems().addAll("启用", "停用");
         statusCombo.setValue(material != null ? material.getStatus() : "启用");
+        statusCombo.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        statusCombo.setPrefHeight(40);
 
-        grid.add(new Label("物资名称:"), 0, 0);
+        grid.add(nameLabel, 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(new Label("物资编码:"), 0, 1);
+        grid.add(codeLabel, 0, 1);
         grid.add(codeField, 1, 1);
-        grid.add(new Label("所属分类:"), 0, 2);
+        grid.add(categoryLabel, 0, 2);
         grid.add(categoryCombo, 1, 2);
-        grid.add(new Label("单位:"), 0, 3);
+        grid.add(unitLabel, 0, 3);
         grid.add(unitField, 1, 3);
-        grid.add(new Label("当前库存:"), 0, 4);
+        grid.add(currentStockLabel, 0, 4);
         grid.add(currentStockField, 1, 4);
-        grid.add(new Label("安全库存:"), 0, 5);
+        grid.add(safetyStockLabel, 0, 5);
         grid.add(safetyStockField, 1, 5);
-        grid.add(new Label("单价:"), 0, 6);
+        grid.add(priceLabel, 0, 6);
         grid.add(priceField, 1, 6);
-        grid.add(new Label("状态:"), 0, 7);
+        grid.add(statusLabel, 0, 7);
         grid.add(statusCombo, 1, 7);
 
+        HBox buttonBox = new HBox(15);
+        buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
         Button saveBtn = new Button("保存");
+        saveBtn.setPrefWidth(100);
+        saveBtn.setPrefHeight(40);
+        saveBtn.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;");
+
         Button cancelBtn = new Button("取消");
+        cancelBtn.setPrefWidth(100);
+        cancelBtn.setPrefHeight(40);
+        cancelBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;");
 
         saveBtn.setOnAction(e -> {
             try {
+                String name = nameField.getText().trim();
+
+                if (name.isEmpty()) {
+                    showError("验证失败", "物资名称不能为空，请输入物资名称！");
+                    nameField.requestFocus();
+                    return;
+                }
+
                 DataRequest request = new DataRequest();
-                request.put("name", nameField.getText());
+                request.put("name", name);
                 request.put("code", codeField.getText());
 
                 String selectedCategory = categoryCombo.getValue();
@@ -733,11 +830,17 @@ public class MaterialController extends ToolController {
 
         cancelBtn.setOnAction(e -> dialog.close());
 
-        javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
-        grid.add(buttonBox, 1, 8);
+        buttonBox.getChildren().addAll(cancelBtn, saveBtn);
 
-        Scene scene = new Scene(grid, 450, 350);
+        VBox contentBox = new VBox(20, titleBar, grid, buttonBox);
+        contentBox.setPadding(new Insets(30));
+        contentBox.setStyle("-fx-background-color: white;");
+
+        Scene scene = new Scene(contentBox, 600, 650);
+        scene.setFill(javafx.scene.paint.Color.WHITE);
         dialog.setScene(scene);
+        dialog.setMinWidth(600);
+        dialog.setMinHeight(650);
         dialog.showAndWait();
     }
 
@@ -747,6 +850,17 @@ public class MaterialController extends ToolController {
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            alert.getDialogPane().setStyle("-fx-background-color: white;");
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
+            alert.getButtonTypes().setAll(okBtn);
+
+            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
+            button.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+            button.setDefaultButton(true);
+
             alert.showAndWait();
         });
     }
@@ -757,6 +871,16 @@ public class MaterialController extends ToolController {
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+            alert.getDialogPane().setStyle("-fx-background-color: white;");
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
+            alert.getButtonTypes().setAll(okBtn);
+
+            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
+            button.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+            button.setDefaultButton(true);
+
             alert.showAndWait();
         });
     }

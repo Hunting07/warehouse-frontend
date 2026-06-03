@@ -160,6 +160,25 @@ public class CategoryController extends ToolController {
         root.setExpanded(true);
         categoryTreeTable.setRoot(root);
         categoryTreeTable.setShowRoot(false);
+
+        categoryTreeTable.setRowFactory(tv -> new TreeTableRow<>() {
+            @Override
+            protected void updateItem(CategoryNode item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setStyle("");
+                } else {
+                    int index = getIndex();
+                    if (index % 2 == 0) {
+                        // 偶数行（第0, 2, 4...行）：白色
+                        setStyle("-fx-background-color: white;");
+                    } else {
+                        // 奇数行（第1, 3, 5...行）：浅蓝色
+                        setStyle("-fx-background-color: #F0F7FF;");
+                    }
+                }
+            }
+        });
     }
 
     private void setupFilters() {
@@ -363,25 +382,36 @@ public class CategoryController extends ToolController {
         confirm.setHeaderText("确定要删除分类 \"" + node.getName() + "\" 吗？");
         confirm.setContentText("删除后无法恢复！");
 
+        confirm.getDialogPane().setStyle("-fx-background-color: white;");
+        confirm.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+        ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelBtn = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
+        confirm.getButtonTypes().setAll(okBtn, cancelBtn);
+
+        Button okButton = (Button) confirm.getDialogPane().lookupButton(okBtn);
+        okButton.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+
+        Button cancelButton = (Button) confirm.getDialogPane().lookupButton(cancelBtn);
+        cancelButton.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+
         confirm.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                try {
-                    DataRequest request = new DataRequest();
-                    request.put("id", node.getId());
+            try {
+                DataRequest request = new DataRequest();
+                request.put("id", node.getId());
 
-                    DataResponse resp = HttpRequestUtil.request("/api/category/delete", request);
+                DataResponse resp = HttpRequestUtil.request("/api/category/delete", request);
 
-                    if (resp != null && resp.getCode() == 200) {
-                        showInfo("删除成功", "分类已删除");
-                        loadCategoryTree();
-                    } else {
-                        String errorMsg = resp != null ? resp.getMsg() : "网络错误";
-                        showError("删除失败", "后端返回错误: " + errorMsg);
-                    }
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "删除分类异常", e);
-                    showError("删除异常", e.getMessage());
+                if (resp != null && resp.getCode() == 200) {
+                    showInfo("删除成功", "分类已删除");
+                    loadCategoryTree();
+                } else {
+                    String errorMsg = resp != null ? resp.getMsg() : "网络错误";
+                    showError("删除失败", "后端返回错误: " + errorMsg);
                 }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "删除分类异常", e);
+                showError("删除异常", e.getMessage());
             }
         });
     }
@@ -413,16 +443,37 @@ public class CategoryController extends ToolController {
     private void showMaterialsDialog(String categoryName, Object data) {
         Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle("分类 [" + categoryName + "] 下的物资列表");
+        dialog.setTitle("物资列表");
+
+        VBox mainContainer = new VBox(20);
+        mainContainer.setPadding(new Insets(30));
+        mainContainer.setStyle("-fx-background-color: white;");
+
+        VBox titleBar = new VBox(5);
+        Label titleLabel = new Label("分类 [" + categoryName + "] 下的物资");
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4A90E2;");
+        Label subtitleLabel = new Label("查看该分类下的所有物资信息");
+        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999;");
+        titleBar.getChildren().addAll(titleLabel, subtitleLabel);
 
         TableView<MaterialNode> materialTable = new TableView<>();
+        materialTable.setStyle("-fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5; -fx-background-color: white;");
+        materialTable.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+        materialTable.lookupAll(".column-header-background").forEach(node -> {
+            node.setStyle("-fx-background-color: #4A90E2;");
+        });
+
+        materialTable.lookupAll(".column-header .label").forEach(node -> {
+            node.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
+        });
 
         TableColumn<MaterialNode, Integer> idCol = new TableColumn<>("编号");
         idCol.setCellValueFactory(param -> param.getValue().getIdProperty().asObject());
         idCol.setPrefWidth(60);
+        idCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaterialNode, String> nameCol = new TableColumn<>("物资名称");
-
         nameCol.setCellValueFactory(param -> param.getValue().nameProperty());
         nameCol.setPrefWidth(150);
 
@@ -433,14 +484,17 @@ public class CategoryController extends ToolController {
         TableColumn<MaterialNode, String> unitCol = new TableColumn<>("单位");
         unitCol.setCellValueFactory(param -> param.getValue().unitProperty());
         unitCol.setPrefWidth(80);
+        unitCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaterialNode, Integer> currentStockCol = new TableColumn<>("当前库存");
         currentStockCol.setCellValueFactory(param -> param.getValue().currentStockProperty().asObject());
         currentStockCol.setPrefWidth(100);
+        currentStockCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 
         TableColumn<MaterialNode, Integer> safetyStockCol = new TableColumn<>("安全库存");
         safetyStockCol.setCellValueFactory(param -> param.getValue().safetyStockProperty().asObject());
         safetyStockCol.setPrefWidth(100);
+        safetyStockCol.setStyle("-fx-alignment: CENTER-RIGHT;");
 
         TableColumn<MaterialNode, String> warningCol = new TableColumn<>("库存状态");
         warningCol.setCellValueFactory(param -> {
@@ -464,28 +518,44 @@ public class CategoryController extends ToolController {
                 } else {
                     setText(item);
                     if ("预警".equals(item)) {
-                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                        setStyle("-fx-text-fill: #F44336; -fx-font-weight: bold;");
                     } else {
-                        setStyle("-fx-text-fill: green;");
+                        setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold;");
                     }
                 }
             }
         });
         warningCol.setPrefWidth(100);
+        warningCol.setStyle("-fx-alignment: CENTER;");
 
         TableColumn<MaterialNode, String> statusCol = new TableColumn<>("状态");
         statusCol.setCellValueFactory(param -> param.getValue().statusProperty());
         statusCol.setPrefWidth(80);
+        statusCol.setStyle("-fx-alignment: CENTER;");
 
         @SuppressWarnings("unchecked")
         TableColumn<MaterialNode, ?>[] columns = new TableColumn[]{idCol, nameCol, codeCol, unitCol, currentStockCol, safetyStockCol, warningCol, statusCol};
         materialTable.getColumns().addAll(columns);
 
-        List<Map<String, Object>> materialList = gson.fromJson(
-                gson.toJson(data),
-                new TypeToken<List<Map<String, Object>>>(){}.getType()
-        );
+        materialTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+        materialTable.setRowFactory(tv -> {
+            TableRow<MaterialNode> row = new TableRow<>();
+            row.setStyle("-fx-background-color: white;");
+            row.hoverProperty().addListener((obs, wasHovered, isNowHovered) -> {
+                if (isNowHovered && !row.isEmpty()) {
+                    row.setStyle("-fx-background-color: #F5F9FF;");
+                } else {
+                    row.setStyle("-fx-background-color: white;");
+                }
+            });
+            return row;
+        });
+
+        List<Map<String, Object>> materialList = gson.fromJson(
+            gson.toJson(data),
+            new TypeToken<List<Map<String, Object>>>(){}.getType()
+        );
 
         if (materialList != null) {
             for (Map<String, Object> material : materialList) {
@@ -501,18 +571,25 @@ public class CategoryController extends ToolController {
         }
 
         Button closeBtn = new Button("关闭");
+        closeBtn.setPrefWidth(100);
+        closeBtn.setPrefHeight(40);
+        closeBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;");
         closeBtn.setOnAction(e -> dialog.close());
-        closeBtn.setStyle("-fx-background-color: #757575; -fx-text-fill: white; -fx-cursor: hand;");
 
-        VBox vbox = new VBox(10, materialTable, closeBtn);
-        vbox.setPadding(new Insets(10));
-        vbox.setAlignment(javafx.geometry.Pos.CENTER);
+        HBox buttonBox = new HBox(closeBtn);
+        buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
 
-        Scene scene = new Scene(vbox, 900, 500);
+        VBox contentBox = new VBox(20, titleBar, materialTable, buttonBox);
+        contentBox.setPadding(new Insets(30));
+        contentBox.setStyle("-fx-background-color: white;");
+
+        Scene scene = new Scene(contentBox, 950, 550);
+        scene.setFill(javafx.scene.paint.Color.WHITE);
         dialog.setScene(scene);
+        dialog.setMinWidth(950);
+        dialog.setMinHeight(550);
         dialog.showAndWait();
     }
-
 
     private MaterialNode mapToMaterialNode(Map<String, Object> map) {
         MaterialNode node = new MaterialNode();
@@ -631,41 +708,80 @@ public class CategoryController extends ToolController {
 
     }
 
-
     private void showEditDialog(CategoryNode node) {
         Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.setTitle(node == null ? "新增分类" : "编辑分类");
 
-        GridPane grid = new GridPane();
-        grid.setPadding(new Insets(20));
-        grid.setHgap(10);
-        grid.setVgap(10);
+        VBox mainContainer = new VBox(20);
+        mainContainer.setPadding(new Insets(30));
+        mainContainer.setStyle("-fx-background-color: white;");
 
+        VBox titleBar = new VBox(5);
+        Label titleLabel = new Label(node == null ? "新增分类" : "编辑分类");
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #4A90E2;");
+        Label subtitleLabel = new Label("请填写分类信息");
+        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999;");
+        titleBar.getChildren().addAll(titleLabel, subtitleLabel);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(18);
+
+        Label nameLabel = new Label("分类名称:");
+        nameLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField nameField = new TextField(node != null ? node.getName() : "");
         nameField.setPromptText("请输入分类名称");
+        nameField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        nameField.setPrefHeight(40);
 
+        Label codeLabel = new Label("分类编码:");
+        codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         TextField codeField = new TextField(node != null ? node.getCode() : "");
         codeField.setPromptText("请输入分类编码");
+        codeField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        codeField.setPrefHeight(40);
 
+        Label statusLabel = new Label("状态:");
+        statusLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         ComboBox<String> statusCombo = new ComboBox<>();
         statusCombo.getItems().addAll("启用", "禁用");
         statusCombo.setValue(node != null ? node.getStatus() : "启用");
+        statusCombo.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
+        statusCombo.setPrefHeight(40);
 
-        grid.add(new Label("分类名称:"), 0, 0);
+        grid.add(nameLabel, 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(new Label("分类编码:"), 0, 1);
+        grid.add(codeLabel, 0, 1);
         grid.add(codeField, 1, 1);
-        grid.add(new Label("状态:"), 0, 2);
+        grid.add(statusLabel, 0, 2);
         grid.add(statusCombo, 1, 2);
 
+        HBox buttonBox = new HBox(15);
+        buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
         Button saveBtn = new Button("保存");
+        saveBtn.setPrefWidth(100);
+        saveBtn.setPrefHeight(40);
+        saveBtn.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;");
+
         Button cancelBtn = new Button("取消");
+        cancelBtn.setPrefWidth(100);
+        cancelBtn.setPrefHeight(40);
+        cancelBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5;");
 
         saveBtn.setOnAction(e -> {
             try {
+                String name = nameField.getText().trim();
+
+                if (name.isEmpty()) {
+                    showError("验证失败", "分类名称不能为空，请输入分类名称！");
+                    nameField.requestFocus();
+                    return;
+                }
+
                 DataRequest request = new DataRequest();
-                request.put("name", nameField.getText());
+                request.put("name", name);
                 request.put("code", codeField.getText());
 
                 String statusValue = statusCombo.getValue();
@@ -696,14 +812,17 @@ public class CategoryController extends ToolController {
 
         cancelBtn.setOnAction(e -> dialog.close());
 
-        javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(10, saveBtn, cancelBtn);
-        grid.add(buttonBox, 1, 3);
+        buttonBox.getChildren().addAll(cancelBtn, saveBtn);
 
-        Scene scene = new Scene(grid, 400, 200);
+        mainContainer.getChildren().addAll(titleBar, grid, buttonBox);
+
+        Scene scene = new Scene(mainContainer, 500, 320);
+        scene.setFill(javafx.scene.paint.Color.WHITE);
         dialog.setScene(scene);
+        dialog.setMinWidth(500);
+        dialog.setMinHeight(320);
         dialog.showAndWait();
     }
-
 
     private void showInfo(String title, String message) {
         Platform.runLater(() -> {
@@ -711,6 +830,17 @@ public class CategoryController extends ToolController {
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            alert.getDialogPane().setStyle("-fx-background-color: white;");
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
+            alert.getButtonTypes().setAll(okBtn);
+
+            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
+            button.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+            button.setDefaultButton(true);
+
             alert.showAndWait();
         });
     }
@@ -721,6 +851,17 @@ public class CategoryController extends ToolController {
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            alert.getDialogPane().setStyle("-fx-background-color: white;");
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
+            alert.getButtonTypes().setAll(okBtn);
+
+            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
+            button.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+            button.setDefaultButton(true);
+
             alert.showAndWait();
         });
     }
