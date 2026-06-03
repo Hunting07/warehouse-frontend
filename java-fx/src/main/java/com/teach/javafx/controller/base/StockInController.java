@@ -78,6 +78,12 @@ public class StockInController extends ToolController {
 
     @FXML
     private Button approveButton;
+    
+    @FXML
+    private Label titleLabel;
+    
+    @FXML
+    private Label subtitleLabel;
 
     private final ObservableList<StockIn> stockInList = FXCollections.observableArrayList();
     private final Gson gson = GsonUtil.getGson();
@@ -91,12 +97,15 @@ public class StockInController extends ToolController {
         String role = AppStore.getJwt().getRole();
         isAdmin = "admin".equals(role);
 
+        // 根据角色设置页面标题
         if (isAdmin) {
+            titleLabel.setText("入库审批管理");
+            subtitleLabel.setText("管理和审批所有入库单据");
             editButton.setVisible(false);
             editButton.setManaged(false);
-            deleteButton.setVisible(false);
-            deleteButton.setManaged(false);
         } else {
+            titleLabel.setText("入库申请管理");
+            subtitleLabel.setText("管理和申请自己的入库单据");
             approveButton.setVisible(false);
             approveButton.setManaged(false);
         }
@@ -520,7 +529,6 @@ public class StockInController extends ToolController {
     private void showApproveDialog(StockIn stockIn) {
         Dialog<Boolean> dialog = new Dialog<>();
         dialog.setTitle("入库单审批");
-        dialog.setHeaderText("审批入库单：" + stockIn.getInCode());
 
         ButtonType approveButtonType = new ButtonType("批准并入库", ButtonBar.ButtonData.OK_DONE);
         ButtonType rejectButtonType = new ButtonType("驳回", ButtonBar.ButtonData.OTHER);
@@ -532,19 +540,58 @@ public class StockInController extends ToolController {
         rejectReasonArea.setPromptText("请输入驳回理由（仅驳回时需要）");
         rejectReasonArea.setPrefRowCount(4);
         rejectReasonArea.setPrefWidth(400);
+        rejectReasonArea.setStyle("-fx-font-size: 13px; -fx-padding: 10;");
 
-        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(10);
-        content.getChildren().addAll(
-            new Label("申请人：" + stockIn.getApplyUserName()),
-            new Label("入库类型：" + getTypeName(stockIn.getType())),
-            new Label("总金额：" + stockIn.getTotalAmount()),
-            new Label("申请时间：" + stockIn.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))),
-            new javafx.scene.control.Separator(),
-            new Label("驳回理由："),
-            rejectReasonArea
-        );
+        Label titleLabel = new Label("入库单审批");
+        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        Separator separator = new Separator();
+        separator.setStyle("-fx-background-color: #e0e6ed;");
+
+        javafx.scene.layout.HBox titleBox = new javafx.scene.layout.HBox(10, titleLabel);
+        titleBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        javafx.scene.layout.VBox infoBox = new javafx.scene.layout.VBox(12);
+        infoBox.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);");
+        
+        Label inCodeLabel = new Label("入库单号：" + stockIn.getInCode());
+        inCodeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        
+        Label applyUserLabel = new Label("申请人：" + stockIn.getApplyUserName());
+        applyUserLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
+        
+        Label typeLabel = new Label("入库类型：" + getTypeName(stockIn.getType()));
+        typeLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
+        
+        Label amountLabel = new Label("总金额：" + stockIn.getTotalAmount());
+        amountLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
+        
+        Label timeLabel = new Label("申请时间：" + stockIn.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        timeLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
+        
+        infoBox.getChildren().addAll(inCodeLabel, applyUserLabel, typeLabel, amountLabel, timeLabel);
+
+        Label rejectLabel = new Label("驳回理由：");
+        rejectLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        javafx.scene.layout.VBox rejectBox = new javafx.scene.layout.VBox(8, rejectLabel, rejectReasonArea);
+        rejectBox.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);");
+
+        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(15);
+        content.setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff); -fx-padding: 25;");
+        content.getChildren().addAll(titleBox, separator, infoBox, rejectBox);
 
         dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff);");
+
+        Button approveBtn = (Button) dialog.getDialogPane().lookupButton(approveButtonType);
+        approveBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);");
+
+        Button rejectBtn = (Button) dialog.getDialogPane().lookupButton(rejectButtonType);
+        rejectBtn.setStyle("-fx-background-color: #e87070; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand;");
+
+        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(cancelButtonType);
+        cancelBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 25; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-cursor: hand;");
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == approveButtonType) {
