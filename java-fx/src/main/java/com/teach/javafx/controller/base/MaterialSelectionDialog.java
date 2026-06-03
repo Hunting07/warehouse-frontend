@@ -75,10 +75,10 @@ public class MaterialSelectionDialog extends Stage {
                     setStyle("-fx-background-color: transparent;");
                 } else {
                     setText(item.getName());
-                    setStyle("-fx-background-color: white; -fx-padding: 12 16 12 16; -fx-font-size: 14px;");
+                    setStyle("-fx-background-color: white; -fx-padding: 12 16 12 16; -fx-font-size: 14px; -fx-text-fill: #2c3e50;");
 
                     if (item == materialListView.getSelectionModel().getSelectedItem()) {
-                        setStyle("-fx-background-color: #e6f7ff; -fx-padding: 12 16 12 16; -fx-font-size: 14px;");
+                        setStyle("-fx-background-color: #e6f7ff; -fx-padding: 12 16 12 16; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
                     }
                 }
             }

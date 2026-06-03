@@ -473,95 +473,16 @@ public class StockInEditDialog extends Stage {
             return;
         }
 
-        // 创建选择对话框
-        Dialog<OptionItem> dialog = new Dialog<>();
-        dialog.setTitle("选择物资");
+        // 使用与出库单相同的 MaterialSelectionDialog
+        MaterialSelectionDialog dialog = MaterialSelectionDialog.createDialog(materialList);
+        if (dialog == null) {
+            return;
+        }
+
+        dialog.showAndWait();
         
-        // 添加标准按钮类型
-        ButtonType selectButtonType = new ButtonType("选择", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelButtonType = ButtonType.CANCEL;
-        dialog.getDialogPane().getButtonTypes().addAll(selectButtonType, cancelButtonType);
-
-        // 创建标题
-        Label titleLabel = new Label("请选择要入库的物资");
-        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-
-        // 创建物资列表
-        ListView<OptionItem> listView = new ListView<>();
-        listView.getItems().addAll(materialList);
-        
-        // 监听选择变化,刷新列表以更新样式
-        listView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            listView.refresh();
-        });
-        
-        listView.setCellFactory(lv -> new ListCell<OptionItem>() {
-            {
-                setStyle("-fx-padding: 10 15; -fx-font-size: 13px; -fx-text-fill: #2c3e50;");
-            }
-            
-            @Override
-            protected void updateItem(OptionItem optionItem, boolean empty) {
-                super.updateItem(optionItem, empty);
-                if (empty || optionItem == null) {
-                    setText(null);
-                    setStyle("-fx-padding: 10 15; -fx-background-color: white; -fx-font-size: 13px; -fx-text-fill: #2c3e50;");
-                } else {
-                    setText(optionItem.getName());
-                    int index = getIndex();
-                    boolean isSelected = isSelected();
-                    
-                    // 根据行号设置交替背景色
-                    String backgroundColor = (index % 2 == 0) ? "#fafafa" : "white";
-                    
-                    if (isSelected) {
-                        // 选中时:保持背景色 + 黑色加粗文字
-                        setStyle("-fx-padding: 10 15; -fx-background-color: " + backgroundColor + "; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-                    } else {
-                        // 未选中时:交替行背景色 + 正常文字
-                        setStyle("-fx-padding: 10 15; -fx-background-color: " + backgroundColor + "; -fx-font-size: 13px; -fx-text-fill: #2c3e50;");
-                    }
-                }
-            }
-        });
-        listView.setPrefHeight(300);
-        // 覆盖ListView默认样式,移除选中高亮
-        listView.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-radius: 8; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-        listView.setFocusTraversable(false);
-
-        // 创建布局
-        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(15);
-        content.setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff); -fx-padding: 25;");
-        content.getChildren().addAll(titleLabel, listView);
-
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff);");
-        
-        // 美化按钮样式
-        Button selectButton = (Button) dialog.getDialogPane().lookupButton(selectButtonType);
-        selectButton.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);");
-        
-        Button cancelButton = (Button) dialog.getDialogPane().lookupButton(cancelButtonType);
-        cancelButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 25; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-cursor: hand;");
-
-        // 设置结果转换器
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == selectButtonType) {
-                OptionItem selected = listView.getSelectionModel().getSelectedItem();
-                if (selected == null) {
-                    MessageDialog.showDialog("请先选择物资");
-                    return null;
-                }
-                return selected;
-            }
-            return null;
-        });
-
-        // 设置对话框大小
-        dialog.setResizable(false);
-        dialog.setWidth(450);
-
-        dialog.showAndWait().ifPresent(selectedMaterial -> {
+        OptionItem selectedMaterial = dialog.getSelectedMaterial();
+        if (selectedMaterial != null) {
             item.setMaterialId(selectedMaterial.getId());
             item.setMaterialName(selectedMaterial.getName());
             
@@ -576,7 +497,7 @@ public class StockInEditDialog extends Stage {
             
             System.out.println("已选择物资: " + selectedMaterial.getName() + " (ID: " + selectedMaterial.getId() + ")");
             itemTable.refresh();
-        });
+        }
     }
 
     private void loadStockInDetail(StockIn stockIn) {
