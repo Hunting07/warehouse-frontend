@@ -47,18 +47,17 @@ public class MessageDialog {
             messageController.setStage(stage);
 
             fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/choice-dialog.fxml"));
-            scene = new Scene(fxmlLoader.load(), 300, 260);
+            scene = new Scene(fxmlLoader.load(), 450, 220);
             stage = new Stage();
             stage.initOwner(MainApplication.getMainStage());
             stage.setAlwaysOnTop(true);
-            stage.initModality(Modality.NONE);
-            stage.setOnCloseRequest(e->{
-                MainApplication.setCanClose(true);
-            });
+            stage.initModality(Modality.APPLICATION_MODAL);
             stage.setScene(scene);
-            stage.setTitle("信息显示对话框");
+            stage.setTitle("确认操作");
+            scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
             choiceController = fxmlLoader.getController();
             choiceController.setStage(stage);
+
 
         } catch (IOException e) {
             throw new RuntimeException(e);

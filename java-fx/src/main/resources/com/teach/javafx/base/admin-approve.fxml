@@ -18,7 +18,7 @@
                 </font>
             </Label>
             <Region HBox.hgrow="ALWAYS" />
-            <Button text="刷新列表" onAction="#loadUserList" style="-fx-background-color: #1677ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand;" />
+            <Button text="刷新列表" onAction="#loadUserList" style="-fx-background-color: linear-gradient(to bottom, #4a90e2, #357abd); -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 8; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 226, 0.3), 6, 0, 0, 2);" />
         </HBox>
 
         <HBox spacing="14" alignment="CENTER_LEFT">

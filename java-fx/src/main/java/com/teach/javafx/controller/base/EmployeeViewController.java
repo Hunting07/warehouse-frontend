@@ -70,10 +70,6 @@ public class EmployeeViewController {
 
         new Thread(() -> {
             try {
-                System.out.println("\n========== [员工管理] 开始加载 ==========");
-                System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/user/list?role=staff");
-                System.out.println("Token: " + AppStore.getJwt().getTokenValue());
-
                 HttpRequest httpRequest = HttpRequest.newBuilder()
                         .uri(URI.create(HttpRequestUtil.serverUrl + "/user/list?role=staff"))
                         .GET()
@@ -81,9 +77,6 @@ public class EmployeeViewController {
                         .build();
 
                 HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println("响应状态码: " + response.statusCode());
-                System.out.println("响应内容: " + response.body());
 
                 int totalCount = 0;
                 int activeCount = 0;
@@ -94,16 +87,9 @@ public class EmployeeViewController {
 
                     if (result.get("code").equals(200.0)) {
                         Object dataObj = result.get("data");
-                        System.out.println("data 类型: " + (dataObj != null ? dataObj.getClass().getName() : "null"));
-                        System.out.println("data 内容: " + dataObj);
 
                         if (dataObj instanceof List) {
                             List<Map<String, Object>> data = (List<Map<String, Object>>) dataObj;
-                            System.out.println("员工数量: " + data.size());
-
-                            if (data.isEmpty()) {
-                                System.out.println("️ 员工列表为空！");
-                            }
 
                             totalCount = data.size();
 
@@ -138,18 +124,12 @@ public class EmployeeViewController {
 
                                 javafx.application.Platform.runLater(() -> employeeList.add(info));
                             }
-                            System.out.println("✅ 员工列表加载完成");
-                        } else {
-                            System.out.println("️ data 不是 List 类型！");
                         }
                     } else {
-                        System.out.println("️ 接口返回错误：code=" + result.get("code") + ", msg=" + result.get("msg"));
                         javafx.application.Platform.runLater(() ->
                                 MessageDialog.showDialog("获取列表失败：" + result.get("msg"))
                         );
                     }
-                } else {
-                    System.out.println("⚠️ HTTP请求失败，状态码：" + response.statusCode());
                 }
 
                 int finalTotalCount = totalCount;
@@ -163,17 +143,13 @@ public class EmployeeViewController {
                 });
 
             } catch (Exception e) {
-                System.out.println("️ 异常信息：" + e.getMessage());
                 e.printStackTrace();
                 javafx.application.Platform.runLater(() ->
                         MessageDialog.showDialog("获取列表异常：" + e.getMessage())
                 );
-            } finally {
-                System.out.println("========== [员工管理] 加载结束 ==========\n");
             }
         }).start();
     }
-
 
     public static class EmployeeInfo {
         private Integer rowNum;

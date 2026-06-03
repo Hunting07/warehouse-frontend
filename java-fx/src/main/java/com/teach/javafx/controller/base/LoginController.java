@@ -187,13 +187,6 @@ public class LoginController {
 
                     AppStore.setJwt(jwt);
 
-                    // 添加调试日志
-                    System.out.println("\n=== [登录成功] 用户信息 ===");
-                    System.out.println("用户名: " + userName);
-                    System.out.println("角色: " + role);
-                    System.out.println("用户ID: " + jwt.getId());
-                    System.out.println("loginId: " + loginId);
-
                     MessageDialog.showDialog("登录成功！");
 
                     FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/main-frame.fxml"));

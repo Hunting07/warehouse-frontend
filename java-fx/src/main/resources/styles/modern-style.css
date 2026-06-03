@@ -541,3 +541,166 @@
     -fx-background-color: transparent;
     -fx-padding: 0;
 }
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* ========================================
+   对话框样式 - 现代化设计
+   ======================================== */
+
+.dialog-pane {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 20, 0, 0, 5);
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: -fx-primary-color;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.dialog-pane .content {
+    -fx-padding: 20;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+}
+
+/* 对话框按钮 - 是/确认按钮 */
+.btn-yes {
+    -fx-background-color: linear-gradient(to bottom, #4caf7d, #3d9969);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(76, 175, 125, 0.3), 8, 0, 0, 2);
+    -fx-border-width: 0;
+}
+
+.btn-yes:hover {
+    -fx-background-color: linear-gradient(to bottom, #3d9969, #2d8a5e);
+    -fx-effect: dropshadow(gaussian, rgba(76, 175, 125, 0.4), 12, 0, 0, 3);
+    -fx-translate-y: -2;
+}
+
+.btn-yes:pressed {
+    -fx-translate-y: 0;
+    -fx-effect: dropshadow(gaussian, rgba(76, 175, 125, 0.2), 4, 0, 0, 1);
+}
+
+/* 对话框按钮 - 否/驳回按钮 */
+.btn-no {
+    -fx-background-color: linear-gradient(to bottom, #f7fafc, #edf2f7);
+    -fx-text-fill: #4a5568;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);
+}
+
+.btn-no:hover {
+    -fx-background-color: linear-gradient(to bottom, #edf2f7, #e2e8f0);
+    -fx-border-color: #cbd5e0;
+    -fx-text-fill: #2d3748;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 6, 0, 0, 2);
+    -fx-translate-y: -2;
+}
+
+.btn-no:pressed {
+    -fx-translate-y: 0;
+}
+
+/* 对话框按钮 - 取消按钮 */
+.btn-cancel {
+    -fx-background-color: linear-gradient(to bottom, #f7fafc, #edf2f7);
+    -fx-text-fill: #718096;
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+    -fx-background-radius: 10;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+}
+
+.btn-cancel:hover {
+    -fx-background-color: linear-gradient(to bottom, #edf2f7, #e2e8f0);
+    -fx-text-fill: #4a5568;
+    -fx-border-color: #cbd5e0;
+    -fx-translate-y: -2;
+}
+
+.btn-cancel:pressed {
+    -fx-translate-y: 0;
+}
+
+/* ========================================
+   对话框按钮样式
+   ======================================== */
+
+.btn-success {
+    -fx-background-color: -fx-success-color;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 2);
+}
+
+.btn-success:hover {
+    -fx-background-color: -fx-success-dark;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 6, 0, 0, 3);
+    -fx-translate-y: -1;
+}
+
+.btn-danger {
+    -fx-background-color: -fx-danger-color;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 2);
+}
+
+.btn-danger:hover {
+    -fx-background-color: -fx-danger-dark;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 6, 0, 0, 3);
+    -fx-translate-y: -1;
+}
+
+.btn-secondary {
+    -fx-background-color: white;
+    -fx-text-fill: -fx-text-secondary;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-border-color: -fx-border-clr;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: -fx-bg-color;
+    -fx-border-color: -fx-text-secondary;
+    -fx-text-fill: -fx-text-primary;
+}
+

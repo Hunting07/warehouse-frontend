@@ -12,6 +12,7 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.Separator?>
 <!-- 前端应用主框架FXML配置文件 对应页面交互控制类 com.teach.javafx.controller.base.MainFrameController -->
 <BorderPane fx:id="mainBorderPane"
             xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
@@ -55,6 +56,24 @@
   <center>
     <StackPane>
       <VBox fx:id="dashboardView" style="-fx-padding: 20 20 20 20; -fx-spacing: 20;">
+        <!-- 欢迎提示区域 -->
+        <VBox styleClass="dashboard-card" style="-fx-padding: 25; -fx-background-color: linear-gradient(to right, #e3f2fd, #f3e5f5);">
+          <children>
+            <HBox alignment="CENTER_LEFT" spacing="15">
+              <children>
+                <Label text="👋" style="-fx-font-size: 40px;" />
+                <VBox spacing="5">
+                  <children>
+                    <Label fx:id="welcomeMessageLabel" text="" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+                    <Label fx:id="subWelcomeLabel" text="" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;" />
+                  </children>
+                </VBox>
+              </children>
+            </HBox>
+          </children>
+        </VBox>
+
+        <!-- 统计卡片区域 -->
         <HBox spacing="20" style="-fx-padding: 0 0 10 0;" alignment="CENTER_LEFT">
           <children>
             <VBox styleClass="dashboard-card" HBox.hgrow="ALWAYS">
@@ -80,7 +99,7 @@
             </VBox>
             <VBox styleClass="dashboard-card" HBox.hgrow="ALWAYS">
               <children>
-                <Label text="⚠️" style="-fx-font-size: 36px; -fx-padding: 0 0 10 0;" />
+                <Label text="️" style="-fx-font-size: 36px; -fx-padding: 0 0 10 0;" />
                 <Label text="库存预警" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d; -fx-padding: 0 0 5 0;" />
                 <Label fx:id="warningCountLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #e87070;" />
               </children>
@@ -95,6 +114,51 @@
             </VBox>
           </children>
         </HBox>
+
+        <!-- 系统功能介绍区域 -->
+        <HBox spacing="20">
+          <children>
+            <VBox styleClass="dashboard-card" HBox.hgrow="ALWAYS" style="-fx-padding: 20;">
+              <children>
+                <Label text="📋 系统功能" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 12 0;" />
+                <VBox spacing="8">
+                  <children>
+                    <Label text="📦 物资分类 - 管理物资分类信息" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                    <Label text="📋 物资管理 - 管理仓库物资信息" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                    <Label fx:id="stockInFunctionLabel" text="" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                    <Label fx:id="stockOutFunctionLabel" text="" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                  </children>
+                </VBox>
+              </children>
+            </VBox>
+            <VBox styleClass="dashboard-card" HBox.hgrow="ALWAYS" style="-fx-padding: 20;">
+              <children>
+                <Label text="🔧 快捷提示" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-padding: 0 0 12 0;" />
+                <VBox spacing="8">
+                  <children>
+                    <Label text="💡 点击左侧菜单切换功能页面" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                    <Label text="💡 顶部标签页支持多任务切换" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                    <Label text="💡 关注库存预警及时处理" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                    <Label text="💡 定期备份数据保障安全" style="-fx-font-size: 13px; -fx-text-fill: #34495e;" />
+                  </children>
+                </VBox>
+              </children>
+            </VBox>
+          </children>
+        </HBox>
+
+        <!-- 温馨提示区域 -->
+        <VBox styleClass="dashboard-card" style="-fx-padding: 20; -fx-background-color: linear-gradient(to right, #fff9c4, #fff3e0);">
+          <children>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+              <children>
+                <Label text="💡" style="-fx-font-size: 24px;" />
+                <Label text="温馨提示" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #e65100;" />
+              </children>
+            </HBox>
+            <Label fx:id="tipLabel" text="" style="-fx-font-size: 13px; -fx-text-fill: #5d4037; -fx-padding: 10 0 0 0;" wrapText="true" />
+          </children>
+        </VBox>
       </VBox>
       <TabPane fx:id="contentTabPane" styleClass="tab-pane" tabClosingPolicy="UNAVAILABLE" visible="false" managed="false">
       </TabPane>

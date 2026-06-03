@@ -197,6 +197,10 @@ public class AdminApproveController {
 
                             for (Map<String, Object> item : data) {
                                 AdminInfo info = new AdminInfo();
+                                Object idObj = item.get("id");
+                                if (idObj instanceof Number) {
+                                    info.setId(((Number) idObj).intValue());
+                                }
                                 info.setUsername((String) item.get("username"));
 
                                 String realName = (String) item.get("realName");
@@ -241,7 +245,9 @@ public class AdminApproveController {
         String statusText = approved ? "通过" : "驳回";
         int ret = MessageDialog.choiceDialog("确认要" + statusText + "管理员【" + info.getRealName() + "】的申请吗？");
 
-        if (ret != MessageDialog.CHOICE_YES) return;
+        if (ret != MessageDialog.CHOICE_YES) {
+            return;
+        }
 
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("id", info.getId());
@@ -277,6 +283,7 @@ public class AdminApproveController {
             }
         }).start();
     }
+
 
     public static class AdminInfo {
         private Integer rowNum;

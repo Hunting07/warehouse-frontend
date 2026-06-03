@@ -69,10 +69,6 @@ public class AdminViewController {
 
         new Thread(() -> {
             try {
-                System.out.println("\n========== [管理员列表] 开始加载 ==========");
-                System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/user/list?role=admin");
-                System.out.println("Token: " + AppStore.getJwt().getTokenValue());
-
                 HttpRequest httpRequest = HttpRequest.newBuilder()
                         .uri(URI.create(HttpRequestUtil.serverUrl + "/user/list?role=admin"))
                         .GET()
@@ -81,9 +77,6 @@ public class AdminViewController {
 
                 HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-                System.out.println("响应状态码: " + response.statusCode());
-                System.out.println("响应内容: " + response.body());
-
                 int totalCount = 0;
                 int todayAddedCount = 0;
                 String today = LocalDate.now().toString();
@@ -91,20 +84,11 @@ public class AdminViewController {
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
 
-                    System.out.println("接口返回: code=" + result.get("code") + ", msg=" + result.get("msg"));
-
                     if (result.get("code").equals(200.0)) {
                         Object dataObj = result.get("data");
-                        System.out.println("data 类型: " + (dataObj != null ? dataObj.getClass().getName() : "null"));
-                        System.out.println("data 内容: " + dataObj);
 
                         if (dataObj instanceof List) {
                             List<Map<String, Object>> data = (List<Map<String, Object>>) dataObj;
-                            System.out.println("管理员总数（含未批准）: " + data.size());
-
-                            if (data.isEmpty()) {
-                                System.out.println("⚠️ 管理员列表为空！");
-                            }
 
                             int rowNum = 1;
                             for (int i = 0; i < data.size(); i++) {
@@ -143,20 +127,12 @@ public class AdminViewController {
                                     javafx.application.Platform.runLater(() -> adminList.add(info));
                                 }
                             }
-                            System.out.println("✅ 管理员列表加载完成");
-                            System.out.println("总管理员数（已批准）: " + totalCount);
-                            System.out.println("今日新增: " + todayAddedCount);
-                        } else {
-                            System.out.println("⚠️ data 不是 List 类型！");
                         }
                     } else {
-                        System.out.println("⚠️ 接口返回错误：code=" + result.get("code") + ", msg=" + result.get("msg"));
                         javafx.application.Platform.runLater(() ->
                                 MessageDialog.showDialog("获取列表失败：" + result.get("msg"))
                         );
                     }
-                } else {
-                    System.out.println("⚠️ HTTP请求失败，状态码：" + response.statusCode());
                 }
 
                 int finalTotalCount = totalCount;
@@ -168,13 +144,10 @@ public class AdminViewController {
                 });
 
             } catch (Exception e) {
-                System.out.println("⚠️ 异常信息：" + e.getMessage());
                 e.printStackTrace();
                 javafx.application.Platform.runLater(() ->
                         MessageDialog.showDialog("获取列表异常：" + e.getMessage())
                 );
-            } finally {
-                System.out.println("========== [管理员列表] 加载结束 ==========\n");
             }
         }).start();
     }

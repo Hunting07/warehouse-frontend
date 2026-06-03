@@ -42,10 +42,6 @@
                 <Label text="在职员工" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
                 <Label fx:id="activeEmployeesLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #388e3c;" />
             </VBox>
-            <VBox style="-fx-background-color: linear-gradient(to bottom right, #fff3e0, #ffe0b2); -fx-padding: 15 25 15 25; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
-                <Label text="待审核" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
-                <Label fx:id="pendingEmployeesLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #f57c00;" />
-            </VBox>
         </HBox>
     </VBox>
 
