@@ -86,10 +86,10 @@ public class StockInEditDialog extends Stage {
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
                     StockInEditDialog.class.getResource("/com/teach/javafx/base/stockin-edit-dialog.fxml"));
 
-            // 加载 FXML，会自动创建控制器实例
             Scene scene = new Scene(loader.load());
             
-            // 获取 FXML 自动创建的控制器实例
+            scene.getStylesheets().add(StockInEditDialog.class.getResource("/styles/modern-style.css").toExternalForm());
+            
             StockInEditDialog dialog = loader.getController();
             
             if (dialog == null) {
@@ -100,19 +100,15 @@ public class StockInEditDialog extends Stage {
             System.out.println("控制器实例: " + dialog);
             System.out.println("typeComboBox: " + dialog.typeComboBox);
             
-            // 设置对话框属性
             dialog.setScene(scene);
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setTitle(stockIn == null ? "新增入库单" : "编辑入库单");
             dialog.setResizable(false);
             
-            // 设置数据
             dialog.editingStockIn = stockIn;
             
-            // 初始化控件
             dialog.initControls();
             
-            // 如果是编辑模式，加载详情
             if (stockIn != null) {
                 dialog.loadStockInDetail(stockIn);
             }
@@ -619,7 +615,6 @@ public class StockInEditDialog extends Stage {
         if (item.getQuantity() != null && item.getPrice() != null) {
             item.setAmount(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
-        itemTable.refresh();
     }
 
     private void calculateTotal() {
@@ -629,7 +624,7 @@ public class StockInEditDialog extends Stage {
                 total = total.add(item.getAmount());
             }
         }
-        totalAmountLabel.setText("总金额：" + total);
+        totalAmountLabel.setText("总金额：¥" + total);
     }
 
     @FXML

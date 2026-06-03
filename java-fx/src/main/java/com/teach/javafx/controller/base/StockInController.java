@@ -74,11 +74,16 @@ public class StockInController extends ToolController {
     private Button editButton;
 
     @FXML
+    private Button deleteButton;
+
+    @FXML
     private Button approveButton;
 
     private final ObservableList<StockIn> stockInList = FXCollections.observableArrayList();
     private final Gson gson = GsonUtil.getGson();
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private static final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(java.time.Duration.ofSeconds(10))
+            .build();
     private boolean isAdmin = false;
 
     @FXML
@@ -87,11 +92,11 @@ public class StockInController extends ToolController {
         isAdmin = "admin".equals(role);
 
         if (isAdmin) {
-            // 管理员：隐藏编辑按钮
             editButton.setVisible(false);
             editButton.setManaged(false);
+            deleteButton.setVisible(false);
+            deleteButton.setManaged(false);
         } else {
-            // 员工：隐藏审批和驳回按钮
             approveButton.setVisible(false);
             approveButton.setManaged(false);
         }
@@ -152,75 +157,70 @@ public class StockInController extends ToolController {
     }
 
     private void loadStockInList() {
-        try {
-            StringBuilder urlBuilder = new StringBuilder(HttpRequestUtil.serverUrl + "/stock-in/list");
-            boolean hasParam = false;
+        new Thread(() -> {
+            try {
+                StringBuilder urlBuilder = new StringBuilder(HttpRequestUtil.serverUrl + "/stock-in/list");
+                boolean hasParam = false;
 
-            String status = statusComboBox.getValue();
-            if (status != null && !status.equals("全部")) {
-                urlBuilder.append(hasParam ? "&" : "?").append("status=").append(getStatusValue(status));
-                hasParam = true;
-            }
-
-            String type = typeComboBox.getValue();
-            if (type != null && !type.equals("全部")) {
-                urlBuilder.append(hasParam ? "&" : "?").append("type=").append(getTypeValue(type));
-                hasParam = true;
-            }
-
-            String searchCode = searchCodeField.getText();
-            if (searchCode != null && !searchCode.trim().isEmpty()) {
-                urlBuilder.append(hasParam ? "&" : "?").append("inCode=").append(searchCode.trim());
-                hasParam = true;
-            }
-
-            System.out.println("=== [前端] 加载入库列表 ===");
-            System.out.println("请求URL: " + urlBuilder.toString());
-            System.out.println("Token: " + AppStore.getJwt().getToken());
-            System.out.println("用户角色: " + AppStore.getJwt().getRole());
-
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(urlBuilder.toString()))
-                    .GET()
-                    .headers("satoken", AppStore.getJwt().getToken())
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("响应状态码: " + response.statusCode());
-            System.out.println("响应内容: " + response.body());
-
-            if (response.statusCode() == 200) {
-                Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
-                if (resultMap.get("code").equals(200.0)) {
-                    List<Map<String, Object>> dataList = (List<Map<String, Object>>) resultMap.get("data");
-                    List<StockIn> list = gson.fromJson(gson.toJson(dataList), new TypeToken<List<StockIn>>(){}.getType());
-                    stockInList.setAll(list);
-                    System.out.println("成功加载 " + list.size() + " 条数据");
-                } else {
-                    MessageDialog.showDialog("加载数据失败：" + resultMap.get("msg"));
-                    System.out.println("业务错误: " + resultMap.get("msg"));
+                String status = statusComboBox.getValue();
+                if (status != null && !status.equals("全部")) {
+                    urlBuilder.append(hasParam ? "&" : "?").append("status=").append(getStatusValue(status));
+                    hasParam = true;
                 }
-            } else {
-                String errorMsg = "";
-                if (response.body() != null && !response.body().isEmpty()) {
-                    try {
-                        Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
-                        if (errorResult.get("msg") != null) {
-                            errorMsg = String.valueOf(errorResult.get("msg"));
-                        }
-                    } catch (Exception e) {
-                        errorMsg += "\n响应内容：" + response.body();
+
+                String type = typeComboBox.getValue();
+                if (type != null && !type.equals("全部")) {
+                    urlBuilder.append(hasParam ? "&" : "?").append("type=").append(getTypeValue(type));
+                    hasParam = true;
+                }
+
+                String searchCode = searchCodeField.getText();
+                if (searchCode != null && !searchCode.trim().isEmpty()) {
+                    urlBuilder.append(hasParam ? "&" : "?").append("inCode=").append(searchCode.trim());
+                    hasParam = true;
+                }
+
+                System.out.println("=== [前端] 加载入库列表 ===");
+                System.out.println("请求URL: " + urlBuilder.toString());
+
+                HttpRequest httpRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(urlBuilder.toString()))
+                        .GET()
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
+
+                HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+                System.out.println("响应状态码: " + response.statusCode());
+
+                if (response.statusCode() == 200) {
+                    Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                    if (resultMap.get("code").equals(200.0)) {
+                        List<Map<String, Object>> dataList = (List<Map<String, Object>>) resultMap.get("data");
+                        List<StockIn> list = gson.fromJson(gson.toJson(dataList), new TypeToken<List<StockIn>>(){}.getType());
+                        
+                        javafx.application.Platform.runLater(() -> {
+                            stockInList.setAll(list);
+                            System.out.println("成功加载 " + list.size() + " 条数据");
+                        });
+                    } else {
+                        javafx.application.Platform.runLater(() -> {
+                            MessageDialog.showDialog("加载数据失败：" + resultMap.get("msg"));
+                        });
                     }
+                } else {
+                    javafx.application.Platform.runLater(() -> {
+                        String errorMsg = "请求失败，状态码：" + response.statusCode();
+                        MessageDialog.showDialog(errorMsg);
+                    });
                 }
-                MessageDialog.showDialog(errorMsg);
-                System.out.println("HTTP错误: " + errorMsg);
+            } catch (Exception e) {
+                e.printStackTrace();
+                javafx.application.Platform.runLater(() -> {
+                    MessageDialog.showDialog("加载数据异常：" + e.getMessage());
+                });
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            MessageDialog.showDialog("加载数据异常：" + e.getMessage());
-            System.out.println("网络异常: " + e.getMessage());
-        }
+        }).start();
     }
 
     @FXML

@@ -30,6 +30,8 @@
                 <Button text="新增入库单" onAction="#onAddButtonClick"
                         style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
                 <Button fx:id="editButton" text="编辑" onAction="#onEditButtonClick"/>
+                <Button fx:id="deleteButton" text="删除" onAction="#onDeleteButtonClick"
+                        style="-fx-background-color: #F44336; -fx-text-fill: white;"/>
                 <Button fx:id="approveButton" text="审批" onAction="#onApproveButtonClick"
                         style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
             </HBox>
