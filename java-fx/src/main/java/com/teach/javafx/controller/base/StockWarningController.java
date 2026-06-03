@@ -73,9 +73,11 @@ public class StockWarningController {
         checkUserRole();
         setupTable();
         setupFilters();
+        setupWarningTableStyle();
         loadWarnings();
         applyRolePermissions();
     }
+
 
     private void checkUserRole() {
         JwtResponse jwt = AppStore.getJwt();
@@ -187,6 +189,22 @@ public class StockWarningController {
         Label emptyLabel = new Label("✅ 库存充足，暂无预警");
         emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4caf50;");
         warningTable.setPlaceholder(emptyLabel);
+    }
+
+    private void setupWarningTableStyle() {
+        Platform.runLater(() -> {
+            try {
+                warningTable.lookup(".column-header-background").setStyle(
+                        "-fx-background-color: linear-gradient(to bottom, #ff8a80, #ff5252); -fx-background-radius: 8;"
+                );
+
+                warningTable.lookupAll(".column-header .label").forEach(label -> {
+                    label.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 13px;");
+                });
+            } catch (Exception e) {
+                logger.warning("设置表格样式失败: " + e.getMessage());
+            }
+        });
     }
 
     private void setupFilters() {

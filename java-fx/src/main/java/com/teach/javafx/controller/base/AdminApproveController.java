@@ -22,6 +22,13 @@ import java.util.Map;
 public class AdminApproveController {
 
     @FXML
+    private Label pendingCountLabel;
+    @FXML
+    private Label approvedCountLabel;
+    @FXML
+    private Label rejectedCountLabel;
+
+    @FXML
     private TableView<AdminInfo> pendingAdminTable;
     @FXML
     private TableColumn<AdminInfo, Integer> pendingNoColumn;
@@ -133,6 +140,36 @@ public class AdminApproveController {
         approvedAdminTable.setItems(approvedList);
     }
 
+    private void updateStatistics() {
+        int pendingCount = 0;
+        int approvedCount = 0;
+        int rejectedCount = 0;
+
+        for (AdminInfo info : pendingList) {
+            if ("pending".equals(info.getStatus())) {
+                pendingCount++;
+            }
+        }
+
+        for (AdminInfo info : approvedList) {
+            if ("approved".equals(info.getStatus())) {
+                approvedCount++;
+            } else if ("rejected".equals(info.getStatus())) {
+                rejectedCount++;
+            }
+        }
+
+        if (pendingCountLabel != null) {
+            pendingCountLabel.setText(String.valueOf(pendingCount));
+        }
+        if (approvedCountLabel != null) {
+            approvedCountLabel.setText(String.valueOf(approvedCount));
+        }
+        if (rejectedCountLabel != null) {
+            rejectedCountLabel.setText(String.valueOf(rejectedCount));
+        }
+    }
+
     @FXML
     public void loadUserList() {
         pendingList.clear();
@@ -194,6 +231,8 @@ public class AdminApproveController {
                 javafx.application.Platform.runLater(() ->
                         MessageDialog.showDialog("获取列表异常：" + e.getMessage())
                 );
+            } finally {
+                javafx.application.Platform.runLater(() -> updateStatistics());
             }
         }).start();
     }

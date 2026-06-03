@@ -1,75 +1,175 @@
+/* src/main/resources/styles/modern-style.css */
 
 /* ========================================
-   仓储管理系统 - 增强样式（蓝色主题）
+   仓储管理系统 - 现代化UI样式表
+   设计风格：扁平化、简洁、专业
    ======================================== */
 
-/* 全局增强 */
 /* 全局根变量 */
 .root {
-    -fx-primary-color: #1677ff;
-    -fx-primary-dark: #0958d9;
-    -fx-primary-light: #4096ff;
-    -fx-success-color: #00b42a;
-    -fx-success-dark: #009a29;
-    -fx-warning-color: #ff7d00;
-    -fx-warning-dark: #d96200;
-    -fx-danger-color: #f53f3f;
-    -fx-danger-dark: #d9363e;
+    -fx-primary-color: #4a90d9;
+    -fx-primary-dark: #3a7bc8;
+    -fx-primary-light: #6ba3e6;
+    -fx-success-color: #4caf7d;
+    -fx-success-dark: #3d9969;
+    -fx-warning-color: #f0b84d;
+    -fx-warning-dark: #e6a23c;
+    -fx-danger-color: #e87070;
+    -fx-danger-dark: #d95a5a;
+    -fx-info-color: #4db6ac;
     -fx-bg-color: #f5f7fa;
     -fx-card-background: #ffffff;
-    -fx-border-clr: #e5e6eb;
-    -fx-text-primary: #1d2129;
-    -fx-text-secondary: #4e5969;
-    -fx-text-light: #86909c;
-    -fx-font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+    -fx-border-clr: #e0e6ed;
+    -fx-text-primary: #2c3e50;
+    -fx-text-secondary: #7f8c8d;
+    -fx-text-light: #bdc3c7;
+    -fx-font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
     -fx-font-size: 13px;
 }
 
-/* 表格增强 - 斑马纹 & 悬浮 */
-.table-row-cell:odd {
-    -fx-background-color: #f7f9fc;
-}
+/* ========================================
+   通用按钮样式
+   ======================================== */
 
-.table-row-cell:even {
-    -fx-background-color: #ffffff;
-}
-
-.table-row-cell:filled:hover {
-    -fx-background-color: #e6f4ff;
+.button {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 20 8 20;
+    -fx-background-radius: 6;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 4, 0, 0, 2);
 }
 
-.table-row-cell:filled:selected {
-    -fx-background-color: linear-gradient(to right, #e6f4ff, #bae0ff);
-    -fx-text-fill: #1d3f66;
+.button:hover {
+    -fx-background-color: -fx-primary-dark;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 6, 0, 0, 3);
+    -fx-translate-y: -1;
 }
 
-.table-row-cell {
-    -fx-background-insets: 0;
-    -fx-padding: 0;
+.button:pressed {
+    -fx-translate-y: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 2, 0, 0, 1);
 }
 
-.table-view .table-cell {
-    -fx-padding: 11 12 11 12;
-    -fx-text-fill: #2c3e50;
+.button.success {
+    -fx-background-color: -fx-success-color;
+}
+
+.button.success:hover {
+    -fx-background-color: -fx-success-dark;
+}
+
+.button.warning {
+    -fx-background-color: -fx-warning-color;
+}
+
+.button.warning:hover {
+    -fx-background-color: -fx-warning-dark;
+}
+
+.button.danger {
+    -fx-background-color: -fx-danger-color;
+}
+
+.button.danger:hover {
+    -fx-background-color: -fx-danger-dark;
+}
+
+.button.secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-primary-color;
+    -fx-border-color: -fx-primary-color;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+}
+
+.button.secondary:hover {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+}
+
+.button:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
+}
+
+/* ========================================
+   输入框样式
+   ======================================== */
+
+.text-field, .password-field {
+    -fx-background-color: white;
+    -fx-text-fill: -fx-text-primary;
+    -fx-prompt-text-fill: -fx-text-light;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 6;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 6;
+    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: -fx-primary-color;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(52, 152, 219, 0.2), 8, 0, 0, 0);
+}
+
+/* ========================================
+   标签样式
+   ======================================== */
+
+.label {
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 13px;
+}
+
+.label.title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-primary-color;
+}
+
+.label.subtitle {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-secondary;
+}
+
+/* ========================================
+   表格样式
+   ======================================== */
+
+.table-view, .tree-table-view {
+    -fx-background-color: transparent;
     -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 8, 0, 0, 1);
 }
 
-/* 表头增强 */
-.table-view .column-header-background {
-    -fx-background-color: linear-gradient(to bottom, #4a90d9, #3a7bc8);
+.table-view .column-header-background,
+.tree-table-view .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #5a9fd4, #4a8fc4);
     -fx-background-insets: 0;
-    -fx-background-radius: 8 8 0 0;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0, 0, 1);
 }
 
-.table-view .column-header .label {
+.table-view .column-header .label,
+.tree-table-view .column-header .label {
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
-    -fx-padding: 13 8 13 8;
+    -fx-padding: 12 5 12 5;
 }
 
-.table-view .column-header {
+.table-view .column-header,
+.tree-table-view .column-header {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-border-width: 0;
@@ -79,11 +179,13 @@
 .tree-table-view .tree-table-row-cell:selected {
     -fx-background-color: linear-gradient(to right, #ebf5fb, #d6eaf8);
     -fx-text-fill: -fx-text-primary;
+    -fx-font-weight: bold;
 }
 
 .table-view .table-row-cell:hover,
 .tree-table-view .tree-table-row-cell:hover {
-    -fx-background-color: #f8f9fa;
+    -fx-background-color: #f0f4f8;
+    -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.1), 6, 0, 0, 1);
 }
 
 .table-view .table-cell,
@@ -91,315 +193,220 @@
     -fx-padding: 10 12 10 12;
     -fx-text-fill: -fx-text-primary;
     -fx-border-color: #e8edf2;
-    -fx-border-width: 0 0 1 1;
-}
-
-.table-view .table-cell:last-visible,
-.tree-table-view .tree-table-cell:last-visible {
-    -fx-border-right-width: 0;
+    -fx-border-width: 0 1 1 0;
+    -fx-border-radius: 0;
 }
 
 .table-row-cell:odd {
     -fx-background-color: #fafbfc;
-.table-view {
+}
+
+.table-row-cell:even {
+    -fx-background-color: white;
+}
+
+.table-view .filler,
+.tree-table-view .filler {
+    -fx-background-color: linear-gradient(to bottom, #5a9fd4, #4a8fc4);
+}
+
+.table-view .corner,
+.tree-table-view .corner {
+    -fx-background-color: linear-gradient(to bottom, #5a9fd4, #4a8fc4);
+}
+
+.table-view .scroll-bar:vertical,
+.tree-table-view .scroll-bar:vertical {
     -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-padding: 0;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+    -fx-padding: 0 2 0 0;
 }
 
-/* 输入框统一 */
-.text-field, .password-field {
-    -fx-background-color: white;
-    -fx-text-fill: #1d2129;
-    -fx-prompt-text-fill: #c0c4cc;
-    -fx-font-size: 13px;
-    -fx-padding: 7 12 7 12;
-    -fx-background-radius: 6;
-    -fx-border-color: #e5e6eb;
-    -fx-border-width: 1;
-    -fx-border-radius: 6;
+.table-view .scroll-bar:vertical .thumb,
+.tree-table-view .scroll-bar:vertical .thumb {
+    -fx-background-color: #bdc3c7;
+    -fx-background-radius: 5;
 }
 
-.text-field:focused, .password-field:focused {
-    -fx-border-color: #1677ff;
-    -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(22, 119, 255, 0.15), 8, 0, 0, 0);
+.table-view .scroll-bar:vertical .thumb:hover,
+.tree-table-view .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #95a5a6;
 }
 
-.text-field:hover, .password-field:hover {
-    -fx-border-color: #93cbff;
+.table-view .scroll-bar:horizontal,
+.tree-table-view .scroll-bar:horizontal {
+    -fx-background-color: transparent;
 }
 
-/* 入库单编辑对话框专用表格样式 */
-.stockin-edit-table {
-    -fx-background-color: white;
-    -fx-background-radius: 8;
-    -fx-border-color: #e0e6ed;
-    -fx-border-width: 1;
-    -fx-border-radius: 8;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 8, 0, 0, 2);
+.table-view .scroll-bar:horizontal .thumb,
+.tree-table-view .scroll-bar:horizontal .thumb {
+    -fx-background-color: #bdc3c7;
+    -fx-background-radius: 5;
 }
 
-.stockin-edit-table .column-header-background {
-    -fx-background-color: linear-gradient(to bottom, #4a90d9, #3a7bc8);
-    -fx-background-insets: 0;
-    -fx-background-radius: 8 8 0 0;
-}
-
-.stockin-edit-table .column-header .label {
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-font-size: 13px;
-    -fx-padding: 12 8 12 8;
-}
-
-.stockin-edit-table .table-cell {
-    -fx-padding: 8 12 8 12;
-    -fx-border-color: #e8edf2;
-    -fx-border-width: 0 0 1 1;
-}
-
-.stockin-edit-table .table-row-cell {
-    -fx-background-color: white;
-    -fx-border-color: transparent;
-}
-
-.stockin-edit-table .table-row-cell:odd {
-    -fx-background-color: #f8fafc;
-}
-
-.stockin-edit-table .table-row-cell:hover {
-    -fx-background-color: #ebf5fb;
-    -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.1), 4, 0, 0, 1);
-}
-
-.stockin-edit-table .table-row-cell:selected {
-    -fx-background-color: linear-gradient(to right, #d6eaf8, #ebf5fb);
-    -fx-text-fill: #2c3e50;
+.table-view .virtual-flow,
+.tree-table-view .virtual-flow {
+    -fx-background-color: transparent;
 }
 
 /* ========================================
    下拉框样式
    ======================================== */
 
-/* ComboBox 美化 */
 .combo-box {
     -fx-background-color: white;
     -fx-background-radius: 6;
-    -fx-border-color: #e5e6eb;
-    -fx-border-width: 1;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 1.5;
     -fx-border-radius: 6;
-    -fx-pref-height: 34;
+    -fx-padding: 4 8 4 8;
 }
 
 .combo-box:focused {
-    -fx-border-color: #1677ff;
+    -fx-border-color: -fx-primary-color;
     -fx-border-width: 2;
-}
-
-.combo-box:hover {
-    -fx-border-color: #93cbff;
-}
-
-.combo-box .list-cell {
-    -fx-padding: 6 10 6 10;
 }
 
 .combo-box-popup .list-view {
     -fx-background-color: white;
-    -fx-background-radius: 6;
-    -fx-border-color: #e5e6eb;
+    -fx-border-color: #e0e6ed;
     -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 12, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0, 0, 3);
 }
 
-.combo-box-popup .list-cell:hover {
-    -fx-background-color: #e6f4ff;
-}
-
-.combo-box-popup .list-cell:selected {
-    -fx-background-color: #1677ff;
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: -fx-primary-light;
     -fx-text-fill: white;
 }
 
-/* 按钮增强 */
-.button {
-    -fx-background-color: #1677ff;
-    -fx-text-fill: white;
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-padding: 9 22 9 22;
-    -fx-background-radius: 6;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(22, 119, 255, 0.3), 6, 0, 0, 2);
-}
+/* ========================================
+   树形视图样式 - 高级美化
+   ======================================== */
 
-.button:hover {
-    -fx-background-color: #4096ff;
-    -fx-effect: dropshadow(gaussian, rgba(22, 119, 255, 0.4), 10, 0, 0, 3);
-    -fx-translate-y: -1;
-}
-
-.button:pressed {
-    -fx-translate-y: 0;
-    -fx-effect: none;
-}
-
-.button:disabled {
-    -fx-opacity: 0.5;
-    -fx-cursor: default;
-}
-
-/* 主按钮 - 绿色（新增） */
-.button.primary-success {
-    -fx-background-color: linear-gradient(to right, #00b42a, #23c343);
-    -fx-effect: dropshadow(gaussian, rgba(0, 180, 42, 0.3), 6, 0, 0, 2);
-}
-
-.button.primary-success:hover {
-    -fx-background-color: linear-gradient(to right, #23c343, #3dd55a);
-    -fx-effect: dropshadow(gaussian, rgba(0, 180, 42, 0.4), 10, 0, 0, 3);
-}
-
-/* 审批按钮 - 橙色 */
-.button.warn-btn {
-    -fx-background-color: #ff7d00;
-    -fx-effect: dropshadow(gaussian, rgba(255, 125, 0, 0.3), 6, 0, 0, 2);
-}
-
-.button.warn-btn:hover {
-    -fx-background-color: #ff9a3c;
-    -fx-effect: dropshadow(gaussian, rgba(255, 125, 0, 0.4), 10, 0, 0, 3);
-}
-
-/* 危险按钮 - 白色底+红色边框 */
-.button.danger-outline {
-    -fx-background-color: white;
-    -fx-text-fill: #f53f3f;
-    -fx-border-color: #f53f3f;
-    -fx-border-width: 1;
-    -fx-border-radius: 6;
-    -fx-effect: none;
-}
-
-.button.danger-outline:hover {
-    -fx-background-color: #fff1f0;
-    -fx-effect: none;
-}
-
-/* 重置按钮 */
-.button.reset-btn {
-    -fx-background-color: #f2f3f5;
-    -fx-text-fill: #4e5969;
-    -fx-font-weight: normal;
-    -fx-border-color: #e5e6eb;
-    -fx-border-width: 1;
-    -fx-border-radius: 6;
-    -fx-effect: none;
-}
-
-.button.reset-btn:hover {
-    -fx-background-color: #e5e6eb;
-    -fx-effect: none;
-    -fx-translate-y: 0;
-}
-
-/* 卡片容器 */
-.card-white {
-    -fx-background-color: white;
-    -fx-background-radius: 8;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
-    -fx-padding: 16 24 16 24;
-}
-
-/* 分割线 */
-.separator .line {
-    -fx-border-color: #f0f0f0;
-    -fx-border-width: 1 0 0 0;
-}
-
-/* 滚动条美化 */
-.scroll-bar {
-    -fx-background-color: transparent;
-}
-
-.scroll-bar .thumb {
-    -fx-background-color: #c0c4cc;
-    -fx-background-radius: 4;
-    -fx-opacity: 0.7;
-}
-
-.scroll-bar .thumb:hover {
-    -fx-background-color: #909399;
-    -fx-opacity: 1;
-}
-
-.scroll-bar .increment-button,
-.scroll-bar .decrement-button {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
-}
-
-/* TreeView 菜单美化 */
 .tree-view {
-    -fx-background-color: white;
-    -fx-border-color: #f0f0f0;
-    -fx-border-width: 0 1 0 0;
-    -fx-padding: 8 4 8 4;
+    -fx-background-color: linear-gradient(to bottom, #ffffff, #f8f9fa);
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 0 2 0 0;
+    -fx-background-radius: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 8, 0, 0, 1);
+    -fx-padding: 8;
 }
 
 .tree-cell {
+    -fx-padding: 14 18 14 18;
+    -fx-text-fill: -fx-text-primary;
+    -fx-font-size: 14px;
     -fx-background-color: transparent;
-    -fx-padding: 8 12 8 12;
-    -fx-background-radius: 6;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
 }
 
 .tree-cell:selected {
-    -fx-background-color: linear-gradient(to right, #e6f4ff, #bae0ff);
-    -fx-text-fill: #1d3f66;
+    -fx-background-color: linear-gradient(to right, #4a90d9, #6ba3e6);
+    -fx-text-fill: white;
     -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);
 }
 
 .tree-cell:hover {
-    -fx-background-color: #f0f5ff;
+    -fx-background-color: linear-gradient(to right, #f0f4f8, #e8f0f8);
+    -fx-text-fill: #2c3e50;
+    -fx-translate-x: 5;
 }
 
 .tree-cell .tree-disclosure-node .arrow {
-    -fx-background-color: #86909c;
+    -fx-background-color: -fx-text-secondary;
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
 }
 
 .tree-cell:expanded .tree-disclosure-node .arrow {
-    -fx-background-color: #1677ff;
+    -fx-background-color: -fx-primary-color;
 }
 
 .tree-cell:hover .tree-disclosure-node .arrow {
-    -fx-background-color: #1677ff;
+    -fx-background-color: -fx-primary-color;
 }
 
 .tree-cell .label {
-    -fx-padding: 0 0 0 6;
+    -fx-padding: 0 0 0 8;
 }
 
-/* Tab 样式 */
+/* ========================================
+   菜单栏样式 - 高级美化
+   ======================================== */
+
+.menu-bar {
+    -fx-background-color: linear-gradient(to bottom, #ffffff, #f8f9fa);
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 6 12 6 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);
+}
+
+.menu-bar .menu {
+    -fx-background-color: transparent;
+    -fx-padding: 8 15 8 15;
+    -fx-background-radius: 8;
+}
+
+.menu-bar .menu:hover {
+    -fx-background-color: linear-gradient(to bottom, #f0f4f8, #e8f0f8);
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 6, 0, 0, 2);
+}
+
+.menu-bar .menu .label {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+/* ========================================
+   仪表盘卡片样式
+   ======================================== */
+
+.dashboard-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-padding: 25 20 25 20;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 10, 0, 0, 2);
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+}
+
+.dashboard-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 15, 0, 0, 4);
+    -fx-translate-y: -3;
+}
+
+/* ========================================
+   选项卡样式
+   ======================================== */
+
 .tab-pane .tab-header-area .tab-header-background {
     -fx-background-color: transparent;
-    -fx-border-color: #f0f0f0;
+    -fx-border-color: #e0e6ed;
     -fx-border-width: 0 0 2 0;
 }
 
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+
 .tab-pane .tab {
     -fx-background-color: transparent;
-    -fx-padding: 10 24 10 24;
-    -fx-background-radius: 6 6 0 0;
+    -fx-padding: 10 25 10 25;
+    -fx-background-radius: 8 8 0 0;
 }
 
 .tab-pane .tab:selected {
-    -fx-background-color: linear-gradient(to bottom, #1677ff, #0958d9);
+    -fx-background-color: linear-gradient(to bottom, #4a90d9, #3a7bc8);
 }
 
 .tab-pane .tab .tab-label {
-    -fx-text-fill: #86909c;
+    -fx-text-fill: -fx-text-secondary;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
 }
@@ -409,36 +416,66 @@
 }
 
 .tab-pane .tab:hover {
-    -fx-background-color: #f0f5ff;
+    -fx-background-color: #f0f4f8;
 }
 
-/* Dashboard 卡片 */
-.dashboard-card {
-    -fx-background-color: white;
-    -fx-background-radius: 10;
-    -fx-padding: 20;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);
+
+.login-container {
+    -fx-background-color: linear-gradient(to bottom right, #667eea, #764ba2);
+    -fx-padding: 40;
+    -fx-spacing: 25;
     -fx-alignment: center;
-    -fx-cursor: hand;
 }
 
-.dashboard-card:hover {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 15, 0, 0, 4);
-    -fx-translate-y: -2;
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 15;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 20, 0, 0, 3);
+    -fx-padding: 40;
+    -fx-max-width: 450;
 }
 
-/* 对话框美化 */
+.border-pane {
+    -fx-background-color: transparent;
+}
+
+.search-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 15;
+    -fx-spacing: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);
+}
+
+.action-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 15;
+    -fx-spacing: 10;
+}
+
+.status-bar {
+    -fx-background-color: white;
+    -fx-border-color: #e0e6ed;
+    -fx-border-width: 2 0 0 0;
+    -fx-padding: 8 15 8 15;
+}
+
+/* ========================================
+   对话框样式
+   ======================================== */
+
 .dialog-pane {
     -fx-background-color: white;
 }
 
 .dialog-pane .header-panel {
-    -fx-background-color: #1d3f66;
+    -fx-background-color: -fx-primary-color;
 }
 
 .dialog-pane .header-panel .label {
     -fx-text-fill: white;
-    -fx-font-size: 15px;
+    -fx-font-size: 16px;
     -fx-font-weight: bold;
 }
 
@@ -446,46 +483,30 @@
     -fx-padding: 20;
 }
 
-/* 菜单条美化 */
-.menu-bar {
-    -fx-background-color: linear-gradient(to bottom, #ffffff, #f8f9fa);
-    -fx-border-color: #e5e6eb;
-    -fx-border-width: 0 0 1 0;
-    -fx-padding: 5 12 5 12;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0, 0, 1);
+.dialog-pane .button-bar .button {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
 }
 
-.menu-bar .menu {
+/* ========================================
+   滚动条样式
+   ======================================== */
+
+.scroll-bar {
     -fx-background-color: transparent;
-    -fx-padding: 7 14 7 14;
-    -fx-background-radius: 6;
 }
 
-.menu-bar .menu:hover {
-    -fx-background-color: #f0f5ff;
-    -fx-background-radius: 6;
+.scroll-bar .thumb {
+    -fx-background-color: #bdc3c7;
+    -fx-background-radius: 5;
 }
 
-.menu-bar .menu .label {
-    -fx-font-weight: bold;
-    -fx-font-size: 13px;
-    -fx-text-fill: #1d2129;
+.scroll-bar .thumb:hover {
+    -fx-background-color: #95a5a6;
 }
 
-/* 状态栏美化 */
-.status-bar {
-    -fx-background-color: white;
-    -fx-border-color: #e5e6eb;
-    -fx-border-width: 1 0 0 0;
-    -fx-padding: 6 14 6 14;
-}
-
-.status-label {
-    -fx-text-fill: #86909c;
-    -fx-font-size: 12px;
-}
-
-/* 背景面板 */
-.border-pane {
-    -fx-background-color: #f5f7fa;
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
 }

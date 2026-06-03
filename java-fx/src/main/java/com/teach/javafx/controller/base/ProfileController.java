@@ -8,12 +8,15 @@ import com.teach.javafx.request.HttpRequestUtil;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 
 import java.io.IOException;
 import java.net.URI;
@@ -83,7 +86,8 @@ public class ProfileController {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>() {
+                }.getType());
                 if (result.get("code").equals(200.0)) {
                     Map<String, Object> data = (Map<String, Object>) result.get("data");
 
@@ -133,7 +137,8 @@ public class ProfileController {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>() {
+                }.getType());
                 if (result.get("code").equals(200.0)) {
                     MessageDialog.showDialog("更新成功");
                     clearPasswordFields();
@@ -186,7 +191,8 @@ public class ProfileController {
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>() {
+                }.getType());
                 if (result.get("code").equals(200.0)) {
                     MessageDialog.showDialog("密码修改成功，请重新登录");
                     handleLogout();
@@ -217,34 +223,43 @@ public class ProfileController {
     @FXML
     protected void toggleOldPasswordVisibility() {
         oldPasswordVisible = !oldPasswordVisible;
-        togglePasswordField(oldPasswordField, oldPasswordToggleBtn, oldPasswordVisible);
+        togglePasswordFieldByButton(oldPasswordToggleBtn, oldPasswordVisible);
     }
 
     @FXML
     protected void toggleNewPasswordVisibility() {
         newPasswordVisible = !newPasswordVisible;
-        togglePasswordField(newPasswordField, newPasswordToggleBtn, newPasswordVisible);
+        togglePasswordFieldByButton(newPasswordToggleBtn, newPasswordVisible);
     }
 
     @FXML
     protected void toggleConfirmPasswordVisibility() {
         confirmPasswordVisible = !confirmPasswordVisible;
-        togglePasswordField(confirmPasswordField, confirmPasswordToggleBtn, confirmPasswordVisible);
+        togglePasswordFieldByButton(confirmPasswordToggleBtn, confirmPasswordVisible);
     }
 
-    private void togglePasswordField(PasswordField passwordField, Button toggleBtn, boolean visible) {
-        GridPane parent = (GridPane) passwordField.getParent();
-        Integer rowIndex = GridPane.getRowIndex(passwordField);
-        Integer columnIndex = GridPane.getColumnIndex(passwordField);
-        int row = (rowIndex == null) ? 0 : rowIndex;
-        int col = (columnIndex == null) ? 0 : columnIndex;
+    private void togglePasswordFieldByButton(Button toggleBtn, boolean visible) {
+        HBox parent = (HBox) toggleBtn.getParent();
+        Node inputField = parent.getChildren().get(0);
 
-        String pwdText = passwordField.getText();
-        String pwdStyle = passwordField.getStyle();
-        String pwdId = passwordField.getId();
-        String pwdPrompt = passwordField.getPromptText();
+        String pwdText = "";
+        String pwdStyle = inputField.getStyle();
+        String pwdId = inputField.getId();
+        String pwdPrompt = "";
 
-        parent.getChildren().remove(passwordField);
+        javafx.scene.control.Control control = (javafx.scene.control.Control) inputField;
+        double pwdPrefWidth = control.getPrefWidth();
+        double pwdMaxWidth = control.getMaxWidth();
+
+        if (inputField instanceof PasswordField) {
+            pwdText = ((PasswordField) inputField).getText();
+            pwdPrompt = ((PasswordField) inputField).getPromptText();
+        } else if (inputField instanceof TextField) {
+            pwdText = ((TextField) inputField).getText();
+            pwdPrompt = ((TextField) inputField).getPromptText();
+        }
+
+        parent.getChildren().remove(inputField);
 
         if (visible) {
             TextField textField = new TextField();
@@ -252,9 +267,10 @@ public class ProfileController {
             textField.setId(pwdId);
             textField.setStyle(pwdStyle);
             textField.setPromptText(pwdPrompt);
-            GridPane.setRowIndex(textField, row);
-            GridPane.setColumnIndex(textField, col);
-            parent.getChildren().add(textField);
+            textField.setPrefWidth(pwdPrefWidth);
+            textField.setMaxWidth(pwdMaxWidth);
+            HBox.setHgrow(textField, Priority.ALWAYS);
+            parent.getChildren().add(0, textField);
             toggleBtn.setText("");
         } else {
             PasswordField newPwdField = new PasswordField();
@@ -262,10 +278,13 @@ public class ProfileController {
             newPwdField.setId(pwdId);
             newPwdField.setStyle(pwdStyle);
             newPwdField.setPromptText(pwdPrompt);
-            GridPane.setRowIndex(newPwdField, row);
-            GridPane.setColumnIndex(newPwdField, col);
-            parent.getChildren().add(newPwdField);
-            toggleBtn.setText("👁");
+            newPwdField.setPrefWidth(pwdPrefWidth);
+            newPwdField.setMaxWidth(pwdMaxWidth);
+            HBox.setHgrow(newPwdField, Priority.ALWAYS);
+            parent.getChildren().add(0, newPwdField);
+            toggleBtn.setText("👁️");
         }
     }
 }
+
+

@@ -1,38 +1,26 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.teach.javafx.controller.base.AdminApproveController"
-      spacing="12"
-      style="-fx-background-color: #f5f7fa;"
-      VBox.vgrow="ALWAYS">
-
+<VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.teach.javafx.controller.base.AdminApproveController" spacing="12" style="-fx-background-color: #f5f7fa;" VBox.vgrow="ALWAYS">
     <padding>
         <Insets top="20" right="28" bottom="20" left="28" />
     </padding>
 
-    <!-- 标题和统计区 -->
     <VBox spacing="12" style="-fx-background-color: white; -fx-padding: 20 28; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
-        <!-- 标题 -->
         <HBox alignment="CENTER_LEFT" spacing="14">
-            <Label text="📝" style="-fx-font-size: 26px;" />
-            <VBox spacing="2">
-                <Label text="管理员审批" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;">
-                    <font>
-                        <Font name="Microsoft YaHei UI" size="20" />
-                    </font>
-                </Label>
-                <Label text="审核新管理员注册申请" style="-fx-font-size: 12px; -fx-text-fill: #86909c;" />
-            </VBox>
+            <Label text="管理员审批" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;">
+                <font>
+                    <Font name="Microsoft YaHei UI" size="20" />
+                </font>
+            </Label>
             <Region HBox.hgrow="ALWAYS" />
-            <Button text="🔄 刷新列表" onAction="#loadUserList"
-                    style="-fx-background-color: #1677ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand;" />
+            <Button text="刷新列表" onAction="#loadUserList" style="-fx-background-color: #1677ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand;" />
         </HBox>
 
-        <!-- 统计卡片 -->
         <HBox spacing="14" alignment="CENTER_LEFT">
             <VBox style="-fx-background-color: linear-gradient(to bottom right, #fff3e0, #ffe0b2); -fx-padding: 16 28 16 28; -fx-background-radius: 8;" HBox.hgrow="ALWAYS">
                 <Label text="待审批" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
@@ -49,12 +37,10 @@
         </HBox>
     </VBox>
 
-    <!-- 待审批列表 -->
     <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 4 0 2 0;">
-        <Label text="📥 待审批列表" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+        <Label text="待审批列表" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
     </HBox>
-    <TableView fx:id="pendingAdminTable" VBox.vgrow="ALWAYS"
-               style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 3;">
+    <TableView fx:id="pendingAdminTable" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 3;">
         <columns>
             <TableColumn fx:id="pendingNoColumn" text="序号" prefWidth="70" />
             <TableColumn fx:id="pendingEmployeeNoColumn" text="工号" prefWidth="120" />
@@ -71,12 +57,10 @@
         </columnResizePolicy>
     </TableView>
 
-    <!-- 已审批列表 -->
     <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 4 0 2 0;">
-        <Label text="📤 已审批列表" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+        <Label text="已审批列表" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
     </HBox>
-    <TableView fx:id="approvedAdminTable" VBox.vgrow="ALWAYS"
-               style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 3;">
+    <TableView fx:id="approvedAdminTable" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 3;">
         <columns>
             <TableColumn fx:id="approvedNoColumn" text="序号" prefWidth="70" />
             <TableColumn fx:id="approvedEmployeeNoColumn" text="工号" prefWidth="120" />
