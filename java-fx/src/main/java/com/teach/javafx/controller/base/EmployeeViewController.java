@@ -38,6 +38,13 @@ public class EmployeeViewController {
     @FXML
     private TableColumn<EmployeeInfo, String> colEmployeeTime;
 
+    @FXML
+    private Label totalEmployeesLabel;
+    @FXML
+    private Label activeEmployeesLabel;
+    @FXML
+    private Label pendingEmployeesLabel;
+
     private final ObservableList<EmployeeInfo> employeeList = FXCollections.observableArrayList();
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
@@ -78,6 +85,10 @@ public class EmployeeViewController {
                 System.out.println("响应状态码: " + response.statusCode());
                 System.out.println("响应内容: " + response.body());
 
+                int totalCount = 0;
+                int activeCount = 0;
+                int pendingCount = 0;
+
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
 
@@ -93,6 +104,8 @@ public class EmployeeViewController {
                             if (data.isEmpty()) {
                                 System.out.println("️ 员工列表为空！");
                             }
+
+                            totalCount = data.size();
 
                             for (int i = 0; i < data.size(); i++) {
                                 Map<String, Object> item = data.get(i);
@@ -113,8 +126,15 @@ public class EmployeeViewController {
 
                                 info.setPhone((String) item.getOrDefault("phone", ""));
                                 info.setRole((String) item.get("role"));
-                                info.setStatus((String) item.get("status"));
+                                String status = (String) item.get("status");
+                                info.setStatus(status);
                                 info.setApplyTime((String) item.getOrDefault("createTime", ""));
+
+                                if ("active".equals(status) || "approved".equals(status)) {
+                                    activeCount++;
+                                } else if ("pending".equals(status)) {
+                                    pendingCount++;
+                                }
 
                                 javafx.application.Platform.runLater(() -> employeeList.add(info));
                             }
@@ -131,6 +151,17 @@ public class EmployeeViewController {
                 } else {
                     System.out.println("⚠️ HTTP请求失败，状态码：" + response.statusCode());
                 }
+
+                int finalTotalCount = totalCount;
+                int finalActiveCount = activeCount;
+                int finalPendingCount = pendingCount;
+
+                javafx.application.Platform.runLater(() -> {
+                    totalEmployeesLabel.setText(String.valueOf(finalTotalCount));
+                    activeEmployeesLabel.setText(String.valueOf(finalActiveCount));
+                    pendingEmployeesLabel.setText(String.valueOf(finalPendingCount));
+                });
+
             } catch (Exception e) {
                 System.out.println("️ 异常信息：" + e.getMessage());
                 e.printStackTrace();

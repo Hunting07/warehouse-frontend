@@ -24,27 +24,32 @@
                 <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
             </columnConstraints>
 
-            <Label text="用户名：" GridPane.rowIndex="0" GridPane.columnIndex="0"
+            <Label text="工号：" GridPane.rowIndex="0" GridPane.columnIndex="0"
                    style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
-            <Label fx:id="usernameLabel" text="" GridPane.rowIndex="0" GridPane.columnIndex="1"
+            <Label fx:id="employeeIdLabel" text="" GridPane.rowIndex="0" GridPane.columnIndex="1"
                    style="-fx-font-size: 14px; -fx-text-fill: #2c3e50; -fx-font-weight: bold;"/>
 
-            <Label text="角色：" GridPane.rowIndex="1" GridPane.columnIndex="0"
+            <Label text="用户名：" GridPane.rowIndex="1" GridPane.columnIndex="0"
                    style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
-            <Label fx:id="roleLabel" text="" GridPane.rowIndex="1" GridPane.columnIndex="1"
+            <Label fx:id="usernameLabel" text="" GridPane.rowIndex="1" GridPane.columnIndex="1"
                    style="-fx-font-size: 14px; -fx-text-fill: #2c3e50; -fx-font-weight: bold;"/>
 
-            <Label text="姓名：" GridPane.rowIndex="2" GridPane.columnIndex="0"
+            <Label text="角色：" GridPane.rowIndex="2" GridPane.columnIndex="0"
                    style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
-            <TextField fx:id="nameField" promptText="请输入姓名" GridPane.rowIndex="2" GridPane.columnIndex="1"
+            <Label fx:id="roleLabel" text="" GridPane.rowIndex="2" GridPane.columnIndex="1"
+                   style="-fx-font-size: 14px; -fx-text-fill: #2c3e50; -fx-font-weight: bold;"/>
+
+            <Label text="姓名：" GridPane.rowIndex="3" GridPane.columnIndex="0"
+                   style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
+            <TextField fx:id="nameField" promptText="请输入姓名" GridPane.rowIndex="3" GridPane.columnIndex="1"
                        style="-fx-font-size: 14px; -fx-background-color: white; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;"/>
 
-            <Label text="电话：" GridPane.rowIndex="3" GridPane.columnIndex="0"
+            <Label text="电话：" GridPane.rowIndex="4" GridPane.columnIndex="0"
                    style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;"/>
-            <TextField fx:id="phoneField" promptText="请输入电话" GridPane.rowIndex="3" GridPane.columnIndex="1"
+            <TextField fx:id="phoneField" promptText="请输入电话" GridPane.rowIndex="4" GridPane.columnIndex="1"
                        style="-fx-font-size: 14px; -fx-background-color: white; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12;"/>
 
-            <Button text="保存信息" onAction="#handleUpdateProfile" GridPane.rowIndex="4" GridPane.columnIndex="1"
+            <Button text="保存信息" onAction="#handleUpdateProfile" GridPane.rowIndex="5" GridPane.columnIndex="1"
                     style="-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 30; -fx-background-radius: 6; -fx-cursor: hand;"/>
         </GridPane>
 
@@ -86,12 +91,14 @@
             </HBox>
 
             <Button text="修改密码" onAction="#handleChangePassword" GridPane.rowIndex="3" GridPane.columnIndex="1"
-                    style="-fx-background-color: #f0b84d; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 30; -fx-background-radius: 6; -fx-cursor: hand;"/>
+                    style="-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 30; -fx-background-radius: 6; -fx-cursor: hand;"/>
         </GridPane>
 
         <Separator style="-fx-background-color: #e0e6ed;"/>
 
-        <Button text="退出登录" onAction="#handleLogout"
-                style="-fx-background-color: #e87070; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 40; -fx-background-radius: 6; -fx-cursor: hand; -fx-pref-width: 180;" alignment="CENTER"/>
+        <HBox alignment="CENTER">
+            <Button text="退出登录" onAction="#handleLogout"
+                    style="-fx-background-color: #e87070; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 40; -fx-background-radius: 6; -fx-cursor: hand;"/>
+        </HBox>
     </VBox>
 </VBox>

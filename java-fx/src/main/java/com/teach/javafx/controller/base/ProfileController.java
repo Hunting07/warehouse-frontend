@@ -29,7 +29,10 @@ public class ProfileController {
     @FXML
     private Label roleLabel;
     @FXML
+    private Label employeeIdLabel;
+    @FXML
     private TextField nameField;
+
     @FXML
     private TextField phoneField;
     @FXML
@@ -86,11 +89,13 @@ public class ProfileController {
 
                     String username = (String) data.get("username");
                     String realName = (String) data.get("realName");
+                    String employeeId = (String) data.get("employeeId");
 
                     String name = (realName == null || realName.isEmpty()) ? username : realName;
 
                     usernameLabel.setText(username != null ? username : "未知用户");
                     roleLabel.setText((String) data.get("role"));
+                    employeeIdLabel.setText(employeeId != null ? employeeId : "无");
                     nameField.setText(name != null ? name : "");
                 } else {
                     MessageDialog.showDialog("获取个人信息失败：" + result.get("msg"));

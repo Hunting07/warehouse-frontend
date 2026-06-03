@@ -16,19 +16,19 @@
       style="-fx-background-color: white;"
       spacing="0">
 
-    <!-- 左侧图片区域 - 方正比例，完整显示 -->
-    <VBox style="-fx-background-image: url('login-bg.jpg'); -fx-background-size: cover; -fx-background-position: center;"
-          prefWidth="600" maxWidth="600" minWidth="600"/>
+    <VBox HBox.hgrow="ALWAYS"
+          style="-fx-background-image: url('login-bg.jpg'); -fx-background-size: 100% 100%; -fx-background-position: center; -fx-background-repeat: no-repeat;"
+          prefWidth="700" minWidth="700"/>
 
     <!-- 右侧登录表单区域 - 白色背景 -->
     <VBox alignment="CENTER" spacing="20.0"
           style="-fx-background-color: #ffffff;"
-          prefWidth="400" maxWidth="400" minWidth="400">
+          prefWidth="450" maxWidth="450" minWidth="450">
         <padding>
             <Insets top="40" right="40" bottom="40" left="40"/>
         </padding>
 
-        <VBox alignment="CENTER" spacing="20" maxWidth="320">
+        <VBox alignment="CENTER" spacing="20" maxWidth="350">
             <Label text="欢迎登录" styleClass="title"
                    style="-fx-font-size: 28px; -fx-text-fill: #4a90d9;"/>
 
@@ -38,7 +38,7 @@
             <GridPane hgap="10" vgap="15">
                 <columnConstraints>
                     <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" maxWidth="70" minWidth="70" />
-                    <ColumnConstraints hgrow="SOMETIMES" minWidth="200" prefWidth="220" />
+                    <ColumnConstraints hgrow="SOMETIMES" minWidth="200" prefWidth="240" />
                 </columnConstraints>
 
                 <Label text="用户名" GridPane.columnIndex="0" GridPane.rowIndex="0"
@@ -58,13 +58,13 @@
 
             <VBox spacing="10" alignment="CENTER">
                 <Button onAction="#onAdminLoginButtonClick" text="管理员登录"
-                        styleClass="button" prefWidth="280" prefHeight="45"/>
+                        styleClass="button" prefWidth="300" prefHeight="45"/>
 
                 <Button onAction="#onEmployeeLoginButtonClick" text="员工登录"
-                        styleClass="button success" prefWidth="280" prefHeight="45"/>
+                        styleClass="button success" prefWidth="300" prefHeight="45"/>
 
                 <Button onAction="#onRegisterButtonClick" text="用户注册"
-                        styleClass="button secondary" prefWidth="280" prefHeight="45"/>
+                        styleClass="button secondary" prefWidth="300" prefHeight="45"/>
             </VBox>
         </VBox>
     </VBox>

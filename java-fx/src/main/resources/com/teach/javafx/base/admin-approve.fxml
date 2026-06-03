@@ -2,6 +2,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
 
 <VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.teach.javafx.controller.base.AdminApproveController"
@@ -10,54 +11,85 @@
       VBox.vgrow="ALWAYS">
 
     <padding>
-        <Insets top="20" right="30" bottom="20" left="30"/>
+        <Insets top="20" right="30" bottom="20" left="30" />
     </padding>
 
-    <HBox spacing="10" alignment="CENTER_LEFT">
-        <Label text="管理员审批" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="刷新" onAction="#loadUserList"
-                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-background-radius: 5; -fx-cursor: hand;" prefWidth="100"/>
+    <!-- 标题和统计区域 -->
+    <VBox style="-fx-background-color: white; -fx-padding: 20 25; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);" spacing="15">
+        <!-- 标题 -->
+        <HBox alignment="CENTER_LEFT" spacing="15">
+            <Label text="✓" style="-fx-font-size: 28px;" />
+            <VBox spacing="3">
+                <Label text="管理员审批" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;">
+                    <font>
+                        <Font name="Microsoft YaHei UI" size="22" />
+                    </font>
+                </Label>
+                <Label text="审核新管理员注册申请" style="-fx-font-size: 13px; -fx-text-fill: #95a5a6;" />
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text=" 刷新列表" onAction="#loadUserList"
+                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 25; -fx-background-radius: 8; -fx-cursor: hand;" />
+        </HBox>
+
+        <!-- 统计卡片 -->
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <VBox style="-fx-background-color: linear-gradient(to bottom right, #fff3e0, #ffe0b2); -fx-padding: 15 25 15 25; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                <Label text="待审批" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
+                <Label fx:id="pendingCountLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #f57c00;" />
+            </VBox>
+            <VBox style="-fx-background-color: linear-gradient(to bottom right, #e8f5e9, #c8e6c9); -fx-padding: 15 25 15 25; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                <Label text="已通过" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
+                <Label fx:id="approvedCountLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #388e3c;" />
+            </VBox>
+            <VBox style="-fx-background-color: linear-gradient(to bottom right, #ffebee, #ffcdd2); -fx-padding: 15 25 15 25; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                <Label text="已拒绝" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
+                <Label fx:id="rejectedCountLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #d32f2f;" />
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <!-- 待审批列表 -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text=" 待审批列表" style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
     </HBox>
-
-    <Separator style="-fx-background-color: #e0e6ed;"/>
-
-    <Label text="待审批的管理员" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-
     <TableView fx:id="pendingAdminTable" VBox.vgrow="ALWAYS"
-               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-radius: 8;">
+               style="-fx-background-color: white; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 5;">
         <columns>
-            <TableColumn fx:id="pendingNoColumn" text="序号" prefWidth="60"/>
-            <TableColumn fx:id="pendingEmployeeNoColumn" text="工号" prefWidth="120"/>
-            <TableColumn fx:id="pendingUsernameColumn" text="账号" prefWidth="120"/>
-            <TableColumn fx:id="pendingRealNameColumn" text="姓名" prefWidth="100"/>
-            <TableColumn fx:id="pendingPhoneColumn" text="电话" prefWidth="130"/>
-            <TableColumn fx:id="pendingRoleColumn" text="角色" prefWidth="80"/>
-            <TableColumn fx:id="pendingStatusColumn" text="状态" prefWidth="100"/>
-            <TableColumn fx:id="pendingTimeColumn" text="申请时间" prefWidth="160"/>
-            <TableColumn fx:id="pendingActionColumn" text="操作" prefWidth="150"/>
+            <TableColumn fx:id="pendingNoColumn" text="序号" prefWidth="70" />
+            <TableColumn fx:id="pendingEmployeeNoColumn" text="工号" prefWidth="120" />
+            <TableColumn fx:id="pendingUsernameColumn" text="账号" prefWidth="130" />
+            <TableColumn fx:id="pendingRealNameColumn" text="姓名" prefWidth="100" />
+            <TableColumn fx:id="pendingPhoneColumn" text="联系电话" prefWidth="140" />
+            <TableColumn fx:id="pendingRoleColumn" text="角色" prefWidth="100" />
+            <TableColumn fx:id="pendingStatusColumn" text="状态" prefWidth="100" />
+            <TableColumn fx:id="pendingTimeColumn" text="申请时间" prefWidth="180" />
+            <TableColumn fx:id="pendingActionColumn" text="操作" prefWidth="160" />
         </columns>
         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
         </columnResizePolicy>
     </TableView>
 
-    <Label text="已审批的管理员" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-
+    <!-- 已审批列表 -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label text=" 已审批列表" style="-fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
+    </HBox>
     <TableView fx:id="approvedAdminTable" VBox.vgrow="ALWAYS"
-               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-radius: 8;">
+               style="-fx-background-color: white; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 5;">
         <columns>
-            <TableColumn fx:id="approvedNoColumn" text="序号" prefWidth="60"/>
-            <TableColumn fx:id="approvedEmployeeNoColumn" text="工号" prefWidth="120"/>
-            <TableColumn fx:id="approvedUsernameColumn" text="账号" prefWidth="120"/>
-            <TableColumn fx:id="approvedRealNameColumn" text="姓名" prefWidth="100"/>
-            <TableColumn fx:id="approvedPhoneColumn" text="电话" prefWidth="130"/>
-            <TableColumn fx:id="approvedRoleColumn" text="角色" prefWidth="80"/>
-            <TableColumn fx:id="approvedStatusColumn" text="状态" prefWidth="100"/>
-            <TableColumn fx:id="approvedTimeColumn" text="审批时间" prefWidth="160"/>
+            <TableColumn fx:id="approvedNoColumn" text="序号" prefWidth="70" />
+            <TableColumn fx:id="approvedEmployeeNoColumn" text="工号" prefWidth="120" />
+            <TableColumn fx:id="approvedUsernameColumn" text="账号" prefWidth="130" />
+            <TableColumn fx:id="approvedRealNameColumn" text="姓名" prefWidth="100" />
+            <TableColumn fx:id="approvedPhoneColumn" text="联系电话" prefWidth="140" />
+            <TableColumn fx:id="approvedRoleColumn" text="角色" prefWidth="100" />
+            <TableColumn fx:id="approvedStatusColumn" text="状态" prefWidth="100" />
+            <TableColumn fx:id="approvedTimeColumn" text="审批时间" prefWidth="180" />
         </columns>
         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
         </columnResizePolicy>
     </TableView>
 </VBox>
+

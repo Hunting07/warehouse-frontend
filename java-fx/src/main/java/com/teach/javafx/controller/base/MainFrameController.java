@@ -12,8 +12,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 import com.teach.javafx.request.DataRequest;
 import com.teach.javafx.request.DataResponse;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -21,6 +27,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 public class MainFrameController {
     class ChangePanelHandler implements EventHandler<ActionEvent> {
@@ -41,6 +48,23 @@ public class MainFrameController {
     @FXML
     @SuppressWarnings("unused")
     private Label systemPrompt;
+    @FXML
+    private Label welcomeLabel;
+    @FXML
+    private Label timeLabel;
+    @FXML
+    private Label totalMaterialsLabel;
+    @FXML
+    private Label todayInLabel;
+    @FXML
+    private Label todayOutLabel;
+    @FXML
+    private Label warningCountLabel;
+    @FXML
+    private VBox dashboardView;
+    @FXML
+    private Button refreshButton;
+
 
     void addMenuItems(Menu parent, List<Map<String, Object>> mList) {
         String name, title;
@@ -178,7 +202,6 @@ public class MainFrameController {
         });
     }
 
-
     private String getMenuIcon(String name, String title) {
         if (title == null) return "";
 
@@ -186,11 +209,11 @@ public class MainFrameController {
         if (title.contains("物资管理") || title.contains("物资")) return "📋";
         if (title.contains("入库")) return "📥";
         if (title.contains("出库")) return "📤";
-        if (title.contains("库存预警") || title.contains("预警")) return "⚠";
+        if (title.contains("库存预警") || title.contains("预警")) return "⚠️";
         if (title.contains("个人中心") || title.contains("个人")) return "👤";
         if (title.contains("用户管理") || title.contains("用户")) return "👥";
         if (title.contains("员工管理") || title.contains("员工")) return "💼";
-        if (title.contains("管理员查看")) return "👑";
+        if (title.contains("管理员管理") || title.contains("管理员列表")) return "👑";
         if (title.contains("审批")) return "✅";
         if (title.contains("金额统计") || title.contains("统计")) return "💰";
         if (title.contains("密码")) return "🔒";
@@ -219,6 +242,12 @@ public class MainFrameController {
         addUserCenterToTree(role);
 
         addCustomMenus(role);
+
+        setupWelcomeMessage(role);
+
+        startTimeUpdate();
+
+        loadDashboardData();
 
         contentTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS);
     }
@@ -259,7 +288,7 @@ public class MainFrameController {
                     new MyTreeNode(null, "employee-view", "💼  员工管理", 0)
             );
             TreeItem<MyTreeNode> adminViewItem = new TreeItem<>(
-                    new MyTreeNode(null, "admin-view", "👑  管理员查看", 0)
+                    new MyTreeNode(null, "admin-view", "👑  管理员列表", 0)  // ← 改成"列表"
             );
 
             userManageItem.getChildren().add(employeeViewItem);
@@ -281,6 +310,165 @@ public class MainFrameController {
             );
             root.getChildren().add(statisticsItem);
         }
+    }
+
+    private void setupWelcomeMessage(String role) {
+        String roleText = "admin".equals(role) ? "管理员" : "员工";
+        String username = AppStore.getJwt().getUsername();
+
+        if (username == null || username.isEmpty()) {
+            username = "用户";
+        }
+
+        String welcomeText = "您好！" + roleText + " " + username;
+        welcomeLabel.setText(welcomeText);
+    }
+
+    private void startTimeUpdate() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, e -> {
+                    timeLabel.setText(LocalDateTime.now().format(formatter));
+                }),
+                new KeyFrame(Duration.seconds(1))
+        );
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.play();
+    }
+
+    private void loadDashboardData() {
+        new Thread(() -> {
+            try {
+                System.out.println("=== [仪表盘] 开始加载数据 ===");
+                long startTime = System.currentTimeMillis();
+
+                DataRequest req = new DataRequest();
+
+                // 并行请求所有接口
+                Thread t1 = new Thread(() -> {
+                    try {
+                        System.out.println("[仪表盘] 请求: /api/material/list");
+                        DataResponse materialRes = HttpRequestUtil.request("/api/material/list", req);
+                        int count = 0;
+                        if (materialRes != null && materialRes.getCode() == 200 && materialRes.getData() instanceof List) {
+                            count = ((List<?>) materialRes.getData()).size();
+                            System.out.println("[仪表盘] ✓ 物资总数: " + count);
+                        }
+                        updateLabel(totalMaterialsLabel, count);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                Thread t2 = new Thread(() -> {
+                    try {
+                        System.out.println("[仪表盘] 请求: /stock-in/list");
+                        DataResponse stockInRes = HttpRequestUtil.request("/stock-in/list", req);
+                        int count = 0;
+                        if (stockInRes != null && stockInRes.getCode() == 200 && stockInRes.getData() instanceof List) {
+                            List<?> list = (List<?>) stockInRes.getData();
+                            String today = java.time.LocalDate.now().toString();
+                            for (Object item : list) {
+                                if (item instanceof Map) {
+                                    Object createTime = ((Map<?, ?>) item).get("createTime");
+                                    if (createTime != null && createTime.toString().startsWith(today)) {
+                                        count++;
+                                    }
+                                }
+                            }
+                            System.out.println("[仪表盘] ✓ 今日入库: " + count);
+                        }
+                        updateLabel(todayInLabel, count);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                Thread t3 = new Thread(() -> {
+                    try {
+                        System.out.println("[仪表盘] 请求: /api/stockOut/list");
+                        DataResponse stockOutRes = HttpRequestUtil.request("/api/stockOut/list", req);
+                        int count = 0;
+                        if (stockOutRes != null && stockOutRes.getCode() == 200 && stockOutRes.getData() != null) {
+                            Object data = stockOutRes.getData();
+                            List<?> list = null;
+
+                            // 处理分页数据结构 {records: [...], total: ..., ...}
+                            if (data instanceof Map) {
+                                Map<?, ?> map = (Map<?, ?>) data;
+                                Object records = map.get("records");
+                                if (records instanceof List) {
+                                    list = (List<?>) records;
+                                }
+                            } else if (data instanceof List) {
+                                list = (List<?>) data;
+                            }
+
+                            if (list != null) {
+                                String today = java.time.LocalDate.now().toString();
+                                for (Object item : list) {
+                                    if (item instanceof Map) {
+                                        Object createTime = ((Map<?, ?>) item).get("createTime");
+                                        if (createTime != null && createTime.toString().startsWith(today)) {
+                                            count++;
+                                        }
+                                    }
+                                }
+                            }
+                            System.out.println("[仪表盘] ✓ 今日出库: " + count);
+                        }
+                        updateLabel(todayOutLabel, count);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                Thread t4 = new Thread(() -> {
+                    try {
+                        System.out.println("[仪表盘] 请求: /api/material/warning");
+                        DataResponse warningRes = HttpRequestUtil.request("/api/material/warning", req);
+                        int count = 0;
+                        if (warningRes != null && warningRes.getCode() == 200 && warningRes.getData() instanceof List) {
+                            count = ((List<?>) warningRes.getData()).size();
+                            System.out.println("[仪表盘] ✓ 库存预警: " + count);
+                        }
+                        updateLabel(warningCountLabel, count);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                // 启动所有线程
+                t1.start();
+                t2.start();
+                t3.start();
+                t4.start();
+
+                // 等待所有线程完成
+                t1.join();
+                t2.join();
+                t3.join();
+                t4.join();
+
+                long endTime = System.currentTimeMillis();
+                System.out.println("=== [仪表盘] 加载完成，耗时: " + (endTime - startTime) + "ms ===\n");
+
+            } catch (Exception e) {
+                System.err.println("=== [仪表盘] 加载失败 ===");
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    private void updateLabel(Label label, int value) {
+        javafx.application.Platform.runLater(() -> {
+            label.setText(String.valueOf(value));
+        });
+    }
+
+    @FXML
+    private void handleRefresh() {
+        loadDashboardData();
     }
 
     protected void logout() {
@@ -310,6 +498,11 @@ public class MainFrameController {
         if (name == null || name.isEmpty())
             return;
 
+        dashboardView.setVisible(false);
+        dashboardView.setManaged(false);
+        contentTabPane.setVisible(true);
+        contentTabPane.setManaged(true);
+
         String fxmlPath = name;
 
         if ("material".equals(name)) {
@@ -330,7 +523,7 @@ public class MainFrameController {
             fxmlPath = "/com/teach/javafx/base/admin-approve";
         } else if (name.contains("employee-view") || name.contains("员工管理")) {
             fxmlPath = "/com/teach/javafx/base/employee-view";
-        } else if (name.contains("admin-view") || name.contains("管理员查看")) {
+        } else if (name.contains("admin-view") || name.contains("管理员管理")) {
             fxmlPath = "/com/teach/javafx/base/admin-view";
         } else if (name.contains("statistics") || name.contains("金额统计")) {
             fxmlPath = "/com/teach/javafx/base/statistics-panel";
@@ -415,6 +608,13 @@ public class MainFrameController {
         contentTabPane.getTabs().remove(tab);
         tabMap.remove(name);
         controlMap.remove(name);
+
+        if (contentTabPane.getTabs().isEmpty()) {
+            dashboardView.setVisible(true);
+            dashboardView.setManaged(true);
+            contentTabPane.setVisible(false);
+            contentTabPane.setManaged(false);
+        }
     }
 
     public ToolController getCurrentToolController() {

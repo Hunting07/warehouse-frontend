@@ -2,6 +2,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
 
 <VBox xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.teach.javafx.controller.base.EmployeeViewController"
@@ -10,34 +11,60 @@
       VBox.vgrow="ALWAYS">
 
     <padding>
-        <Insets top="20" right="30" bottom="20" left="30"/>
+        <Insets top="20" right="30" bottom="20" left="30" />
     </padding>
 
-    <HBox spacing="10" alignment="CENTER_LEFT">
-        <Label text="员工管理" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-        <Region HBox.hgrow="ALWAYS"/>
-        <Button text="刷新" onAction="#loadEmployeeList"
-                style="-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;"/>
-    </HBox>
+    <!-- 标题和统计区域 -->
+    <VBox style="-fx-background-color: white; -fx-padding: 20 25; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);" spacing="15">
+        <!-- 标题 -->
+        <HBox alignment="CENTER_LEFT" spacing="15">
+            <Label text="" style="-fx-font-size: 28px;" />
+            <VBox spacing="3">
+                <Label text="员工管理" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;">
+                    <font>
+                        <Font name="Microsoft YaHei UI" size="22" />
+                    </font>
+                </Label>
+                <Label text="管理系统所有员工信息" style="-fx-font-size: 13px; -fx-text-fill: #95a5a6;" />
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="🔄 刷新列表" onAction="#loadEmployeeList"
+                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 25; -fx-background-radius: 8; -fx-cursor: hand;" />
+        </HBox>
 
-    <Separator style="-fx-background-color: #e0e6ed;"/>
+        <!-- 统计卡片 -->
+        <HBox spacing="15" alignment="CENTER_LEFT">
+            <VBox style="-fx-background-color: linear-gradient(to bottom right, #e3f2fd, #bbdefb); -fx-padding: 15 25 15 25; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                <Label text="总员工数" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
+                <Label fx:id="totalEmployeesLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #1976d2;" />
+            </VBox>
+            <VBox style="-fx-background-color: linear-gradient(to bottom right, #e8f5e9, #c8e6c9); -fx-padding: 15 25 15 25; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                <Label text="在职员工" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
+                <Label fx:id="activeEmployeesLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #388e3c;" />
+            </VBox>
+            <VBox style="-fx-background-color: linear-gradient(to bottom right, #fff3e0, #ffe0b2); -fx-padding: 15 25 15 25; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                <Label text="待审核" style="-fx-font-size: 13px; -fx-text-fill: #546e7a;" />
+                <Label fx:id="pendingEmployeesLabel" text="0" style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #f57c00;" />
+            </VBox>
+        </HBox>
+    </VBox>
 
-    <Label text="员工列表" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
-
+    <!-- 表格区域 -->
+    <Label text="员工列表" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" />
     <TableView fx:id="employeeTable" VBox.vgrow="ALWAYS"
-               style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-radius: 8;">
+               style="-fx-background-color: white; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 5;">
         <columns>
-            <TableColumn fx:id="colRowNum" text="序号" prefWidth="60"/>
-            <TableColumn fx:id="colEmployeeNo" text="工号" prefWidth="120"/>
-            <TableColumn fx:id="colEmployeeAccount" text="账号" prefWidth="120"/>
-            <TableColumn fx:id="colEmployeeName" text="姓名" prefWidth="100"/>
-            <TableColumn fx:id="colEmployeePhone" text="电话" prefWidth="130"/>
-            <TableColumn fx:id="colEmployeeRole" text="角色" prefWidth="80"/>
-            <TableColumn fx:id="colEmployeeStatus" text="状态" prefWidth="100"/>
-            <TableColumn fx:id="colEmployeeTime" text="创建时间" prefWidth="160"/>
+            <TableColumn fx:id="colRowNum" text="序号" prefWidth="70" />
+            <TableColumn fx:id="colEmployeeNo" text="工号" prefWidth="120" />
+            <TableColumn fx:id="colEmployeeAccount" text="账号" prefWidth="130" />
+            <TableColumn fx:id="colEmployeeName" text="姓名" prefWidth="100" />
+            <TableColumn fx:id="colEmployeePhone" text="联系电话" prefWidth="140" />
+            <TableColumn fx:id="colEmployeeRole" text="角色" prefWidth="100" />
+            <TableColumn fx:id="colEmployeeStatus" text="状态" prefWidth="100" />
+            <TableColumn fx:id="colEmployeeTime" text="创建时间" prefWidth="180" />
         </columns>
         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
         </columnResizePolicy>
     </TableView>
 
