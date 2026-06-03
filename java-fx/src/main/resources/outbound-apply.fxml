@@ -1,36 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<BorderPane prefWidth="1000" prefHeight="700" xmlns:fx="http://javafx.com/fxml"
+<BorderPane prefWidth="1100" prefHeight="750" xmlns:fx="http://javafx.com/fxml"
+            style="-fx-background-color: #f5f7fa;"
             fx:controller="com.teach.javafx.controller.base.OutboundApplyController">
-    <!-- 顶部操作栏 -->
+
     <top>
-        <VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #f5f7fa;">
-            <Label text="出库申请" style="-fx-font-size: 20px; -fx-font-weight: bold;"/>
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label text="申请备注：" style="-fx-font-size: 14px;"/>
-                <TextField fx:id="remarkField" prefWidth="500" promptText="请输入本次出库的备注信息"/>
+        <VBox spacing="12" style="-fx-padding: 20 24 12 24; -fx-background-color: #f5f7fa;">
+
+            <HBox alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 16 24 16 24;" spacing="12">
+                <VBox spacing="2">
+                    <Label text="出库申请" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+                    <Label text="填写出库商品明细，提交后等待审批" style="-fx-font-size: 12px; -fx-text-fill: #86909c;" />
+                </VBox>
             </HBox>
-            <HBox spacing="15">
-                <Button text="添加商品" onAction="#addGoods" style="-fx-background-color: #409eff; -fx-text-fill: white; -fx-pref-width: 100; -fx-pref-height: 35;"/>
-                <Button text="删除选中" onAction="#deleteGoods" style="-fx-background-color: #f56c6c; -fx-text-fill: white; -fx-pref-width: 100; -fx-pref-height: 35;"/>
-                <Button text="提交申请" onAction="#submitApply" style="-fx-background-color: #67c23a; -fx-text-fill: white; -fx-pref-width: 100; -fx-pref-height: 35;"/>
+
+            <HBox spacing="16" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 16 24 16 24;">
+                <Label text="备注信息：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
+                <TextField fx:id="remarkField" prefWidth="520" promptText="请输入本次出库的备注说明（选填）"
+                           style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 14 8 14; -fx-font-size: 13px;" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="+ 添加商品" onAction="#addGoods"
+                        style="-fx-background-color: #1677ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 28 10 28; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(22,119,255,0.3), 6, 0, 0, 2);" />
+                <Button text="删除选中" onAction="#deleteGoods"
+                        style="-fx-background-color: white; -fx-text-fill: #f53f3f; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 24 10 24; -fx-background-radius: 6; -fx-border-color: #f53f3f; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />
+                <Button text="提交申请" onAction="#submitApply"
+                        style="-fx-background-color: linear-gradient(to right, #00b42a, #23c343); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 32 10 32; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,180,42,0.35), 8, 0, 0, 2);" />
             </HBox>
         </VBox>
     </top>
 
-    <!-- 中间商品明细表格 -->
     <center>
-        <TableView fx:id="detailTableView" style="-fx-padding: 10;">
-            <columns>
-                <TableColumn fx:id="goodsNameCol" text="商品名称" prefWidth="200" editable="true"/>
-                <TableColumn fx:id="goodsSpecCol" text="规格" prefWidth="120" editable="true"/>
-                <TableColumn fx:id="unitCol" text="单位" prefWidth="80" editable="true"/>
-                <TableColumn fx:id="outNumCol" text="出库数量" prefWidth="100" editable="true"/>
-                <TableColumn fx:id="unitPriceCol" text="单价(元)" prefWidth="120" editable="true"/>
-                <TableColumn fx:id="totalPriceCol" text="小计(元)" prefWidth="120"/>
-            </columns>
-        </TableView>
+        <VBox style="-fx-padding: 0 24 20 24; -fx-background-color: #f5f7fa;">
+            <Label text="商品明细" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1d3f66; -fx-padding: 4 0 10 0;" />
+            <TableView fx:id="detailTableView"
+                       style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #f0f0f0; -fx-border-width: 1; -fx-border-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 2;">
+                <columns>
+                    <TableColumn fx:id="goodsNameCol" text="商品名称" prefWidth="220" editable="true" />
+                    <TableColumn fx:id="goodsSpecCol" text="规格型号" prefWidth="130" editable="true" />
+                    <TableColumn fx:id="unitCol" text="单位" prefWidth="80" editable="true" />
+                    <TableColumn fx:id="outNumCol" text="出库数量" prefWidth="100" editable="true" />
+                    <TableColumn fx:id="unitPriceCol" text="单价（元）" prefWidth="130" editable="true" />
+                    <TableColumn fx:id="totalPriceCol" text="小计（元）" prefWidth="140" />
+                </columns>
+            </TableView>
+        </VBox>
     </center>
 </BorderPane>
