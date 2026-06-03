@@ -100,6 +100,51 @@ public class CategoryController extends ToolController {
         materialCountCol.setCellValueFactory(param -> param.getValue().getValue().materialCountProperty().asObject());
         createTimeCol.setCellValueFactory(param -> param.getValue().getValue().createTimeProperty());
 
+        nameCol.setCellFactory(column -> new TreeTableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        codeCol.setCellFactory(column -> new TreeTableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        statusCol.setCellFactory(column -> new TreeTableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        materialCountCol.setCellFactory(column -> new TreeTableCell<>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item.toString());
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        createTimeCol.setCellFactory(column -> new TreeTableCell<>() {
+            @Override
+            protected void updateItem(LocalDateTime item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item.toString());
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
         actionCol.setCellFactory(new Callback<>() {
             @Override
             public TreeTableCell<CategoryNode, Void> call(TreeTableColumn<CategoryNode, Void> param) {
@@ -111,7 +156,7 @@ public class CategoryController extends ToolController {
                             setGraphic(null);
                         } else {
                             Button viewMaterialsBtn = new Button("查看物资");
-                            viewMaterialsBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-cursor: hand;");
+                            viewMaterialsBtn.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-cursor: hand;");
                             viewMaterialsBtn.setOnAction(e -> {
                                 TreeItem<CategoryNode> treeItem = getTreeTableView().getTreeItem(getIndex());
                                 if (treeItem != null) {
@@ -122,7 +167,7 @@ public class CategoryController extends ToolController {
 
                             if (isAdmin) {
                                 Button editBtn = new Button("编辑");
-                                editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;");
+                                editBtn.setStyle("-fx-background-color: #5CB85C; -fx-text-fill: white; -fx-cursor: hand;");
                                 editBtn.setOnAction(e -> {
                                     TreeItem<CategoryNode> treeItem = getTreeTableView().getTreeItem(getIndex());
                                     if (treeItem != null) {
@@ -132,7 +177,7 @@ public class CategoryController extends ToolController {
                                 });
 
                                 Button deleteBtn = new Button("删除");
-                                deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-cursor: hand;");
+                                deleteBtn.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-cursor: hand;");
                                 deleteBtn.setOnAction(e -> {
                                     TreeItem<CategoryNode> treeItem = getTreeTableView().getTreeItem(getIndex());
                                     if (treeItem != null) {
@@ -142,6 +187,7 @@ public class CategoryController extends ToolController {
                                 });
 
                                 javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(5, viewMaterialsBtn, editBtn, deleteBtn);
+                                box.setAlignment(javafx.geometry.Pos.CENTER);
                                 box.setPadding(new Insets(5));
                                 setGraphic(box);
                             } else {
@@ -390,7 +436,7 @@ public class CategoryController extends ToolController {
         confirm.getButtonTypes().setAll(okBtn, cancelBtn);
 
         Button okButton = (Button) confirm.getDialogPane().lookupButton(okBtn);
-        okButton.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+        okButton.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
 
         Button cancelButton = (Button) confirm.getDialogPane().lookupButton(cancelBtn);
         cancelButton.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
