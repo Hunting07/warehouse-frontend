@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      style="-fx-background-color: #f5f7fa;"
+      spacing="16"
+      fx:controller="com.teach.javafx.controller.base.MaterialSelectionDialog"
+      prefWidth="500" prefHeight="600">
+
+    <!-- 标题区域 -->
+    <VBox spacing="8" style="-fx-padding: 24 24 0 24;">
+        <Label text="选择物资" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+        <Separator style="-fx-background-color: #e5e6eb;" />
+    </VBox>
+
+    <!-- 搜索框卡片 -->
+    <VBox spacing="12" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 16 24 16 24;">
+        <Label text="搜索物资" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+        <TextField fx:id="searchField" promptText="请输入物资名称进行搜索..."
+                   style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 8 12 8 12; -fx-font-size: 13px;" />
+    </VBox>
+
+    <!-- 物资列表卡片 -->
+    <VBox spacing="12" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 16 24 16 24;" VBox.vgrow="ALWAYS">
+        <HBox alignment="CENTER_LEFT" spacing="8">
+            <Label text="物资列表" style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+            <Label fx:id="countLabel" text="(0)" style="-fx-font-size: 12px; -fx-text-fill: #86909c;" />
+        </HBox>
+
+        <ListView fx:id="materialListView" VBox.vgrow="ALWAYS"
+                  style="-fx-background-color: #f5f7fa; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 4;">
+        </ListView>
+    </VBox>
+
+    <!-- 操作按钮区域 -->
+    <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 0 24 24 24;">
+        <Region HBox.hgrow="ALWAYS" />
+        <Button text="取消" onAction="#onCancelButtonClick"
+                style="-fx-background-color: white; -fx-text-fill: #4e5969; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 24 8 24; -fx-background-radius: 6; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />
+        <Button text="确定选择" onAction="#onConfirmButtonClick"
+                style="-fx-background-color: linear-gradient(to right, #00b42a, #23c343); -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 28 9 28; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,180,42,0.3), 6, 0, 0, 2);" />
+    </HBox>
+</VBox>

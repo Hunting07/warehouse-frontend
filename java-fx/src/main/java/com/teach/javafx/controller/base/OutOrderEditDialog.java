@@ -65,6 +65,7 @@ public class OutOrderEditDialog extends Stage {
     private final Gson gson = GsonUtil.getGson();
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private List<OptionItem> materialList = new ArrayList<>();
+    private List<Map<String, Object>> materialMapList = new ArrayList<>();
     private OutOrder editingOutOrder = null;
     private boolean isNew = true;
 
@@ -444,50 +445,33 @@ public class OutOrderEditDialog extends Stage {
             return;
         }
 
-        Dialog<OptionItem> dialog = new Dialog<>();
-        dialog.setTitle("选择物资");
-        dialog.setHeaderText("请选择要出库的物资");
+        MaterialSelectionDialog dialog = MaterialSelectionDialog.createDialog(materialList);
+        if (dialog == null) {
+            return;
+        }
 
-        ListView<OptionItem> listView = new ListView<>();
-        listView.getItems().addAll(materialList);
+        dialog.showAndWait();
         
-        System.out.println("listView中的项目数: " + listView.getItems().size());
-        
-        listView.setCellFactory(lv -> new ListCell<OptionItem>() {
-            @Override
-            protected void updateItem(OptionItem item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    System.out.println("ListCell: empty or null");
-                } else {
-                    setText(item.getName());
-                    System.out.println("ListCell: 显示 " + item.getName());
+        OptionItem selectedMaterial = dialog.getSelectedMaterial();
+        if (selectedMaterial != null) {
+            System.out.println("选中物资: " + selectedMaterial.getName());
+            detail.setGoodsName(selectedMaterial.getName());
+            detail.setGoodsId(selectedMaterial.getId());
+
+            for (Map<String, Object> mat : materialMapList) {
+                if (((Number) mat.get("id")).intValue() == selectedMaterial.getId()) {
+                    detail.setGoodsSpec((String) mat.getOrDefault("spec", "默认规格"));
+                    detail.setUnit((String) mat.getOrDefault("unit", "件"));
+                    Object priceObj = mat.get("price");
+                    if (priceObj instanceof Number) {
+                        detail.setUnitPrice(BigDecimal.valueOf(((Number) priceObj).doubleValue()));
+                    }
+                    break;
                 }
             }
-        });
-
-        dialog.getDialogPane().setContent(listView);
-
-        ButtonType selectButtonType = new ButtonType("选择", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(selectButtonType, ButtonType.CANCEL);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == selectButtonType) {
-                return listView.getSelectionModel().getSelectedItem();
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(selectedMaterial -> {
-            detail.setGoodsId(selectedMaterial.getId());
-            detail.setGoodsName(selectedMaterial.getName());
-            if (selectedMaterial.getPrice() != null) {
-                detail.setUnitPrice(selectedMaterial.getPrice());
-            }
-            calculateTotal();
             detailTable.refresh();
-        });
+            calculateTotal();
+        }
     }
 
     /**

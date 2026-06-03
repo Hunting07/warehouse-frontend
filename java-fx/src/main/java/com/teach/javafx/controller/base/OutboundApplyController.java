@@ -203,37 +203,15 @@ public class OutboundApplyController {
             return;
         }
 
-        Dialog<OptionItem> dialog = new Dialog<>();
-        dialog.setTitle("选择物资");
-        dialog.setHeaderText("请选择要出库的物资");
+        MaterialSelectionDialog dialog = MaterialSelectionDialog.createDialog(materialList);
+        if (dialog == null) {
+            return;
+        }
 
-        ListView<OptionItem> listView = new ListView<>();
-        listView.getItems().addAll(materialList);
-        listView.setCellFactory(lv -> new ListCell<OptionItem>() {
-            @Override
-            protected void updateItem(OptionItem item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getName());
-                }
-            }
-        });
-
-        dialog.getDialogPane().setContent(listView);
-
-        ButtonType selectButtonType = new ButtonType("选择", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(selectButtonType, ButtonType.CANCEL);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == selectButtonType) {
-                return listView.getSelectionModel().getSelectedItem();
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(selectedMaterial -> {
+        dialog.showAndWait();
+        
+        OptionItem selectedMaterial = dialog.getSelectedMaterial();
+        if (selectedMaterial != null) {
             detail.setGoodsName(selectedMaterial.getName());
             detail.setGoodsId(selectedMaterial.getId());
 
@@ -249,7 +227,7 @@ public class OutboundApplyController {
                 }
             }
             detailTableView.refresh();
-        });
+        }
     }
 
     @FXML
