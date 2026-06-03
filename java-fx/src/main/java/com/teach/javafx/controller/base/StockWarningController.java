@@ -19,6 +19,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -147,7 +148,7 @@ public class StockWarningController {
                     }
 
                     Button settingBtn = new Button("设置");
-                    settingBtn.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;");
+                    settingBtn.setStyle("-fx-background-color: linear-gradient(to bottom, #f59e0b, #d97706); -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 16; -fx-background-radius: 6; -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.3), 4, 0, 0, 2);");
                     settingBtn.setOnAction(e -> {
                         WarningNode warning = getTableRow().getItem();
                         editWarningSetting(warning);
@@ -187,7 +188,7 @@ public class StockWarningController {
         });
 
         Label emptyLabel = new Label("✅ 库存充足，暂无预警");
-        emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4caf50;");
+        emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #10b981; -fx-font-weight: 500;");
         warningTable.setPlaceholder(emptyLabel);
     }
 
@@ -428,6 +429,7 @@ public class StockWarningController {
         return value;
     }
 
+
     private void editWarningSetting(WarningNode warning) {
         if (!isAdmin) {
             showError("权限不足", "只有管理员可以修改安全库存设置");
@@ -443,32 +445,80 @@ public class StockWarningController {
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.setTitle("库存预警设置 - " + warning.getName());
 
+        VBox mainContainer = new VBox(16);
+        mainContainer.setPadding(new Insets(24));
+        mainContainer.setStyle("-fx-background-color: linear-gradient(to bottom, #ffffff, #f8fafc);");
+
+        HBox titleBox = new HBox(12);
+        titleBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        Label iconLabel = new Label("⚙");
+        iconLabel.setStyle("-fx-font-size: 24px;");
+        Label titleLabel = new Label("安全库存设置");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1e293b;");
+        titleBox.getChildren().addAll(iconLabel, titleLabel);
+
+        VBox infoCard = new VBox(12);
+        infoCard.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 12; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 8, 0, 0, 2);");
+
         GridPane grid = new GridPane();
-        grid.setPadding(new Insets(20));
-        grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setHgap(16);
+        grid.setVgap(14);
 
+        Label nameLabel = new Label("物资名称:");
+        nameLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748b; -fx-font-weight: 500;");
+        Label nameValue = new Label(warning.getName());
+        nameValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #1e293b; -fx-font-weight: bold;");
+
+        Label codeLabel = new Label("物资编码:");
+        codeLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748b; -fx-font-weight: 500;");
+        Label codeValue = new Label(warning.getCode());
+        codeValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #1e293b; -fx-font-weight: bold;");
+
+        Label stockLabel = new Label("当前库存:");
+        stockLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748b; -fx-font-weight: 500;");
+        Label stockValue = new Label(String.valueOf(warning.getCurrentStock()));
+        stockValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #dc2626; -fx-font-weight: bold;");
+
+        Label safetyLabel = new Label("安全库存:");
+        safetyLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748b; -fx-font-weight: 500;");
         TextField safetyStockField = new TextField(String.valueOf(warning.getSafetyStock()));
-        safetyStockField.setPromptText("安全库存数量");
+        safetyStockField.setPromptText("请输入安全库存数量");
+        safetyStockField.setStyle("-fx-font-size: 14px; -fx-padding: 10 12; -fx-background-radius: 8; -fx-border-color: #cbd5e1; -fx-border-width: 1.5; -fx-border-radius: 8;");
 
-        Label infoLabel = new Label("💡 提示：当库存低于安全库存时会触发预警");
-        infoLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 12px;");
-
-        grid.add(new Label("物资名称:"), 0, 0);
-        grid.add(new Label(warning.getName()), 1, 0);
-        grid.add(new Label("物资编码:"), 0, 1);
-        grid.add(new Label(warning.getCode()), 1, 1);
-        grid.add(new Label("当前库存:"), 0, 2);
-        grid.add(new Label(String.valueOf(warning.getCurrentStock())), 1, 2);
-        grid.add(new Label("安全库存:"), 0, 3);
+        grid.add(nameLabel, 0, 0);
+        grid.add(nameValue, 1, 0);
+        grid.add(codeLabel, 0, 1);
+        grid.add(codeValue, 1, 1);
+        grid.add(stockLabel, 0, 2);
+        grid.add(stockValue, 1, 2);
+        grid.add(safetyLabel, 0, 3);
         grid.add(safetyStockField, 1, 3);
-        grid.add(infoLabel, 0, 4, 2, 1);
 
-        Button saveBtn = new Button("保存");
-        saveBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 4;");
+        infoCard.getChildren().add(grid);
+
+        VBox tipBox = new VBox(8);
+        tipBox.setStyle("-fx-background-color: #fef3c7; -fx-padding: 14 18; -fx-background-radius: 10; -fx-border-color: #fde68a; -fx-border-width: 1; -fx-border-radius: 10;");
+        Label tipIcon = new Label("💡");
+        tipIcon.setStyle("-fx-font-size: 16px;");
+        Label tipText = new Label("当库存低于安全库存时会触发预警，请及时补货");
+        tipText.setStyle("-fx-text-fill: #92400e; -fx-font-size: 13px; -fx-font-weight: 500;");
+        tipBox.getChildren().addAll(tipIcon, tipText);
+
+        HBox buttonBox = new HBox(12);
+        buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        buttonBox.setPadding(new Insets(8, 0, 0, 0));
+
+        Button saveBtn = new Button("💾 保存设置");
+        saveBtn.setStyle("-fx-background-color: linear-gradient(to bottom, #10b981, #059669); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 12 32; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 8, 0, 0, 2);");
+
         Button cancelBtn = new Button("取消");
-        cancelBtn.setStyle("-fx-cursor: hand; -fx-background-radius: 4;");
+        cancelBtn.setStyle("-fx-background-color: linear-gradient(to bottom, #f8fafc, #e2e8f0); -fx-text-fill: #475569; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 12 32; -fx-background-radius: 10; -fx-border-color: #cbd5e1; -fx-border-width: 1.5; -fx-border-radius: 10;");
 
+        buttonBox.getChildren().addAll(cancelBtn, saveBtn);
+
+        mainContainer.getChildren().addAll(titleBox, infoCard, tipBox, buttonBox);
+
+        // ... existing code ...
         saveBtn.setOnAction(e -> {
             try {
                 int safetyStock = Integer.parseInt(safetyStockField.getText());
@@ -482,17 +532,28 @@ public class StockWarningController {
                 request.put("id", warning.getId());
                 request.put("safetyStock", safetyStock);
 
-                String responseStr = HttpRequestUtil.post("/api/material/update", gson.toJson(request.getParams()));
+                logger.info("=== 开始发送更新请求 ===");
+                logger.info("物资ID: " + warning.getId());
+                logger.info("安全库存: " + safetyStock);
+                logger.info("请求参数: " + gson.toJson(request));
 
-                if (responseStr != null) {
-                    DataResponse response = gson.fromJson(responseStr, DataResponse.class);
+                try {
+                    DataResponse response = HttpRequestUtil.request("/api/material/update", request);
+
+                    logger.info("响应结果: " + (response != null ? "code=" + response.getCode() + ", msg=" + response.getMsg() : "null"));
+
                     if (response != null && response.getCode() == 200) {
-                        showInfo("设置成功", "安全库存已更新");
+                        showInfo("设置成功", "安全库存已更新为 " + safetyStock);
                         dialog.close();
                         loadWarnings();
+                    } else if (response != null) {
+                        showError("设置失败", "服务器返回错误: " + response.getMsg());
                     } else {
-                        showError("设置失败", response != null ? response.getMsg() : "网络错误");
+                        showError("设置失败", "HTTP请求返回null，请查看控制台日志");
                     }
+                } catch (Exception httpEx) {
+                    logger.log(Level.SEVERE, "HTTP请求异常", httpEx);
+                    showError("网络错误", "请求异常: " + httpEx.getMessage());
                 }
             } catch (NumberFormatException ex) {
                 showError("输入错误", "请输入有效的数字");
@@ -502,12 +563,11 @@ public class StockWarningController {
             }
         });
 
+
         cancelBtn.setOnAction(e -> dialog.close());
 
-        HBox buttonBox = new HBox(10, saveBtn, cancelBtn);
-        grid.add(buttonBox, 1, 5);
-
-        javafx.scene.Scene scene = new javafx.scene.Scene(grid, 450, 250);
+        javafx.scene.Scene scene = new javafx.scene.Scene(mainContainer, 560, 450);
+        scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
         dialog.setScene(scene);
         dialog.showAndWait();
     }
@@ -522,15 +582,35 @@ public class StockWarningController {
         });
     }
 
+    // ... existing code ...
     private void showInfo(String title, String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            alert.getDialogPane().setStyle("-fx-background-color: linear-gradient(to bottom, #ffffff, #f8fafc); -fx-padding: 20 24 16 24;");
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            Label messageLabel = (Label) alert.getDialogPane().lookup(".content.label");
+            if (messageLabel != null) {
+                messageLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #1e293b; -fx-font-weight: 500;");
+            }
+
+            ButtonType okBtn = new ButtonType("✓ 确定", ButtonBar.ButtonData.OK_DONE);
+            alert.getButtonTypes().setAll(okBtn);
+
+            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
+            if (button != null) {
+                button.setStyle("-fx-background-color: linear-gradient(to bottom, #10b981, #059669); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10; -fx-padding: 12 32; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.4), 8, 0, 0, 2);");
+                button.setDefaultButton(true);
+            }
+
             alert.showAndWait();
         });
     }
+
 
     private void showError(String title, String message) {
         Platform.runLater(() -> {
@@ -538,9 +618,28 @@ public class StockWarningController {
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            alert.getDialogPane().setStyle("-fx-background-color: linear-gradient(to bottom, #ffffff, #fef2f2); -fx-padding: 20 24 16 24;");
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            Label messageLabel = (Label) alert.getDialogPane().lookup(".content.label");
+            if (messageLabel != null) {
+                messageLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #dc2626; -fx-font-weight: 500;");
+            }
+
+            ButtonType okBtn = new ButtonType("✗ 确定", ButtonBar.ButtonData.OK_DONE);
+            alert.getButtonTypes().setAll(okBtn);
+
+            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
+            if (button != null) {
+                button.setStyle("-fx-background-color: linear-gradient(to bottom, #ef4444, #dc2626); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10; -fx-padding: 12 32; -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 8, 0, 0, 2);");
+                button.setDefaultButton(true);
+            }
+
             alert.showAndWait();
         });
     }
+
 
     public void cleanup() {
     }

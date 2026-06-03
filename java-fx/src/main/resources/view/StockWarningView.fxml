@@ -11,68 +11,87 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.teach.javafx.controller.base.StockWarningController"
             prefHeight="600.0" prefWidth="1200.0"
-            style="-fx-background-color: #f5f7fa;">
+            style="-fx-background-color: linear-gradient(to bottom, #f8fafc, #f1f5f9);">
     <top>
-        <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20 25 15 25; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 2);">
+        <VBox spacing="16" style="-fx-background-color: white; -fx-padding: 24 28 20 28; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 3);">
             <!-- 标题区域 -->
-            <HBox alignment="CENTER_LEFT" spacing="15">
-                <Label text="⚠️" style="-fx-font-size: 28px;"/>
-                <Label text="库存预警" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;">
-                    <font>
-                        <Font name="Microsoft YaHei UI" size="22" />
-                    </font>
-                </Label>
-                <Label text="需要及时处理库存不足的物资" style="-fx-font-size: 13px; -fx-text-fill: #95a5a6; -fx-padding: 0 0 0 10;" />
+            <HBox alignment="CENTER_LEFT" spacing="14">
+                <Label text="⚠" style="-fx-font-size: 32px;"/>
+                <VBox spacing="2">
+                    <Label text="库存预警" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1e293b;">
+                        <font>
+                            <Font name="Microsoft YaHei UI" size="24" />
+                        </font>
+                    </Label>
+                    <Label text="监控库存不足物资，及时补货避免断货风险" style="-fx-font-size: 13px; -fx-text-fill: #94a3b8;" />
+                </VBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <Label text="📊 实时监控" style="-fx-font-size: 12px; -fx-text-fill: #64748b; -fx-font-style: italic; -fx-padding: 8 16; -fx-background-color: #f1f5f9; -fx-background-radius: 20;" />
             </HBox>
 
             <!-- 统计卡片 -->
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <VBox style="-fx-background-color: linear-gradient(to bottom right, #fff5f5, #ffe6e6); -fx-padding: 18 30 18 30; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);" HBox.hgrow="ALWAYS">
-                    <Label text="库存不足" style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;" />
-                    <HBox alignment="BASELINE_LEFT" spacing="8">
-                        <Label fx:id="warningCountLabel" text="0" style="-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #e74c3c;" />
-                        <Label text="项" style="-fx-font-size: 14px; -fx-text-fill: #95a5a6;" />
+            <HBox spacing="16" alignment="CENTER_LEFT">
+                <!-- 库存不足卡片 -->
+                <VBox style="-fx-background-color: linear-gradient(to bottom right, #fef2f2, #fee2e2); -fx-padding: 20 28; -fx-background-radius: 14; -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.15), 10, 0, 0, 3); -fx-border-color: #fecaca; -fx-border-width: 1; -fx-border-radius: 14;" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label text="🔴" style="-fx-font-size: 28px;" />
+                        <VBox spacing="2">
+                            <Label text="库存不足" style="-fx-font-size: 14px; -fx-text-fill: #991b1b; -fx-font-weight: 500;" />
+                            <HBox alignment="BASELINE_LEFT" spacing="6">
+                                <Label fx:id="warningCountLabel" text="0" style="-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: #dc2626;" />
+                                <Label text="项" style="-fx-font-size: 15px; -fx-text-fill: #b91c1c;" />
+                            </HBox>
+                        </VBox>
                     </HBox>
                 </VBox>
 
-                <VBox style="-fx-background-color: linear-gradient(to bottom right, #f8f9fa, #e9ecef); -fx-padding: 18 30 18 30; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);" HBox.hgrow="ALWAYS">
-                    <Label text="物资总计" style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;" />
-                    <HBox alignment="BASELINE_LEFT" spacing="8">
-                        <Label fx:id="totalCountLabel" text="0" style="-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #34495e;" />
-                        <Label text="项" style="-fx-font-size: 14px; -fx-text-fill: #95a5a6;" />
+                <!-- 预警物资卡片 -->
+                <VBox style="-fx-background-color: linear-gradient(to bottom right, #fff7ed, #ffedd5); -fx-padding: 20 28; -fx-background-radius: 14; -fx-effect: dropshadow(gaussian, rgba(251, 146, 60, 0.15), 10, 0, 0, 3); -fx-border-color: #fed7aa; -fx-border-width: 1; -fx-border-radius: 14;" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label text="" style="-fx-font-size: 28px;" />
+                        <VBox spacing="2">
+                            <Label text="预警物资" style="-fx-font-size: 14px; -fx-text-fill: #9a3412; -fx-font-weight: 500;" />
+                            <HBox alignment="BASELINE_LEFT" spacing="6">
+                                <Label fx:id="totalCountLabel" text="0" style="-fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: #ea580c;" />
+                                <Label text="项" style="-fx-font-size: 15px; -fx-text-fill: #c2410c;" />
+                            </HBox>
+                        </VBox>
                     </HBox>
                 </VBox>
             </HBox>
 
+            <!-- 分割线 -->
+            <Separator style="-fx-background-color: #e2e8f0;" />
+
             <!-- 搜索和操作区域 -->
-            <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 5 0 0 0;">
-                <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-background-color: #f8f9fa; -fx-padding: 8 15 8 15; -fx-background-radius: 8;">
+            <HBox spacing="14" alignment="CENTER_LEFT">
+                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #f8fafc; -fx-padding: 10 18; -fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 10;">
                     <Label text="🔍" style="-fx-font-size: 16px;" />
-                    <TextField fx:id="searchField" promptText="搜索物资名称或编码..." prefWidth="280" style="-fx-background-color: transparent; -fx-font-size: 13px;" />
+                    <TextField fx:id="searchField" promptText="搜索物资名称或编码..." prefWidth="300" style="-fx-background-color: transparent; -fx-font-size: 13px; -fx-prompt-text-fill: #94a3b8;" />
                 </HBox>
                 <Button text="搜索" onAction="#searchWarning"
-                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20 8 20; -fx-background-radius: 8; -fx-cursor: hand;" />
+                        style="-fx-background-color: linear-gradient(to bottom, #3b82f6, #2563eb); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.3), 6, 0, 0, 2);" />
                 <Button text="重置" onAction="#resetSearch"
-                        style="-fx-background-color: #ecf0f1; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-padding: 8 20 8 20; -fx-background-radius: 8; -fx-cursor: hand;" />
+                        style="-fx-background-color: linear-gradient(to bottom, #f8fafc, #e2e8f0); -fx-text-fill: #475569; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 10; -fx-cursor: hand; -fx-border-color: #cbd5e1; -fx-border-width: 1; -fx-border-radius: 10;" />
                 <Region HBox.hgrow="ALWAYS" />
-                <Button fx:id="exportBtn" text="📥 导出" onAction="#exportWarnings"
-                        style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20 8 20; -fx-background-radius: 6; -fx-cursor: hand;" />
-                <Button text="🔄 刷新" onAction="#loadWarnings"
-                        style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20 8 20; -fx-background-radius: 6; -fx-cursor: hand;" />
+                <Button fx:id="exportBtn" text="📥 导出报表" onAction="#exportWarnings"
+                        style="-fx-background-color: linear-gradient(to bottom, #f97316, #ea580c); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(249, 115, 22, 0.3), 6, 0, 0, 2);" />
+                <Button text="🔄 刷新数据" onAction="#loadWarnings"
+                        style="-fx-background-color: linear-gradient(to bottom, #3b82f6, #2563eb); -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.3), 6, 0, 0, 2);" />
             </HBox>
         </VBox>
     </top>
     <center>
-        <TableView fx:id="warningTable" prefHeight="500.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 3;">
+        <TableView fx:id="warningTable" prefHeight="500.0" style="-fx-background-color: white; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 12, 0, 0, 3); -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 12; -fx-padding: 4;">
             <columns>
                 <TableColumn fx:id="idCol" text="序号" prefWidth="70" />
-                <TableColumn fx:id="nameCol" text="物资名称" prefWidth="180" />
-                <TableColumn fx:id="codeCol" text="物资编码" prefWidth="150" />
-                <TableColumn fx:id="categoryNameCol" text="所属分类" prefWidth="140" />
+                <TableColumn fx:id="nameCol" text="物资名称" prefWidth="170" />
+                <TableColumn fx:id="codeCol" text="物资编码" prefWidth="140" />
+                <TableColumn fx:id="categoryNameCol" text="所属分类" prefWidth="130" />
                 <TableColumn fx:id="currentStockCol" text="当前库存" prefWidth="100" />
                 <TableColumn fx:id="safetyStockCol" text="安全库存" prefWidth="100" />
                 <TableColumn fx:id="shortageCol" text="短缺数量" prefWidth="100" />
-                <TableColumn fx:id="updateTimeCol" text="更新时间" prefWidth="180" />
+                <TableColumn fx:id="updateTimeCol" text="更新时间" prefWidth="170" />
                 <TableColumn fx:id="actionCol" text="操作" prefWidth="120" style="-fx-alignment: CENTER;" />
             </columns>
             <columnResizePolicy>
