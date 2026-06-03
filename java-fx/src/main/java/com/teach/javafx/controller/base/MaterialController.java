@@ -104,7 +104,7 @@ public class MaterialController extends ToolController {
     }
     private void setupTable() {
         if (isAdmin) {
-            actionCol.setPrefWidth(150);
+            actionCol.setPrefWidth(200);
         } else {
             actionCol.setVisible(false);
         }
@@ -149,9 +149,10 @@ public class MaterialController extends ToolController {
 
                     // 根据库存状态设置样式
                     if ("预警".equals(item)) {
-                        setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                        setStyle("-fx-text-fill: red; -fx-font-weight: bold; -fx-font-size: 14px;");
                     } else {
-                        setStyle("-fx-text-fill: green;");
+                        setStyle("-fx-text-fill: green; -fx-font-size: 14px;");
+
                     }
                 }
             }
@@ -161,7 +162,89 @@ public class MaterialController extends ToolController {
         statusCol.setCellValueFactory(param -> param.getValue().statusProperty());
         createTimeCol.setCellValueFactory(param -> param.getValue().createTimeProperty());
 
+        nameCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        codeCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        categoryNameCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        unitCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        currentStockCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item.toString());
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        safetyStockCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item.toString());
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        priceCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(BigDecimal item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item.toString());
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        statusCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item);
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
+        createTimeCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(LocalDateTime item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(item == null ? "" : item.toString());
+                setStyle("-fx-font-size: 14px;");
+            }
+        });
+
         actionCol.setCellFactory(new Callback<>() {
+
             @Override
             public TableCell<MaterialNode, Void> call(TableColumn<MaterialNode, Void> param) {
                 return new TableCell<>() {
@@ -177,20 +260,21 @@ public class MaterialController extends ToolController {
                             }
 
                             Button editBtn = new Button("编辑");
-                            editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;");
+                            editBtn.setStyle("-fx-background-color: #5CB85C; -fx-text-fill: white; -fx-cursor: hand;");
                             editBtn.setOnAction(e -> {
                                 MaterialNode material = getTableView().getItems().get(getIndex());
                                 editMaterial(material);
                             });
 
                             Button deleteBtn = new Button("删除");
-                            deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-cursor: hand;");
+                            deleteBtn.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-cursor: hand;");
                             deleteBtn.setOnAction(e -> {
                                 MaterialNode material = getTableView().getItems().get(getIndex());
                                 deleteMaterial(material);
                             });
 
                             javafx.scene.layout.HBox box = new javafx.scene.layout.HBox(5, editBtn, deleteBtn);
+                            box.setAlignment(javafx.geometry.Pos.CENTER);
                             box.setPadding(new Insets(5));
                             setGraphic(box);
                         }
@@ -588,7 +672,7 @@ public class MaterialController extends ToolController {
         confirm.getButtonTypes().setAll(okBtn, cancelBtn);
 
         Button okButton = (Button) confirm.getDialogPane().lookupButton(okBtn);
-        okButton.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+        okButton.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
 
         Button cancelButton = (Button) confirm.getDialogPane().lookupButton(cancelBtn);
         cancelButton.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
