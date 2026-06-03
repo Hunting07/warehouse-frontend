@@ -151,6 +151,13 @@ public class OutOrderEditDialog extends Stage {
         outTypeComboBox.getItems().addAll("领料出库", "销售出库", "报损出库", "其他出库");
         outTypeComboBox.setValue(isNew ? "领料出库" : getOutTypeName(editingOutOrder.getOutType()));
         
+        // 添加出库类型切换监听器
+        outTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                updateFieldEditableState(newVal);
+            }
+        });
+        
         // 初始化表格
         detailTable.setItems(detailList);
         detailTable.setEditable(true);
@@ -160,14 +167,15 @@ public class OutOrderEditDialog extends Stage {
         materialColumn.setCellFactory(col -> {
             return new TableCell<OutOrderDetail, String>() {
                 private final TextField textField = new TextField();
-                private final Button selectBtn = new Button("...");
+                private final Button selectBtn = new Button("选择");
                 private final HBox container = new HBox(5, textField, selectBtn);
                 
                 {
                     textField.setEditable(false);
-                    textField.setPromptText("请输入物资名称");
+                    textField.setPromptText("请选择物资");
                     
-                    selectBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
+                    // 修改按钮样式，增加内边距和最小宽度
+                    selectBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-min-width: 50; -fx-cursor: hand; -fx-background-radius: 6;");
                     selectBtn.setOnAction(e -> {
                         OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
                         if (detail == null) {
@@ -288,6 +296,8 @@ public class OutOrderEditDialog extends Stage {
                 {
                     textField.setEditable(true);
                     textField.setPromptText("单价");
+                    // 统一输入框样式
+                    textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-prompt-text-fill: #bdc3c7; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
                     
                     textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
                         if (!newVal) {
@@ -367,6 +377,36 @@ public class OutOrderEditDialog extends Stage {
             }
             return new javafx.beans.property.SimpleObjectProperty<>(amt);
         });
+        
+        amountColumn.setCellFactory(col -> new TableCell<OutOrderDetail, BigDecimal>() {
+            private final TextField textField = new TextField();
+            
+            {
+                textField.setEditable(false);
+                textField.setFocusTraversable(false);
+                // 样式与单价输入框完全一致（包括边框颜色#e0e6ed和粗细1.5）
+                textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
+            }
+            
+            @Override
+            protected void updateItem(BigDecimal amount, boolean empty) {
+                super.updateItem(amount, empty);
+                
+                if (empty || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    setText(null);
+                } else {
+                    if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+                        textField.setText(String.format("%.2f", amount));
+                    } else {
+                        // 初始值显示为0
+                        textField.setText("0");
+                    }
+                    setGraphic(textField);
+                    setText(null);
+                }
+            }
+        });
 
         // 操作列
         actionColumn.setCellFactory(col -> new TableCell<OutOrderDetail, Void>() {
@@ -392,6 +432,31 @@ public class OutOrderEditDialog extends Stage {
             onAddItemButtonClick();
         }
         
+        // 初始化字段编辑状态
+        updateFieldEditableState(outTypeComboBox.getValue());
+        
+        calculateTotal();
+    }
+
+    /**
+     * 根据出库类型更新字段的编辑状态
+     * @param outType 出库类型
+     */
+    private void updateFieldEditableState(String outType) {
+        boolean isSales = "销售出库".equals(outType);
+        
+        // 遍历所有行，更新单价和金额输入框的状态
+        for (OutOrderDetail detail : detailList) {
+            if (!isSales) {
+                // 领料、报损、其他出库：单价和金额全部只读为0
+                detail.setUnitPrice(BigDecimal.ZERO);
+            }
+        }
+        
+        // 刷新表格以应用更改
+        detailTable.refresh();
+        
+        // 重新计算总金额
         calculateTotal();
     }
 
@@ -688,15 +753,27 @@ public class OutOrderEditDialog extends Stage {
             System.out.println("Token: " + AppStore.getJwt().getToken());
             System.out.println("请求体: " + gson.toJson(requestBody));
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(HttpRequestUtil.serverUrl + url))
-                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                    .headers("Content-Type", "application/json")
-                    .headers("satoken", AppStore.getJwt().getToken())
-                    .build();
+            HttpRequest request;
+            if (isNew) {
+                // 新增使用 POST
+                request = HttpRequest.newBuilder()
+                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
+                        .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                        .headers("Content-Type", "application/json")
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
+            } else {
+                // 更新使用 PUT
+                request = HttpRequest.newBuilder()
+                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
+                        .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                        .headers("Content-Type", "application/json")
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
+            }
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            
+
             System.out.println("响应状态码: " + response.statusCode());
             System.out.println("响应内容: " + response.body());
 

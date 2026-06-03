@@ -42,7 +42,7 @@
 
     <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 12 16; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
         <Button text="+ 新增入库单" onAction="#onAddButtonClick"
-                style="-fx-background-color: #4caf7d; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 4; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(76, 175, 125, 0.3), 6, 0, 0, 2);" />
+                style="-fx-background-color: #52c41a; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 4; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(82, 196, 26, 0.2), 6, 0, 0, 2);" />
         <Button fx:id="editButton" text="编辑" onAction="#onEditButtonClick"
                 style="-fx-background-color: #4096ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 4; -fx-cursor: hand;" />
         <Button fx:id="approveButton" text="审批" onAction="#onApproveButtonClick"

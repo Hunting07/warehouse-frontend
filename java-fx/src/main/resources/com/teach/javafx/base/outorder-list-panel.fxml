@@ -18,43 +18,47 @@
                 </VBox>
             </HBox>
 
-            <!-- 筛选条件卡片 -->
-            <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 14 24 14 24;">
-                <Label text="出库单号：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
-                <TextField fx:id="searchOrderNoField" prefWidth="180" promptText="请输入单号模糊检索"
-                           style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7 12 7 12; -fx-font-size: 13px;" />
+            <!-- 筛选条件和操作按钮合并卡片 -->
+            <VBox spacing="12" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 16 24 16 24;">
 
-                <Label text="申请人：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
-                <TextField fx:id="applicantNameField" prefWidth="140" promptText="填写申请人账号/姓名"
-                           style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7 12 7 12; -fx-font-size: 13px;" />
+                <!-- 筛选条件区域 -->
+                <HBox spacing="12" alignment="CENTER_LEFT">
+                    <Label text="出库单号：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
+                    <TextField fx:id="searchOrderNoField" prefWidth="180" promptText="请输入单号模糊检索"
+                               style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7 12 7 12; -fx-font-size: 13px;" />
 
-                <Label text="类型：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
-                <ComboBox fx:id="typeComboBox" prefWidth="120" promptText="全部类型"
-                          style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6;" />
+                    <Label text="申请人：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
+                    <TextField fx:id="applicantNameField" prefWidth="140" promptText="填写申请人账号/姓名"
+                               style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7 12 7 12; -fx-font-size: 13px;" />
 
-                <Label text="状态：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
-                <ComboBox fx:id="statusComboBox" prefWidth="120" promptText="全部状态"
-                          style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6;" />
+                    <Label text="类型：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
+                    <ComboBox fx:id="typeComboBox" prefWidth="120" promptText="全部类型"
+                              style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6;" />
 
-                <Region HBox.hgrow="ALWAYS" />
-                <Button text="查询" onAction="#onSearchButtonClick"
-                        style="-fx-background-color: #1677ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 24 8 24; -fx-background-radius: 6; -fx-cursor: hand;" />
-                <Button text="重置" onAction="#onResetButtonClick"
-                        style="-fx-background-color: #f2f3f5; -fx-text-fill: #4e5969; -fx-font-size: 13px; -fx-font-weight: normal; -fx-padding: 8 24 8 24; -fx-background-radius: 6; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />
-            </HBox>
+                    <Label text="状态：" style="-fx-font-size: 13px; -fx-text-fill: #4e5969; -fx-font-weight: bold;" />
+                    <ComboBox fx:id="statusComboBox" prefWidth="120" promptText="全部状态"
+                              style="-fx-background-color: white; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6;" />
 
-            <!-- 操作按钮栏 -->
-            <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 12 24 12 24;">
-                <Button text="+ 新增出库单" onAction="#onAddButtonClick"
-                        style="-fx-background-color: linear-gradient(to right, #389e0d, #52c41a); -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 24 9 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(56,158,13,0.25), 6, 0, 0, 2);" />
-                <Button text="编辑" onAction="#onEditButtonClick"
-                        style="-fx-background-color: #4096ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
-                <Button text="审批" onAction="#onApproveButtonClick"
-                        style="-fx-background-color: #ffa940; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
-                <Region HBox.hgrow="ALWAYS" />
-                <Button text="删除" onAction="#onDeleteButtonClick"
-                        style="-fx-background-color: white; -fx-text-fill: #f53f3f; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-border-color: #f53f3f; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />
-            </HBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="查询" onAction="#onSearchButtonClick"
+                            style="-fx-background-color: #1677ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 24 8 24; -fx-background-radius: 6; -fx-cursor: hand;" />
+                    <Button text="重置" onAction="#onResetButtonClick"
+                            style="-fx-background-color: #f2f3f5; -fx-text-fill: #4e5969; -fx-font-size: 13px; -fx-font-weight: normal; -fx-padding: 8 24 8 24; -fx-background-radius: 6; -fx-border-color: #e5e6eb; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />
+                </HBox>
+
+                <!-- 操作按钮区域 -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Button text="+ 新增出库单" onAction="#onAddButtonClick"
+                            style="-fx-background-color: linear-gradient(to right, #52c41a, #73d13d); -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 24 9 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(82,196,26,0.2), 6, 0, 0, 2);" />
+                    <Button text="编辑" onAction="#onEditButtonClick"
+                            style="-fx-background-color: #4096ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
+                    <Button text="审批" onAction="#onApproveButtonClick"
+                            style="-fx-background-color: #ffa940; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="删除" onAction="#onDeleteButtonClick"
+                            style="-fx-background-color: white; -fx-text-fill: #f53f3f; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-border-color: #f53f3f; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />
+                </HBox>
+            </VBox>
         </VBox>
     </top>
 
