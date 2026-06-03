@@ -465,6 +465,11 @@ public class StockInEditDialog extends Stage {
         // 创建选择对话框
         Dialog<OptionItem> dialog = new Dialog<>();
         dialog.setTitle("选择物资");
+        
+        // 添加标准按钮类型
+        ButtonType selectButtonType = new ButtonType("选择", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButtonType = ButtonType.CANCEL;
+        dialog.getDialogPane().getButtonTypes().addAll(selectButtonType, cancelButtonType);
 
         // 创建标题
         Label titleLabel = new Label("请选择要入库的物资");
@@ -513,57 +518,53 @@ public class StockInEditDialog extends Stage {
         listView.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-radius: 8; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
         listView.setFocusTraversable(false);
 
-        // 创建按钮
-        Button selectButton = new Button("选择");
-        selectButton.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);");
-        selectButton.setOnAction(e -> {
-            OptionItem selected = listView.getSelectionModel().getSelectedItem();
-            if (selected != null) {
-                item.setMaterialId(selected.getId());
-                item.setMaterialName(selected.getName());
-                
-                // 如果是退货入库,直接使用已加载的单价
-                boolean isReturn = "退货入库".equals(typeComboBox.getValue());
-                if (isReturn && selected.getPrice() != null) {
-                    item.setPrice(selected.getPrice());
-                    updateAmount(item);
-                    calculateTotal();
-                    System.out.println("已自动填充单价: " + selected.getPrice());
-                }
-                
-                System.out.println("已选择物资: " + selected.getName() + " (ID: " + selected.getId() + ")");
-                itemTable.refresh();
-                dialog.setResult(selected);
-                dialog.close();
-            } else {
-                MessageDialog.showDialog("请先选择物资");
-            }
-        });
-
-        Button cancelButton = new Button("取消");
-        cancelButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 25; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-cursor: hand;");
-        cancelButton.setOnAction(e -> dialog.close());
-
         // 创建布局
         javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(15);
         content.setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff); -fx-padding: 25;");
         content.getChildren().addAll(titleLabel, listView);
 
-        javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(12, cancelButton, selectButton);
-        buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
-        buttonBox.setStyle("-fx-padding: 0 25 25 25;");
-
-        javafx.scene.layout.VBox mainContent = new javafx.scene.layout.VBox(content, buttonBox);
-
-        dialog.getDialogPane().setContent(mainContent);
+        dialog.getDialogPane().setContent(content);
         dialog.getDialogPane().setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff);");
+        
+        // 美化按钮样式
+        Button selectButton = (Button) dialog.getDialogPane().lookupButton(selectButtonType);
+        selectButton.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);");
+        
+        Button cancelButton = (Button) dialog.getDialogPane().lookupButton(cancelButtonType);
+        cancelButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 25; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-cursor: hand;");
+
+        // 设置结果转换器
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == selectButtonType) {
+                OptionItem selected = listView.getSelectionModel().getSelectedItem();
+                if (selected == null) {
+                    MessageDialog.showDialog("请先选择物资");
+                    return null;
+                }
+                return selected;
+            }
+            return null;
+        });
 
         // 设置对话框大小
         dialog.setResizable(false);
         dialog.setWidth(450);
 
         dialog.showAndWait().ifPresent(selectedMaterial -> {
-            // 已在按钮点击事件中处理
+            item.setMaterialId(selectedMaterial.getId());
+            item.setMaterialName(selectedMaterial.getName());
+            
+            // 如果是退货入库,直接使用已加载的单价
+            boolean isReturn = "退货入库".equals(typeComboBox.getValue());
+            if (isReturn && selectedMaterial.getPrice() != null) {
+                item.setPrice(selectedMaterial.getPrice());
+                updateAmount(item);
+                calculateTotal();
+                System.out.println("已自动填充单价: " + selectedMaterial.getPrice());
+            }
+            
+            System.out.println("已选择物资: " + selectedMaterial.getName() + " (ID: " + selectedMaterial.getId() + ")");
+            itemTable.refresh();
         });
     }
 
