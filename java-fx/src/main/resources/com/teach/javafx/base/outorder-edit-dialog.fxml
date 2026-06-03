@@ -3,62 +3,67 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.teach.javafx.controller.base.OutOrderEditDialog"
-            prefWidth="800" prefHeight="600">
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.OutOrderEditDialog"
+      spacing="15" prefWidth="800" prefHeight="580"
+      style="-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff);">
 
-    <top>
-        <VBox spacing="15" style="-fx-background-color: #f5f7fa;">
-            <padding>
-                <Insets top="20" right="20" bottom="20" left="20"/>
-            </padding>
+    <padding>
+        <Insets top="25" right="25" bottom="25" left="25"/>
+    </padding>
 
-            <Label text="新增出库单" fx:id="titleLabel" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+    <!-- 标题栏 -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label fx:id="titleLabel" text="新增出库单"
+               style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+    </HBox>
 
-            <HBox spacing="10" alignment="CENTER_LEFT">
-                <Label text="出库类型：" style="-fx-font-size: 14px;"/>
-                <ComboBox fx:id="outTypeComboBox" prefWidth="200" promptText="请选择出库类型"/>
-            </HBox>
+    <Separator style="-fx-background-color: #e0e6ed;"/>
 
-            <Label text="出库明细：" style="-fx-font-size: 14px; -fx-font-weight: bold;"/>
-        </VBox>
-    </top>
+    <!-- 出库类型选择区域 -->
+    <HBox spacing="12" alignment="CENTER_LEFT"
+          style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);">
+        <Label text="出库类型："
+               style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-min-width: 80;"/>
+        <ComboBox fx:id="outTypeComboBox" prefWidth="220"
+                  style="-fx-font-size: 13px;"/>
+    </HBox>
 
-    <center>
-        <VBox spacing="10">
-            <padding>
-                <Insets top="10" right="20" bottom="10" left="20"/>
-            </padding>
+    <!-- 出库明细标题 -->
+    <Label text="出库明细"
+           style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
 
-            <TableView fx:id="detailTable" prefHeight="350" editable="true">
-                <columns>
-                    <TableColumn fx:id="materialColumn" text="物资" prefWidth="200"/>
-                    <TableColumn fx:id="specColumn" text="规格型号" prefWidth="120"/>
-                    <TableColumn fx:id="unitColumn" text="单位" prefWidth="80"/>
-                    <TableColumn fx:id="quantityColumn" text="数量" prefWidth="100"/>
-                    <TableColumn fx:id="actionColumn" text="操作" prefWidth="80"/>
-                </columns>
-            </TableView>
+    <!-- 明细表格 -->
+    <TableView fx:id="detailTable" prefHeight="280" VBox.vgrow="ALWAYS"
+               styleClass="stockin-edit-table">
+        <columns>
+            <TableColumn fx:id="materialColumn" text="物资" prefWidth="200"/>
+            <TableColumn fx:id="quantityColumn" text="数量" prefWidth="100"/>
+            <TableColumn fx:id="priceColumn" text="单价" prefWidth="100"/>
+            <TableColumn fx:id="amountColumn" text="金额" prefWidth="100"/>
+            <TableColumn fx:id="actionColumn" text="操作" prefWidth="80"/>
+        </columns>
+        <columnResizePolicy>
+            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+        </columnResizePolicy>
+    </TableView>
 
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Button fx:id="addButton" text="+ 添加物资" onAction="#onAddButtonClick"
-                        style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 14px;"/>
-                <Label fx:id="totalLabel" text="总数量：0" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
-            </HBox>
-        </VBox>
-    </center>
+    <!-- 添加物资和总金额区域 -->
+    <HBox spacing="15" alignment="CENTER_LEFT"
+          style="-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 12 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);">
+        <Button text="+ 添加物资" onAction="#onAddItemButtonClick"
+                style="-fx-background-color: #4caf7d; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="totalAmountLabel" text="总金额：¥0.00"
+               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #e87070;"/>
+    </HBox>
 
-    <bottom>
-        <HBox spacing="15" alignment="CENTER_RIGHT">
-            <padding>
-                <Insets top="15" right="20" bottom="20" left="20"/>
-            </padding>
-            <Button fx:id="remarkButton" text="备注" onAction="#onRemarkButtonClick"
-                    style="-fx-background-color: #FF9800; -fx-text-fill: white;"/>
-            <Button fx:id="submitBtn" text="提交" onAction="#onSubmitButtonClick"
-                    style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 14px; -fx-pref-width: 100;"/>
-            <Button fx:id="cancelBtn" text="取消" onAction="#onCancelButtonClick"
-                    style="-fx-font-size: 14px; -fx-pref-width: 100;"/>
-        </HBox>
-    </bottom>
-</BorderPane>
+    <!-- 操作按钮区域 -->
+    <HBox spacing="12" alignment="CENTER_RIGHT">
+        <Button text="取消" onAction="#onCancelButtonClick"
+                style="-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 25; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-cursor: hand;"/>
+        <Button text="提交" onAction="#onSubmitButtonClick"
+                style="-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);"/>
+    </HBox>
+</VBox>

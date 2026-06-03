@@ -1,27 +1,26 @@
 package com.teach.javafx.controller.base;
 
-
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.teach.javafx.AppStore;
+import com.teach.javafx.GsonUtil;
 import com.teach.javafx.bean.OutOrder;
 import com.teach.javafx.bean.OutOrderDetail;
 import com.teach.javafx.request.HttpRequestUtil;
 import com.teach.javafx.request.OptionItem;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.converter.IntegerStringConverter;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -32,176 +31,351 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-public class OutOrderEditDialog {
+public class OutOrderEditDialog extends Stage {
 
-    private Stage dialog;
-    private OutOrder outOrder;
-    private boolean isNew;
-    private final Gson gson = new Gson();
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    @FXML
+    private Label titleLabel;
 
+    @FXML
     private ComboBox<String> outTypeComboBox;
-    private TextArea remarkArea;
+
+    @FXML
     private TableView<OutOrderDetail> detailTable;
-    private ObservableList<OutOrderDetail> detailList;
-    private List<OptionItem> materialList;
-    private List<Map<String, Object>> materialMapList = new ArrayList<>();
+
+    @FXML
+    private TableColumn<OutOrderDetail, String> materialColumn;
+
+    @FXML
+    private TableColumn<OutOrderDetail, Integer> quantityColumn;
+
+    @FXML
+    private TableColumn<OutOrderDetail, BigDecimal> priceColumn;
+
+    @FXML
+    private TableColumn<OutOrderDetail, BigDecimal> amountColumn;
+
+    @FXML
+    private TableColumn<OutOrderDetail, Void> actionColumn;
+
+    @FXML
     private Label totalAmountLabel;
 
+    private final ObservableList<OutOrderDetail> detailList = FXCollections.observableArrayList();
+    private final Gson gson = GsonUtil.getGson();
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private List<OptionItem> materialList = new ArrayList<>();
+    private OutOrder editingOutOrder = null;
+    private boolean isNew = true;
+
+    /**
+     * 静态工厂方法：创建新增对话框
+     */
     public static OutOrderEditDialog createNewDialog() {
-        OutOrderEditDialog dialog = new OutOrderEditDialog();
-        dialog.outOrder = new OutOrder();
-        dialog.isNew = true;
-        dialog.outOrder.setOutType(1);
-        dialog.outOrder.setTotalNum(0);
-        dialog.outOrder.setTotalAmount(BigDecimal.ZERO);
-        return dialog;
+        return createDialog(null, true);
     }
 
+    /**
+     * 静态工厂方法：创建编辑对话框
+     */
     public static OutOrderEditDialog createEditDialog(OutOrder order) {
-        OutOrderEditDialog dialog = new OutOrderEditDialog();
-        dialog.outOrder = order;
-        dialog.isNew = false;
-        return dialog;
+        return createDialog(order, false);
     }
 
-    public void showAndWait() {
-        dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle(isNew ? "新增出库单" : "编辑出库单");
-        dialog.setMinWidth(900);
-        dialog.setMinHeight(600);
+    /**
+     * 内部方法：创建对话框
+     */
+    private static OutOrderEditDialog createDialog(OutOrder order, boolean isNew) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    OutOrderEditDialog.class.getResource("/com/teach/javafx/base/outorder-edit-dialog.fxml"));
 
-        BorderPane root = new BorderPane();
-        root.setPadding(new Insets(15));
+            Scene scene = new Scene(loader.load());
+            
+            scene.getStylesheets().add(OutOrderEditDialog.class.getResource("/styles/modern-style.css").toExternalForm());
+            
+            OutOrderEditDialog dialog = loader.getController();
+            
+            if (dialog == null) {
+                throw new RuntimeException("无法获取控制器实例");
+            }
+            
+            dialog.setScene(scene);
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.setTitle(isNew ? "新增出库单" : "编辑出库单");
+            dialog.setResizable(false);
+            
+            dialog.editingOutOrder = order;
+            dialog.isNew = isNew;
+            
+            // 先同步加载物资列表，确保数据已经加载完成
+            System.out.println("=== 开始同步加载物资列表 ===");
+            dialog.loadMaterialListSync();
+            System.out.println("=== 物资列表加载完成 ===");
+            
+            dialog.initControls();
+            
+            if (order != null) {
+                dialog.loadOutOrderDetail(order);
+            }
+            
+            return dialog;
+            
+        } catch (Exception e) {
+            System.err.println("=== FXML 加载失败 ===");
+            System.err.println("错误类型: " + e.getClass().getName());
+            System.err.println("错误消息: " + e.getMessage());
+            e.printStackTrace();
+            
+            StringBuilder errorMsg = new StringBuilder("打开对话框失败：\n");
+            errorMsg.append("错误类型: ").append(e.getClass().getSimpleName()).append("\n");
+            errorMsg.append("错误消息: ").append(e.getMessage()).append("\n");
+            
+            if (e.getCause() != null) {
+                errorMsg.append("原因: ").append(e.getCause().getMessage()).append("\n");
+            }
+            
+            MessageDialog.showDialog(errorMsg.toString());
+            return null;
+        }
+    }
 
-        VBox topBox = new VBox(10);
-        topBox.setPadding(new Insets(10));
-
-        HBox typeBox = new HBox(10);
-        typeBox.getChildren().addAll(new Label("出库类型："), outTypeComboBox = new ComboBox<>());
+    private void initControls() {
+        if (outTypeComboBox == null) {
+            System.err.println("错误：outTypeComboBox 为 null，FXML 绑定失败");
+            return;
+        }
+        
+        // 初始化出库类型
         outTypeComboBox.getItems().addAll("领料出库", "销售出库", "报损出库", "其他出库");
-        outTypeComboBox.setValue(getOutTypeName(outOrder.getOutType()));
-
-        HBox remarkBox = new HBox(10);
-        remarkBox.getChildren().addAll(new Label("备注："));
-        remarkArea = new TextArea();
-        remarkArea.setPrefRowCount(2);
-        remarkArea.setPrefColumnCount(50);
-        remarkArea.setText(outOrder.getRemark());
-        remarkBox.getChildren().add(remarkArea);
-
-        topBox.getChildren().addAll(typeBox, remarkBox);
-        root.setTop(topBox);
-
-        VBox centerBox = new VBox(10);
-        centerBox.setPadding(new Insets(10));
-
-        HBox buttonBox = new HBox(10);
-        Button addBtn = new Button("添加商品");
-        addBtn.setOnAction(e -> onAddItem());
-        Button deleteBtn = new Button("删除选中");
-        deleteBtn.setOnAction(e -> onDeleteItem());
-        buttonBox.getChildren().addAll(addBtn, deleteBtn);
-
-        detailTable = new TableView<>();
+        outTypeComboBox.setValue(isNew ? "领料出库" : getOutTypeName(editingOutOrder.getOutType()));
+        
+        // 初始化表格
+        detailTable.setItems(detailList);
         detailTable.setEditable(true);
 
-        TableColumn<OutOrderDetail, String> materialCol = new TableColumn<>("物资名称");
-        materialCol.setPrefWidth(200);
-        materialCol.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getGoodsName()));
-        materialCol.setCellFactory(param -> new TableCell<OutOrderDetail, String>() {
-            private final Button selectBtn = new Button("加载中...");
-            {
-                selectBtn.setStyle("-fx-background-color: #999; -fx-text-fill: white;");
-                selectBtn.setDisable(true);
-                selectBtn.setOnAction(event -> {
-                    OutOrderDetail detail = getTableView().getItems().get(getIndex());
-                    System.out.println("=== 点击选择物资按钮 ===");
-                    System.out.println("materialList 是否为null: " + (materialList == null));
-                    System.out.println("materialList 大小: " + (materialList != null ? materialList.size() : "N/A"));
-                    showMaterialSelectionDialog(detail);
-                });
-            }
-
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    if (item != null && !item.equals("请选择物资") && !item.equals("加载中...")) {
-                        selectBtn.setText(item);
-                        selectBtn.setStyle("-fx-background-color: #409eff; -fx-text-fill: white;");
-                        selectBtn.setDisable(false);
-                    } else if (item != null && item.equals("请选择物资")) {
-                        selectBtn.setText("请选择物资");
-                        selectBtn.setStyle("-fx-background-color: #409eff; -fx-text-fill: white;");
-                        selectBtn.setDisable(false);
-                    } else {
-                        selectBtn.setText("加载中...");
-                        selectBtn.setStyle("-fx-background-color: #999; -fx-text-fill: white;");
-                        selectBtn.setDisable(true);
-                    }
-                    setGraphic(selectBtn);
+        // 物资名称列
+        materialColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getGoodsName()));
+        materialColumn.setCellFactory(col -> {
+            return new TableCell<OutOrderDetail, String>() {
+                private final TextField textField = new TextField();
+                private final Button selectBtn = new Button("...");
+                private final HBox container = new HBox(5, textField, selectBtn);
+                
+                {
+                    textField.setEditable(false);
+                    textField.setPromptText("请输入物资名称");
+                    
+                    selectBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
+                    selectBtn.setOnAction(e -> {
+                        OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (detail == null) {
+                            MessageDialog.showDialog("请先添加物资行");
+                            return;
+                        }
+                        showMaterialSelectionDialog(detail);
+                    });
+                    
+                    HBox.setHgrow(textField, Priority.ALWAYS);
                 }
+                
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    
+                    if (empty || getTableRow().getItem() == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        if (item != null && !item.isEmpty()) {
+                            textField.setText(item);
+                        } else {
+                            textField.clear();
+                        }
+                        setGraphic(container);
+                        setText(null);
+                    }
+                }
+            };
+        });
+
+        // 数量列
+        quantityColumn.setCellValueFactory(param -> new javafx.beans.property.SimpleObjectProperty<>(param.getValue().getOutNum()));
+        quantityColumn.setCellFactory(col -> {
+            return new TableCell<OutOrderDetail, Integer>() {
+                private final TextField textField = new TextField();
+                
+                {
+                    textField.setEditable(true);
+                    textField.setPromptText("数量");
+                    
+                    textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (!newVal) {
+                            OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
+                            if (detail != null) {
+                                try {
+                                    String text = textField.getText().trim();
+                                    if (!text.isEmpty()) {
+                                        Integer newQuantity = Integer.parseInt(text);
+                                        if (newQuantity > 0) {
+                                            detail.setOutNum(newQuantity);
+                                            calculateTotal();
+                                            detailTable.refresh();
+                                        } else {
+                                            MessageDialog.showDialog("数量必须大于0");
+                                            detailTable.refresh();
+                                        }
+                                    }
+                                } catch (NumberFormatException e) {
+                                    MessageDialog.showDialog("请输入有效的数字");
+                                    detailTable.refresh();
+                                }
+                            }
+                        }
+                    });
+                    
+                    textField.setOnAction(e -> {
+                        OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (detail != null) {
+                            try {
+                                String text = textField.getText().trim();
+                                if (!text.isEmpty()) {
+                                    Integer newQuantity = Integer.parseInt(text);
+                                    if (newQuantity > 0) {
+                                        detail.setOutNum(newQuantity);
+                                        calculateTotal();
+                                        detailTable.refresh();
+                                    } else {
+                                        MessageDialog.showDialog("数量必须大于0");
+                                        detailTable.refresh();
+                                    }
+                                }
+                            } catch (NumberFormatException e2) {
+                                MessageDialog.showDialog("请输入有效的数字");
+                                detailTable.refresh();
+                            }
+                        }
+                    });
+                }
+                
+                @Override
+                protected void updateItem(Integer quantity, boolean empty) {
+                    super.updateItem(quantity, empty);
+                    
+                    if (empty || getTableRow().getItem() == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        if (quantity != null && quantity > 0) {
+                            textField.setText(String.valueOf(quantity));
+                        } else {
+                            textField.clear();
+                        }
+                        setGraphic(textField);
+                        setText(null);
+                    }
+                }
+            };
+        });
+
+        // 单价列
+        priceColumn.setCellValueFactory(param -> new javafx.beans.property.SimpleObjectProperty<>(param.getValue().getUnitPrice()));
+        priceColumn.setCellFactory(col -> {
+            return new TableCell<OutOrderDetail, BigDecimal>() {
+                private final TextField textField = new TextField();
+                
+                {
+                    textField.setEditable(true);
+                    textField.setPromptText("单价");
+                    
+                    textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
+                        if (!newVal) {
+                            OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
+                            if (detail != null) {
+                                try {
+                                    String text = textField.getText().trim();
+                                    if (!text.isEmpty()) {
+                                        BigDecimal newPrice = new BigDecimal(text);
+                                        if (newPrice.compareTo(BigDecimal.ZERO) >= 0) {
+                                            detail.setUnitPrice(newPrice);
+                                            calculateTotal();
+                                            detailTable.refresh();
+                                        } else {
+                                            MessageDialog.showDialog("单价不能为负数");
+                                            detailTable.refresh();
+                                        }
+                                    }
+                                } catch (NumberFormatException e) {
+                                    MessageDialog.showDialog("请输入有效的数字");
+                                    detailTable.refresh();
+                                }
+                            }
+                        }
+                    });
+                    
+                    textField.setOnAction(e -> {
+                        OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
+                        if (detail != null) {
+                            try {
+                                String text = textField.getText().trim();
+                                if (!text.isEmpty()) {
+                                    BigDecimal newPrice = new BigDecimal(text);
+                                    if (newPrice.compareTo(BigDecimal.ZERO) >= 0) {
+                                        detail.setUnitPrice(newPrice);
+                                        calculateTotal();
+                                        detailTable.refresh();
+                                    } else {
+                                        MessageDialog.showDialog("单价不能为负数");
+                                        detailTable.refresh();
+                                    }
+                                }
+                            } catch (NumberFormatException e2) {
+                                MessageDialog.showDialog("请输入有效的数字");
+                                detailTable.refresh();
+                            }
+                        }
+                    });
+                }
+                
+                @Override
+                protected void updateItem(BigDecimal price, boolean empty) {
+                    super.updateItem(price, empty);
+                    
+                    if (empty || getTableRow().getItem() == null) {
+                        setGraphic(null);
+                        setText(null);
+                    } else {
+                        if (price != null && price.compareTo(BigDecimal.ZERO) >= 0) {
+                            textField.setText(price.toPlainString());
+                        } else {
+                            textField.clear();
+                        }
+                        setGraphic(textField);
+                        setText(null);
+                    }
+                }
+            };
+        });
+
+        // 金额列（只读）
+        amountColumn.setCellValueFactory(param -> {
+            OutOrderDetail d = param.getValue();
+            BigDecimal amt = BigDecimal.ZERO;
+            if (d.getUnitPrice() != null && d.getOutNum() != null) {
+                amt = d.getUnitPrice().multiply(BigDecimal.valueOf(d.getOutNum()));
             }
+            return new javafx.beans.property.SimpleObjectProperty<>(amt);
         });
 
-        TableColumn<OutOrderDetail, String> specCol = new TableColumn<>("规格型号");
-        specCol.setPrefWidth(120);
-        specCol.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getGoodsSpec()));
-
-        TableColumn<OutOrderDetail, String> unitCol = new TableColumn<>("单位");
-        unitCol.setPrefWidth(80);
-        unitCol.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getUnit()));
-
-        TableColumn<OutOrderDetail, Integer> quantityCol = new TableColumn<>("出库数量");
-        quantityCol.setPrefWidth(100);
-        quantityCol.setCellValueFactory(new PropertyValueFactory<>("outNum"));
-        quantityCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        quantityCol.setOnEditCommit(event -> {
-            OutOrderDetail detail = event.getRowValue();
-            detail.setOutNum(event.getNewValue());
-            updateAmount(detail);
-            calculateTotalAmount();
-            detailTable.refresh();
-        });
-
-        TableColumn<OutOrderDetail, BigDecimal> priceCol = new TableColumn<>("单价");
-        priceCol.setPrefWidth(100);
-        priceCol.setCellValueFactory(new PropertyValueFactory<>("unitPrice"));
-        priceCol.setCellFactory(TextFieldTableCell.forTableColumn(new javafx.util.converter.BigDecimalStringConverter()));
-        priceCol.setOnEditCommit(event -> {
-            OutOrderDetail detail = event.getRowValue();
-            BigDecimal newPrice = event.getNewValue();
-            if (newPrice != null && newPrice.compareTo(BigDecimal.ZERO) >= 0) {
-                detail.setUnitPrice(newPrice);
-                updateAmount(detail);
-                calculateTotalAmount();
-            } else {
-                MessageDialog.showDialog("单价不能为负数");
-                detailTable.refresh();
-            }
-        });
-
-        TableColumn<OutOrderDetail, BigDecimal> amountCol = new TableColumn<>("金额");
-        amountCol.setPrefWidth(120);
-        amountCol.setCellValueFactory(new PropertyValueFactory<>("totalPrice"));
-
-        TableColumn<OutOrderDetail, Void> actionCol = new TableColumn<>("操作");
-        actionCol.setPrefWidth(80);
-        actionCol.setCellFactory(col -> new TableCell<OutOrderDetail, Void>() {
+        // 操作列
+        actionColumn.setCellFactory(col -> new TableCell<OutOrderDetail, Void>() {
             private final Button deleteBtn = new Button("删除");
             {
-                deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 11px;");
+                deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
                 deleteBtn.setOnAction(e -> {
-                    OutOrderDetail item = getTableView().getItems().get(getIndex());
-                    detailList.remove(item);
-                    calculateTotalAmount();
+                    OutOrderDetail detail = getTableView().getItems().get(getIndex());
+                    detailList.remove(detail);
+                    calculateTotal();
                 });
             }
 
@@ -212,394 +386,263 @@ public class OutOrderEditDialog {
             }
         });
 
-        detailTable.getColumns().addAll(materialCol, specCol, unitCol, quantityCol, priceCol, amountCol, actionCol);
+        // 添加一个空行
+        if (detailList.isEmpty()) {
+            onAddItemButtonClick();
+        }
+        
+        calculateTotal();
+    }
 
-        detailList = FXCollections.observableArrayList();
-        detailTable.setItems(detailList);
-
-        centerBox.getChildren().addAll(buttonBox, detailTable);
-        root.setCenter(centerBox);
-
-        HBox bottomBox = new HBox(10);
-        bottomBox.setPadding(new Insets(10));
-        bottomBox.setStyle("-fx-alignment: center-left;");
-
-        totalAmountLabel = new Label("总金额：0.00");
-        totalAmountLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2196F3;");
-
-        Button submitBtn = new Button("提交");
-        submitBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
-        submitBtn.setOnAction(e -> onSubmitButtonClick());
-
-        Button cancelBtn = new Button("取消");
-        cancelBtn.setOnAction(e -> dialog.close());
-
-        HBox rightButtons = new HBox(10);
-        rightButtons.setStyle("-fx-alignment: center-right; -fx-hgrow: always;");
-        rightButtons.getChildren().addAll(submitBtn, cancelBtn);
-
-        bottomBox.getChildren().addAll(totalAmountLabel, rightButtons);
-        root.setBottom(bottomBox);
-
-        javafx.scene.Scene scene = new javafx.scene.Scene(root);
-        dialog.setScene(scene);
-
-        System.out.println("========================================");
-        System.out.println("=== 开始初始化出库编辑对话框 ===");
-        System.out.println("========================================");
-        System.out.println("isNew: " + isNew);
-        System.out.println("outOrder: " + outOrder);
-        System.out.println("materialList 初始状态: " + materialList);
-
-        CountDownLatch latch = new CountDownLatch(1);
-        System.out.println("=== 调用 loadMaterialListWithLatch ===");
-        loadMaterialListWithLatch(latch);
+    private void loadOutOrderDetail(OutOrder outOrder) {
+        outTypeComboBox.setValue(getOutTypeName(outOrder.getOutType()));
 
         try {
-            System.out.println("=== 等待物资列表加载完成（最多15秒）===");
-            boolean completed = latch.await(15, TimeUnit.SECONDS);
-            if (!completed) {
-                System.err.println("⚠️ 物资列表加载超时");
-                Platform.runLater(() -> {
-                    MessageDialog.showDialog("加载物资列表超时，请检查网络连接");
-                });
-            } else {
-                System.out.println("✅ 等待完成");
-                System.out.println("materialList 最终状态: " + materialList);
-                System.out.println("materialList 大小: " + (materialList != null ? materialList.size() : "null"));
+            String url = HttpRequestUtil.serverUrl + "/api/stockOut/detail/" + outOrder.getId();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .GET()
+                    .headers("satoken", AppStore.getJwt().getToken())
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (code == 200 || code == 0) {
+                    Map<String, Object> data = (Map<String, Object>) result.get("data");
+                    List<Map<String, Object>> items = (List<Map<String, Object>>) data.get("items");
+
+                    detailList.clear();
+                    for (Map<String, Object> itemMap : items) {
+                        OutOrderDetail detail = gson.fromJson(gson.toJson(itemMap), OutOrderDetail.class);
+                        detailList.add(detail);
+                    }
+                    calculateTotal();
+                }
             }
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("❌ 等待被中断");
-            Platform.runLater(() -> {
-                MessageDialog.showDialog("加载物资列表被中断");
-            });
+            System.out.println("加载出库单详情失败：" + e.getMessage());
         }
-
-        if (!isNew) {
-            System.out.println("=== 加载出库单明细 ===");
-            loadDetailList();
-        }
-
-        System.out.println("=== 显示对话框 ===");
-        System.out.println("========================================");
-        dialog.showAndWait();
     }
 
-    private void loadMaterialListWithLatch(CountDownLatch latch) {
-        new Thread(() -> {
-            try {
-                System.out.println("=== 开始加载物资列表 ===");
-                String url = HttpRequestUtil.serverUrl + "/api/material/list";
-                System.out.println("请求URL: " + url);
-                System.out.println("Token: " + AppStore.getJwt().getToken());
-
-                // 使用 POST 请求，发送空的 JSON 对象
-                String requestBody = "{}";
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                        .headers("Content-Type", "application/json")
-                        .headers("satoken", AppStore.getJwt().getToken())
-                        .build();
-
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println("响应状态码: " + response.statusCode());
-                System.out.println("响应内容: " + response.body());
-
-                if (response.statusCode() == 200) {
-                    Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-
-                    int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
-                    if (c == 200 || c == 0) {
-                        Object dataObj = result.get("data");
-
-                        if (dataObj instanceof List) {
-                            // 格式1：直接返回 List
-                            System.out.println("物资列表加载成功（格式1-直接List）");
-                            List<Map<String, Object>> data = (List<Map<String, Object>>) dataObj;
-                            materialList = new ArrayList<>();
-                            materialMapList = new ArrayList<>();
-                            for (Map<String, Object> item : data) {
-                                OptionItem option = new OptionItem();
-                                option.setId(((Number) item.get("id")).intValue());
-                                option.setName((String) item.get("name"));
-                                materialList.add(option);
-                                materialMapList.add(item);
-                            }
-                            System.out.println("物资列表加载完成，共 " + materialList.size() + " 条记录");
-                        } else if (dataObj instanceof Map) {
-                            // 格式2：分页数据
-                            System.out.println("物资列表加载成功（格式2-分页数据）");
-                            Map<String, Object> dataMap = (Map<String, Object>) dataObj;
-                            List<Map<String, Object>> data = (List<Map<String, Object>>) dataMap.get("records");
-                            materialList = new ArrayList<>();
-                            materialMapList = new ArrayList<>();
-                            if (data != null) {
-                                for (Map<String, Object> item : data) {
-                                    OptionItem option = new OptionItem();
-                                    option.setId(((Number) item.get("id")).intValue());
-                                    option.setName((String) item.get("name"));
-                                    materialList.add(option);
-                                    materialMapList.add(item);
-                                }
-                            }
-                            System.out.println("物资列表加载完成，共 " + materialList.size() + " 条记录");
-                        } else {
-                            System.err.println("物资列表数据格式不正确，dataObj类型: " + (dataObj != null ? dataObj.getClass() : "null"));
-                            materialList = new ArrayList<>();
-                            materialMapList = new ArrayList<>();
-                        }
-                    } else {
-                        System.err.println("接口返回错误：code=" + result.get("code") + ", msg=" + result.get("msg"));
-                        materialList = new ArrayList<>();
-                        materialMapList = new ArrayList<>();
-                    }
-                } else {
-                    System.err.println("HTTP请求失败：" + response.statusCode());
-                    materialList = new ArrayList<>();
-                    materialMapList = new ArrayList<>();
-                }
-            } catch (Exception e) {
-                System.err.println("加载物资列表异常：" + e.getMessage());
-                e.printStackTrace();
-                materialList = new ArrayList<>();
-                materialMapList = new ArrayList<>();
-            } finally {
-                System.out.println("=== 释放锁 ===");
-                latch.countDown();
-            }
-        }).start();
-    }
-
-    private void loadDetailList() {
-        new Thread(() -> {
-            try {
-                System.out.println("\n=== [编辑对话框] 开始加载出库单明细 ===");
-                System.out.println("出库单ID: " + outOrder.getId());
-                String url = HttpRequestUtil.serverUrl + "/api/stockOut/getDetail/" + outOrder.getId();
-                System.out.println("请求URL: " + url);
-                System.out.println("Token: " + AppStore.getJwt().getToken());
-                
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .GET()
-                        .headers("satoken", AppStore.getJwt().getToken())
-                        .build();
-
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                
-                System.out.println("响应状态码: " + response.statusCode());
-                System.out.println("响应内容: " + response.body());
-
-                if (response.statusCode() == 200) {
-                    Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                    int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
-                    System.out.println("解析结果: code=" + c);
-                    
-                    if (c == 200 || c == 0) {
-                        // getDetail 接口返回的是 {data: {items: [...]}}
-                        Map<String, Object> data = (Map<String, Object>) result.get("data");
-                        final List<Map<String, Object>> finalItems;
-                        
-                        if (data != null) {
-                            @SuppressWarnings("unchecked")
-                            List<Map<String, Object>> rawItems = (List<Map<String, Object>>) data.get("items");
-                            finalItems = rawItems;
-                        } else {
-                            finalItems = null;
-                        }
-                        
-                        System.out.println("明细数量: " + (finalItems != null ? finalItems.size() : 0));
-                        
-                        Platform.runLater(() -> {
-                            if (finalItems != null && !finalItems.isEmpty()) {
-                                // 需要将后端字段映射到 OutOrderDetail
-                                List<OutOrderDetail> list = new ArrayList<>();
-                                for (Map<String, Object> itemMap : finalItems) {
-                                    OutOrderDetail detail = new OutOrderDetail();
-                                    
-                                    // 字段映射：后端使用 materialId, materialName, outQuantity 等
-                                    Object materialId = itemMap.get("materialId");
-                                    if (materialId != null) {
-                                        detail.setGoodsId(((Number) materialId).intValue());
-                                    }
-                                    
-                                    detail.setGoodsName((String) itemMap.get("materialName"));
-                                    detail.setGoodsSpec((String) itemMap.get("materialCode"));
-                                    detail.setUnit((String) itemMap.get("unit"));
-                                    
-                                    Object outQuantity = itemMap.get("outQuantity");
-                                    if (outQuantity != null) {
-                                        detail.setOutNum(((Number) outQuantity).intValue());
-                                    }
-                                    
-                                    Object unitPrice = itemMap.get("unitPrice");
-                                    if (unitPrice != null) {
-                                        try {
-                                            detail.setUnitPrice(new BigDecimal(unitPrice.toString()));
-                                        } catch (NumberFormatException e) {
-                                            detail.setUnitPrice(BigDecimal.ZERO);
-                                        }
-                                    } else {
-                                        detail.setUnitPrice(BigDecimal.ZERO);
-                                    }
-                                    
-                                    // 计算总价
-                                    if (detail.getOutNum() != null && detail.getUnitPrice() != null) {
-                                        detail.setTotalPrice(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getOutNum())));
-                                    } else {
-                                        detail.setTotalPrice(BigDecimal.ZERO);
-                                    }
-                                    
-                                    list.add(detail);
-                                }
-                                
-                                System.out.println("转换后的明细列表大小: " + list.size());
-                                detailList.addAll(list);
-                                calculateTotalAmount();
-                                System.out.println("✅ 明细加载成功");
-                            } else {
-                                System.out.println("⚠️ 没有明细数据");
-                                MessageDialog.showDialog("该出库单暂无明细数据");
-                            }
-                        });
-                    } else {
-                        System.err.println("❌ 业务错误: " + result.get("msg"));
-                        Platform.runLater(() -> {
-                            MessageDialog.showDialog("加载明细失败：" + result.get("msg"));
-                        });
-                    }
-                } else {
-                    System.err.println("❌ HTTP错误: " + response.statusCode());
-                    Platform.runLater(() -> {
-                        MessageDialog.showDialog("加载明细失败：HTTP " + response.statusCode());
-                    });
-                }
-            } catch (Exception e) {
-                System.err.println("❌ 加载明细数据异常: " + e.getMessage());
-                e.printStackTrace();
-                Platform.runLater(() -> {
-                    MessageDialog.showDialog("加载明细异常：" + e.getMessage());
-                });
-            }
-        }).start();
-    }
-
+    /**
+     * 显示物资选择对话框
+     */
     private void showMaterialSelectionDialog(OutOrderDetail detail) {
-        if (materialList == null || materialList.isEmpty()) {
-            Alert loadingAlert = new Alert(Alert.AlertType.INFORMATION);
-            loadingAlert.setTitle("加载中");
-            loadingAlert.setHeaderText(null);
-            loadingAlert.setContentText("物资列表正在加载中，请稍候再试...");
-            loadingAlert.showAndWait();
+        System.out.println("=== 打开物资选择对话框 ===");
+        System.out.println("materialList大小: " + materialList.size());
+        if (!materialList.isEmpty()) {
+            System.out.println("第一个物资: " + materialList.get(0).getName());
+        }
+        
+        if (materialList.isEmpty()) {
+            MessageDialog.showDialog("物资列表为空，无法选择。");
             return;
         }
 
-        Dialog<OptionItem> selectionDialog = new Dialog<>();
-        selectionDialog.setTitle("选择物资");
-        selectionDialog.setHeaderText("请选择要出库的物资");
+        Dialog<OptionItem> dialog = new Dialog<>();
+        dialog.setTitle("选择物资");
+        dialog.setHeaderText("请选择要出库的物资");
 
         ListView<OptionItem> listView = new ListView<>();
         listView.getItems().addAll(materialList);
+        
+        System.out.println("listView中的项目数: " + listView.getItems().size());
+        
         listView.setCellFactory(lv -> new ListCell<OptionItem>() {
             @Override
             protected void updateItem(OptionItem item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getName());
+                if (empty || item == null) {
+                    setText(null);
+                    System.out.println("ListCell: empty or null");
+                } else {
+                    setText(item.getName());
+                    System.out.println("ListCell: 显示 " + item.getName());
+                }
             }
         });
 
-        selectionDialog.getDialogPane().setContent(listView);
+        dialog.getDialogPane().setContent(listView);
 
         ButtonType selectButtonType = new ButtonType("选择", ButtonBar.ButtonData.OK_DONE);
-        selectionDialog.getDialogPane().getButtonTypes().addAll(selectButtonType, ButtonType.CANCEL);
+        dialog.getDialogPane().getButtonTypes().addAll(selectButtonType, ButtonType.CANCEL);
 
-        selectionDialog.setResultConverter(dialogButton -> {
+        dialog.setResultConverter(dialogButton -> {
             if (dialogButton == selectButtonType) {
                 return listView.getSelectionModel().getSelectedItem();
             }
             return null;
         });
 
-        selectionDialog.showAndWait().ifPresent(selectedMaterial -> {
-            detail.setGoodsName(selectedMaterial.getName());
+        dialog.showAndWait().ifPresent(selectedMaterial -> {
             detail.setGoodsId(selectedMaterial.getId());
-
-            if (materialMapList != null) {
-                for (Map<String, Object> mat : materialMapList) {
-                    if (((Number) mat.get("id")).intValue() == selectedMaterial.getId()) {
-                        detail.setGoodsSpec((String) mat.getOrDefault("spec", "默认规格"));
-                        detail.setUnit((String) mat.getOrDefault("unit", "件"));
-                        Object priceObj = mat.get("price");
-                        if (priceObj != null) {
-                            try {
-                                detail.setUnitPrice(new BigDecimal(priceObj.toString()));
-                            } catch (NumberFormatException ex) {
-                                detail.setUnitPrice(BigDecimal.ZERO);
-                            }
-                        } else {
-                            detail.setUnitPrice(BigDecimal.ZERO);
-                        }
-                        updateAmount(detail);
-                        calculateTotalAmount();
-                        break;
-                    }
-                }
+            detail.setGoodsName(selectedMaterial.getName());
+            if (selectedMaterial.getPrice() != null) {
+                detail.setUnitPrice(selectedMaterial.getPrice());
             }
+            calculateTotal();
             detailTable.refresh();
         });
     }
 
-    private void onAddItem() {
-        OutOrderDetail detail = new OutOrderDetail();
-        detail.setGoodsName("请选择物资");
-        detail.setGoodsSpec("默认规格");
-        detail.setUnit("件");
-        detail.setOutNum(1);
-        detail.setUnitPrice(BigDecimal.ZERO);
-        detail.setTotalPrice(BigDecimal.ZERO);
-        detailList.add(detail);
-    }
-
-    private void onDeleteItem() {
-        OutOrderDetail selectedItem = detailTable.getSelectionModel().getSelectedItem();
-        if (selectedItem != null) {
-            detailList.remove(selectedItem);
-            calculateTotalAmount();
-        } else {
-            MessageDialog.showDialog("请先选择要删除的商品");
+    /**
+     * 同步加载物资列表（阻塞式，确保数据加载完成后再继续）
+     */
+    private void loadMaterialListSync() {
+        try {
+            System.out.println("开始同步加载物资列表...");
+            String url = HttpRequestUtil.serverUrl + "/api/material/list";
+            System.out.println("请求URL: " + url);
+            
+            // 使用 POST 方法，发送空的 JSON 对象（与入库单保持一致）
+            Map<String, Object> emptyBody = new HashMap<>();
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(emptyBody)))
+                    .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
+                    .build();
+            
+            System.out.println("发送HTTP请求...");
+            // 使用 send() 方法同步发送请求，会阻塞直到收到响应
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            System.out.println("HTTP状态码: " + response.statusCode());
+            
+            if (response.statusCode() == 200) {
+                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                System.out.println("返回code: " + code);
+                
+                if (code == 200 || code == 0) {
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+                    System.out.println("data列表大小: " + (data != null ? data.size() : "null"));
+                    
+                    materialList.clear();
+                    if (data != null) {
+                        for (int i = 0; i < data.size() && i < 3; i++) {
+                            Map<String, Object> item = data.get(i);
+                            System.out.println("物资项 " + i + ": name=" + item.get("name") + ", price=" + item.get("price"));
+                        }
+                        
+                        for (Map<String, Object> item : data) {
+                            OptionItem option = new OptionItem();
+                            option.setId(((Number) item.get("id")).intValue());
+                            
+                            // 修复：后端返回的字段是 name，不是 materialName
+                            String materialName = (String) item.get("name");
+                            option.setName(materialName);
+                            
+                            // 修复：后端返回的字段是 price，不是 unitPrice
+                            if (item.get("price") instanceof Number) {
+                                option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
+                            }
+                            materialList.add(option);
+                        }
+                    }
+                    System.out.println("物资列表加载成功，共 " + materialList.size() + " 条数据");
+                    if (!materialList.isEmpty()) {
+                        System.out.println("第一个物资: id=" + materialList.get(0).getId() + 
+                                         ", name=" + materialList.get(0).getName() + 
+                                         ", price=" + materialList.get(0).getPrice());
+                    }
+                } else {
+                    System.err.println("加载物资列表失败: code=" + code);
+                    System.err.println("错误信息: " + result.get("msg"));
+                }
+            } else {
+                System.err.println("HTTP请求失败: " + response.statusCode());
+                System.err.println("响应内容: " + response.body());
+            }
+        } catch (Exception e) {
+            System.err.println("同步加载物资列表异常: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private void updateAmount(OutOrderDetail detail) {
-        if (detail.getOutNum() != null && detail.getUnitPrice() != null) {
-            detail.setTotalPrice(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getOutNum())));
+    private void loadMaterialList() {
+        try {
+            String url = HttpRequestUtil.serverUrl + "/api/material/list";
+
+            // 使用 POST 方法，发送空的 JSON 对象（与入库单保持一致）
+            Map<String, Object> emptyBody = new HashMap<>();
+            
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(emptyBody)))
+                    .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (code == 200 || code == 0) {
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+                    materialList.clear();
+                    for (Map<String, Object> item : data) {
+                        OptionItem option = new OptionItem();
+                        option.setId(((Number) item.get("id")).intValue());
+                        
+                        // 修复：后端返回的字段是 name，不是 materialName
+                        String materialName = (String) item.get("name");
+                        option.setName(materialName);
+                        
+                        // 修复：后端返回的字段是 price，不是 unitPrice
+                        if (item.get("price") instanceof Number) {
+                            option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
+                        }
+                        materialList.add(option);
+                    }
+                    System.out.println("物资列表加载成功，共 " + materialList.size() + " 条数据");
+                } else {
+                    System.err.println("加载物资列表失败: code=" + code);
+                }
+            } else {
+                System.err.println("HTTP请求失败: " + response.statusCode());
+                System.err.println("响应内容: " + response.body());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        detailTable.refresh();
     }
 
-    private void calculateTotalAmount() {
-        BigDecimal total = BigDecimal.ZERO;
-        int totalQty = 0;
+    @FXML
+    protected void onAddItemButtonClick() {
+        OutOrderDetail newItem = new OutOrderDetail();
+        newItem.setGoodsName("");
+        newItem.setOutNum(1);
+        newItem.setUnitPrice(BigDecimal.ZERO);
+        detailList.add(newItem);
+        calculateTotal();
+    }
+
+    private void calculateTotal() {
+        BigDecimal totalAmount = BigDecimal.ZERO;
         for (OutOrderDetail detail : detailList) {
-            if (detail.getTotalPrice() != null) {
-                total = total.add(detail.getTotalPrice());
-            }
-            if (detail.getOutNum() != null) {
-                totalQty += detail.getOutNum();
+            if (detail.getOutNum() != null && detail.getUnitPrice() != null) {
+                totalAmount = totalAmount.add(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getOutNum())));
             }
         }
-        outOrder.setTotalAmount(total);
-        outOrder.setTotalNum(totalQty);
-        totalAmountLabel.setText("总金额：" + total);
+        totalAmountLabel.setText("总金额：¥" + String.format("%.2f", totalAmount));
     }
 
     @FXML
     protected void onSubmitButtonClick() {
         if (detailList.isEmpty()) {
             MessageDialog.showDialog("请添加商品");
+            return;
+        }
+
+        String outType = outTypeComboBox.getValue();
+        if (outType == null || outType.isEmpty()) {
+            MessageDialog.showDialog("请选择出库类型");
             return;
         }
 
@@ -614,177 +657,91 @@ public class OutOrderEditDialog {
             }
         }
 
-        String outType = outTypeComboBox.getValue();
-        if (outType == null || outType.isEmpty()) {
-            MessageDialog.showDialog("请选择出库类型");
-            return;
-        }
-
         try {
             Map<String, Object> requestBody = new HashMap<>();
-            if (!isNew) {
-                requestBody.put("id", outOrder.getId());
-            }
             requestBody.put("outType", getOutTypeValue(outType));
-
-            // 确保备注不为空
-            String remark = remarkArea.getText();
+            
+            String remark = editingOutOrder != null ? editingOutOrder.getRemark() : "";
             if (remark == null || remark.trim().isEmpty()) {
                 remark = "无";
             }
             requestBody.put("remark", remark);
 
-            // 添加申请人ID（从登录信息中获取）
-            Integer applicantId = AppStore.getJwt().getId();
-            
-            // 如果 id 为 null，尝试从 loginId 获取
-            if (applicantId == null && AppStore.getJwt().getLoginId() != null) {
-                try {
-                    applicantId = Integer.parseInt(AppStore.getJwt().getLoginId());
-                } catch (NumberFormatException e) {
-                    System.err.println("从 loginId 解析用户ID失败: " + AppStore.getJwt().getLoginId());
+            BigDecimal totalAmount = BigDecimal.ZERO;
+            int totalNum = 0;
+            for (OutOrderDetail detail : detailList) {
+                if (detail.getOutNum() != null) {
+                    totalNum += detail.getOutNum();
+                    if (detail.getUnitPrice() != null) {
+                        totalAmount = totalAmount.add(detail.getUnitPrice().multiply(BigDecimal.valueOf(detail.getOutNum())));
+                    }
                 }
             }
-            
-            if (applicantId != null) {
-                requestBody.put("applicantId", applicantId);
-            }
+            requestBody.put("totalNum", totalNum);
+            requestBody.put("totalAmount", totalAmount);
 
-            // 添加申请人名称（从登录信息中获取）
-            String applicantName = AppStore.getJwt().getUsername();
-            
-            // 如果 username 为空，尝试使用其他方式获取
-            if (applicantName == null || applicantName.isEmpty()) {
-                // 尝试从 loginId 作为备用（虽然这不是用户名，但至少不是空）
-                applicantName = "用户" + applicantId;
-            }
-            
-            if (applicantName != null && !applicantName.isEmpty()) {
-                requestBody.put("applicantName", applicantName);
-            }
-            
-            // 添加调试日志
-            System.out.println("\n=== [创建出库单] 申请人信息 ===");
-            System.out.println("当前登录用户ID: " + applicantId);
-            System.out.println("当前登录用户名 (username): " + AppStore.getJwt().getUsername());
-            System.out.println("最终使用的申请人名称: " + applicantName);
-            System.out.println("设置到请求体中的 applicantId: " + requestBody.get("applicantId"));
-            System.out.println("设置到请求体中的 applicantName: " + requestBody.get("applicantName"));
-
-            requestBody.put("totalNum", outOrder.getTotalNum());
-            requestBody.put("totalAmount", outOrder.getTotalAmount());
+            Integer userId = AppStore.getJwt().getId();
+            String userName = AppStore.getJwt().getUsername();
+            if (userId != null) requestBody.put("applicantId", userId);
+            if (userName != null) requestBody.put("applicantName", userName);
 
             List<Map<String, Object>> items = new ArrayList<>();
             for (OutOrderDetail detail : detailList) {
-                if (detail.getGoodsId() == null) {
-                    MessageDialog.showDialog("请选择物资");
-                    return;
-                }
-                if (detail.getOutNum() == null || detail.getOutNum() <= 0) {
-                    MessageDialog.showDialog("出库数量必须大于0");
-                    return;
-                }
                 Map<String, Object> item = new HashMap<>();
                 item.put("materialId", detail.getGoodsId());
                 item.put("quantity", detail.getOutNum());
-                if (detail.getUnitPrice() != null) {
-                    item.put("unitPrice", detail.getUnitPrice());
-                }
+                if (detail.getUnitPrice() != null) item.put("unitPrice", detail.getUnitPrice());
+                if (detail.getId() != null) item.put("id", detail.getId());
                 items.add(item);
             }
             requestBody.put("items", items);
 
-            String url;
-            HttpRequest request;
-
-            if (isNew) {
-                // 新增：POST /api/stockOut/submitApply
-                url = "/api/stockOut/submitApply";
-                request = HttpRequest.newBuilder()
-                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
-                        .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                        .headers("Content-Type", "application/json")
-                        .headers("satoken", AppStore.getJwt().getToken())
-                        .build();
-            } else {
-                // 编辑：PUT /api/stockOut/update/{id}
-                url = "/api/stockOut/update/" + outOrder.getId();
-                request = HttpRequest.newBuilder()
-                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
-                        .method("PUT", HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
-                        .headers("Content-Type", "application/json")
-                        .headers("satoken", AppStore.getJwt().getToken())
-                        .build();
-            }
-
-            System.out.println("========================================");
-            System.out.println("=== 开始提交出库单 ===");
-            System.out.println("========================================");
-            System.out.println("请求方法: " + request.method());
-            System.out.println("URL: " + HttpRequestUtil.serverUrl + url);
+            String url = isNew ? "/api/stockOut/submitApply" : "/api/stockOut/update";
+            
+            // 打印详细的请求信息
+            System.out.println("\n=== [出库单" + (isNew ? "新增" : "编辑") + "] 提交数据 ===");
+            System.out.println("请求URL: " + HttpRequestUtil.serverUrl + url);
             System.out.println("Token: " + AppStore.getJwt().getToken());
             System.out.println("请求体: " + gson.toJson(requestBody));
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            System.out.println("响应状态码: " + response.statusCode());
-            System.out.println("响应内容: " + response.body());
-            System.out.println("========================================");
-
-            if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
-                if (c == 200 || c == 0) {
-                    MessageDialog.showDialog(isNew ? "提交成功" : "更新成功");
-                    dialog.close();
-                } else {
-                    MessageDialog.showDialog("失败：" + result.get("msg"));
-                }
-            } else {
-                System.err.println("HTTP请求失败：");
-                System.err.println("状态码: " + response.statusCode());
-                System.err.println("响应内容: " + response.body());
-                MessageDialog.showDialog("请求失败" + "\n请查看控制台获取详细信息");
-            }
-        } catch (Exception e) {
-            System.err.println("提交出库单异常！");
-            e.printStackTrace();
-            MessageDialog.showDialog("异常：" + e.getMessage());
-        }
-    }
-
-    private boolean checkStockAvailability() throws Exception {
-        for (OutOrderDetail detail : detailList) {
-            if (detail.getGoodsId() == null) continue;
-
-            // 查询物资当前库存
-            String url = HttpRequestUtil.serverUrl + "/api/material/getById/" + detail.getGoodsId();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
+                    .uri(URI.create(HttpRequestUtil.serverUrl + url))
+                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
+                    .headers("Content-Type", "application/json")
                     .headers("satoken", AppStore.getJwt().getToken())
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            System.out.println("响应状态码: " + response.statusCode());
+            System.out.println("响应内容: " + response.body());
 
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                int c = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
-                if (c == 200 || c == 0) {
-                    Map<String, Object> data = (Map<String, Object>) result.get("data");
-                    Integer currentStock = (Integer) data.getOrDefault("currentStock", 0);
-                    String materialName = (String) data.get("materialName");
-
-                    if (currentStock < detail.getOutNum()) {
-                        MessageDialog.showDialog("库存不足：\n物资：" + materialName +
-                                "\n当前库存：" + currentStock +
-                                "\n需要出库：" + detail.getOutNum());
-                        return false;
-                    }
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                if (code == 200 || code == 0) {
+                    MessageDialog.showDialog(isNew ? "提交成功" : "更新成功");
+                    this.close();
+                } else {
+                    String errorMsg = result.get("msg") != null ? result.get("msg").toString() : "未知错误";
+                    System.err.println("提交失败，错误信息: " + errorMsg);
+                    MessageDialog.showDialog("失败：" + errorMsg);
                 }
+            } else {
+                System.err.println("HTTP请求失败，状态码: " + response.statusCode());
+                System.err.println("响应内容: " + response.body());
+                MessageDialog.showDialog("请求失败！状态码: " + response.statusCode() + "\n响应: " + response.body());
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("提交异常: " + e.getMessage());
+            MessageDialog.showDialog("异常：" + e.getMessage());
         }
-        return true;
+    }
+
+    @FXML
+    protected void onCancelButtonClick() {
+        this.close();
     }
 
     private String getOutTypeName(Integer type) {

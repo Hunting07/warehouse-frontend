@@ -46,11 +46,11 @@
             <!-- 操作按钮栏 -->
             <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 12 24 12 24;">
                 <Button text="+ 新增出库单" onAction="#onAddButtonClick"
-                        style="-fx-background-color: linear-gradient(to right, #00b42a, #23c343); -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 24 9 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,180,42,0.3), 6, 0, 0, 2);" />
+                        style="-fx-background-color: linear-gradient(to right, #389e0d, #52c41a); -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 24 9 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(56,158,13,0.25), 6, 0, 0, 2);" />
                 <Button text="编辑" onAction="#onEditButtonClick"
-                        style="-fx-background-color: #1677ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
+                        style="-fx-background-color: #4096ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
                 <Button text="审批" onAction="#onApproveButtonClick"
-                        style="-fx-background-color: #ff7d00; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
+                        style="-fx-background-color: #ffa940; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
                 <Region HBox.hgrow="ALWAYS" />
                 <Button text="删除" onAction="#onDeleteButtonClick"
                         style="-fx-background-color: white; -fx-text-fill: #f53f3f; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-border-color: #f53f3f; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />

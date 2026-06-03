@@ -345,12 +345,17 @@ public class OutboundApplyController {
             if (detail.getUnitPrice() != null) {
                 item.put("unitPrice", detail.getUnitPrice());
             }
+            if (detail.getId() != null) {
+                item.put("id", detail.getId());
+            }
             items.add(item);
         }
         requestBody.put("items", items);
 
         try {
             System.out.println("\n=== [出库申请] 提交数据 ===");
+            System.out.println("请求URL: " + HttpRequestUtil.serverUrl + "/api/stockOut/submitApply");
+            System.out.println("Token: " + AppStore.getJwt().getToken());
             System.out.println("请求体: " + gson.toJson(requestBody));
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -373,13 +378,18 @@ public class OutboundApplyController {
                     remarkField.clear();
                     MessageDialog.showDialog("提交成功！");
                 } else {
-                    MessageDialog.showDialog("提交失败：" + result.get("msg"));
+                    String errorMsg = result.get("msg") != null ? result.get("msg").toString() : "未知错误";
+                    System.err.println("提交失败，错误信息: " + errorMsg);
+                    MessageDialog.showDialog("提交失败：" + errorMsg);
                 }
             } else {
-                MessageDialog.showDialog("提交失败！");
+                System.err.println("HTTP请求失败，状态码: " + response.statusCode());
+                System.err.println("响应内容: " + response.body());
+                MessageDialog.showDialog("请求失败！状态码: " + response.statusCode() + "\n响应: " + response.body());
             }
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("提交异常: " + e.getMessage());
             MessageDialog.showDialog("提交异常：" + e.getMessage());
         }
     }
