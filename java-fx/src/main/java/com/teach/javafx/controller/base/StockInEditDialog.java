@@ -167,6 +167,9 @@ public class StockInEditDialog extends Stage {
                 private final HBox container = new HBox(5, textField, selectBtn);
 
                 {
+                    // 设置容器垂直居中
+                    container.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    
                     textField.setEditable(true);
                     textField.setPromptText("输入物资名称");
 
@@ -181,7 +184,8 @@ public class StockInEditDialog extends Stage {
                     });
 
                     // 选择按钮点击事件
-                    selectBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
+                    selectBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 4 12; -fx-background-radius: 4;");
+                    selectBtn.setMinWidth(50);
                     selectBtn.setOnAction(e -> {
                         StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
                         if (item == null) {
@@ -417,8 +421,14 @@ public class StockInEditDialog extends Stage {
         // 操作列 - 只保留删除按钮
         actionColumn.setCellFactory(col -> new TableCell<StockInItem, Void>() {
             private final Button deleteBtn = new Button("删除");
+            private final HBox container = new HBox(deleteBtn);
+            
             {
-                deleteBtn.setStyle("-fx-background-color: #ff7875; -fx-text-fill: white; -fx-font-size: 11px; -fx-cursor: hand;");
+                // 设置容器居中对齐
+                container.setAlignment(javafx.geometry.Pos.CENTER);
+                container.setStyle("-fx-padding: 5;");
+                
+                deleteBtn.setStyle("-fx-background-color: #e87070; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 6 15; -fx-background-radius: 4;");
                 deleteBtn.setOnAction(e -> {
                     StockInItem item = getTableView().getItems().get(getIndex());
                     itemList.remove(item);
@@ -429,7 +439,8 @@ public class StockInEditDialog extends Stage {
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                setGraphic(empty ? null : deleteBtn);
+                setGraphic(empty ? null : container);
+                setText(null);
             }
         });
 
