@@ -690,7 +690,7 @@ public class OutOrderEditDialog extends Stage {
     private void loadMaterialListSync() {
         try {
             System.out.println("开始同步加载物资列表...");
-            String url = HttpRequestUtil.serverUrl + "/api/material/list";
+            String url = HttpRequestUtil.serverUrl + "/api/material/available";
             System.out.println("请求URL: " + url);
             
             // 使用 POST 方法，发送空的 JSON 对象（与入库单保持一致）
@@ -725,17 +725,6 @@ public class OutOrderEditDialog extends Stage {
                         }
                         
                         for (Map<String, Object> item : data) {
-                            // 检查物资状态，只添加启用的物资
-                            Object statusObj = item.get("status");
-                            if (statusObj != null) {
-                                // 假设status为1表示启用，0或其他值表示停用
-                                int status = ((Number) statusObj).intValue();
-                                if (status != 1) {
-                                    System.out.println("跳过已停用的物资: " + item.get("name") + ", status=" + status);
-                                    continue;
-                                }
-                            }
-                            
                             OptionItem option = new OptionItem();
                             option.setId(((Number) item.get("id")).intValue());
                             
@@ -748,12 +737,8 @@ public class OutOrderEditDialog extends Stage {
                                 option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
                             }
                             
-                            // 设置状态字段（使用上面已经定义的statusObj）
-                            if (statusObj != null) {
-                                option.setStatus(((Number) statusObj).intValue());
-                            } else {
-                                option.setStatus(1); // 默认为启用状态
-                            }
+                            // 设置状态字段（available接口返回的都是启用的）
+                            option.setStatus(1);
                             
                             materialList.add(option);
                         }

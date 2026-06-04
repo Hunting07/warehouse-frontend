@@ -121,9 +121,16 @@ public class OutOrderApproveDialog extends Stage {
         });
 
         quantityColumn.setCellValueFactory(param -> {
+            // 尝试多种可能的字段名
             Object quantity = param.getValue().get("outNum");
             if (quantity == null) {
                 quantity = param.getValue().get("quantity");
+            }
+            if (quantity == null) {
+                quantity = param.getValue().get("outQuantity");
+            }
+            if (quantity == null) {
+                quantity = param.getValue().get("num");
             }
             if (quantity instanceof Number) {
                 return new SimpleObjectProperty<>(((Number) quantity).intValue());
@@ -216,6 +223,13 @@ public class OutOrderApproveDialog extends Stage {
                             
                             // 打印第一条明细数据用于调试
                             System.out.println("第一条明细数据: " + items.get(0));
+                            
+                            // 特别检查数量字段
+                            Map<String, Object> firstItem = items.get(0);
+                            System.out.println("  - outNum: " + firstItem.get("outNum"));
+                            System.out.println("  - quantity: " + firstItem.get("quantity"));
+                            System.out.println("  - outQuantity: " + firstItem.get("outQuantity"));
+                            System.out.println("  - num: " + firstItem.get("num"));
 
                             javafx.application.Platform.runLater(() -> {
                                 detailList.clear();

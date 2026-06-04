@@ -548,50 +548,11 @@ public class MaterialController extends ToolController {
                                     }
                                 }
 
-                                String categoryName = (String) material.get("categoryName");
-
-                                if (categoryName == null || categoryName.isEmpty()) {
-                                    // 无分类物资：根据自身状态决定
-                                    if ("启用".equals(materialStatus)) {
-                                        matchesStatusFilter = (materialStatusCode == 1);
-                                    } else {
-                                        matchesStatusFilter = (materialStatusCode == 0);
-                                    }
+                                // 物资管理页面：只根据物资本身的状态过滤，不考虑分类状态
+                                if ("启用".equals(materialStatus)) {
+                                    matchesStatusFilter = (materialStatusCode == 1);
                                 } else {
-                                    // 有分类物资：查找分类状态
-                                    int categoryStatusCode = -1;
-                                    boolean foundCategory = false;
-
-                                    if (categoryListCache != null) {
-                                        for (Map<String, Object> cat : categoryListCache) {
-                                            if (categoryName.equals(cat.get("name"))) {
-                                                Object catStatusObj = cat.get("status");
-                                                if (catStatusObj instanceof Number) {
-                                                    categoryStatusCode = ((Number) catStatusObj).intValue();
-                                                } else {
-                                                    String catStatusStr = catStatusObj.toString();
-                                                    categoryStatusCode = ("1".equals(catStatusStr) || "启用".equals(catStatusStr)) ? 1 : 0;
-                                                }
-                                                foundCategory = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    // 如果缓存中没找到，默认为停用状态
-                                    if (!foundCategory) {
-                                        categoryStatusCode = 0;
-                                    }
-
-                                    // 有分类物资：只有分类和自身状态都为启用时才显示在"启用"结果
-                                    // 其他情况一律显示在"停用"结果
-                                    if ("启用".equals(materialStatus)) {
-                                        matchesStatusFilter = (materialStatusCode == 1 && categoryStatusCode == 1);
-                                    } else {
-                                        // 停用筛选：只要不是"分类和自身都为启用"的情况
-                                        matchesStatusFilter = !(materialStatusCode == 1 && categoryStatusCode == 1);
-                                    }
-
+                                    matchesStatusFilter = (materialStatusCode == 0);
                                 }
                             }
 
