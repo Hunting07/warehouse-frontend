@@ -42,8 +42,6 @@ public class EmployeeViewController {
     private Label totalEmployeesLabel;
     @FXML
     private Label activeEmployeesLabel;
-    @FXML
-    private Label pendingEmployeesLabel;
 
     private final ObservableList<EmployeeInfo> employeeList = FXCollections.observableArrayList();
     private final HttpClient httpClient = HttpClient.newHttpClient();
@@ -80,7 +78,6 @@ public class EmployeeViewController {
 
                 int totalCount = 0;
                 int activeCount = 0;
-                int pendingCount = 0;
 
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
@@ -118,8 +115,6 @@ public class EmployeeViewController {
 
                                 if ("active".equals(status) || "approved".equals(status)) {
                                     activeCount++;
-                                } else if ("pending".equals(status)) {
-                                    pendingCount++;
                                 }
 
                                 javafx.application.Platform.runLater(() -> employeeList.add(info));
@@ -134,12 +129,14 @@ public class EmployeeViewController {
 
                 int finalTotalCount = totalCount;
                 int finalActiveCount = activeCount;
-                int finalPendingCount = pendingCount;
 
                 javafx.application.Platform.runLater(() -> {
-                    totalEmployeesLabel.setText(String.valueOf(finalTotalCount));
-                    activeEmployeesLabel.setText(String.valueOf(finalActiveCount));
-                    pendingEmployeesLabel.setText(String.valueOf(finalPendingCount));
+                    if (totalEmployeesLabel != null) {
+                        totalEmployeesLabel.setText(String.valueOf(finalTotalCount));
+                    }
+                    if (activeEmployeesLabel != null) {
+                        activeEmployeesLabel.setText(String.valueOf(finalActiveCount));
+                    }
                 });
 
             } catch (Exception e) {

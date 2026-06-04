@@ -51,8 +51,8 @@
                 <HBox GridPane.columnIndex="1" GridPane.rowIndex="1" spacing="5">
                     <PasswordField fx:id="passwordField" HBox.hgrow="ALWAYS"
                                    promptText="请输入密码" styleClass="password-field"/>
-                    <Button fx:id="passwordToggleBtn" text="👁" onAction="#togglePasswordVisibility"
-                            styleClass="secondary" prefWidth="40"/>
+                    <Button fx:id="passwordToggleBtn" text="" onAction="#togglePasswordVisibility"
+                            styleClass="password-toggle-btn"/>
                 </HBox>
             </GridPane>
 

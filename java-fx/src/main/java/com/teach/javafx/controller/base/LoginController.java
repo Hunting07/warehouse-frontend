@@ -111,7 +111,7 @@ public class LoginController {
             parentHBox.getChildren().remove(passwordInputControl);
             parentHBox.getChildren().add(index, newPwdField);
             passwordInputControl = newPwdField;
-            passwordToggleBtn.setText("");
+            passwordToggleBtn.setText("🔒");
         }
     }
 

@@ -59,13 +59,30 @@ public class AdminViewController {
         colAdminStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colAdminTime.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
 
+        addHardcodedAdmin();
         adminTable.setItems(adminList);
+
         loadUserList();
+    }
+
+    private void addHardcodedAdmin() {
+        AdminInfo admin = new AdminInfo();
+        admin.setRowNum(adminList.size() + 1);
+        admin.setEmployeeNo("202610001");
+        admin.setAccount("admin");
+        admin.setName("系统管理员");
+        admin.setPhone("");
+        admin.setRole("admin");
+        admin.setStatus("active");
+        admin.setApplyTime("2024-01-01 00:00:00");
+
+        adminList.add(admin);
     }
 
     @FXML
     public void loadUserList() {
         adminList.clear();
+        addHardcodedAdmin();
 
         new Thread(() -> {
             try {
@@ -90,7 +107,7 @@ public class AdminViewController {
                         if (dataObj instanceof List) {
                             List<Map<String, Object>> data = (List<Map<String, Object>>) dataObj;
 
-                            int rowNum = 1;
+                            int rowNum = adminList.size() + 1;
                             for (int i = 0; i < data.size(); i++) {
                                 Map<String, Object> item = data.get(i);
                                 String status = (String) item.get("status");
@@ -139,7 +156,7 @@ public class AdminViewController {
                 int finalTodayAddedCount = todayAddedCount;
 
                 javafx.application.Platform.runLater(() -> {
-                    totalAdminsLabel.setText(String.valueOf(finalTotalCount));
+                    totalAdminsLabel.setText(String.valueOf(finalTotalCount + 1));
                     todayAddedLabel.setText(String.valueOf(finalTodayAddedCount));
                 });
 

@@ -93,7 +93,11 @@ public class ProfileController {
 
                     String username = (String) data.get("username");
                     String realName = (String) data.get("realName");
-                    String employeeId = (String) data.get("employeeId");
+
+                    String employeeId = (String) data.get("employeeNo");
+                    if (employeeId == null || employeeId.isEmpty()) {
+                        employeeId = (String) data.get("employeeId");
+                    }
 
                     String name = (realName == null || realName.isEmpty()) ? username : realName;
 

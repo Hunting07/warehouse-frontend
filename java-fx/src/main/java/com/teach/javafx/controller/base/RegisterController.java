@@ -66,6 +66,11 @@ public class RegisterController {
         boolean isAdmin = adminRadio.isSelected();
         String url = isAdmin ? "/auth/register/admin" : "/auth/register/staff";
 
+        System.out.println("=== [注册] 请求信息 ===");
+        System.out.println("注册类型: " + (isAdmin ? "管理员" : "员工"));
+        System.out.println("请求URL: " + HttpRequestUtil.serverUrl + url);
+        System.out.println("用户名: " + username);
+
         Map<String, String> requestBody = new HashMap<>();
         requestBody.put("username", username);
         requestBody.put("password", password);
@@ -77,29 +82,48 @@ public class RegisterController {
                     .headers("Content-Type", "application/json")
                     .build();
 
+            System.out.println("请求体: " + gson.toJson(requestBody));
+
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
+            System.out.println("响应状态码: " + response.statusCode());
+            System.out.println("响应内容: " + response.body());
+
             if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                Map<String, Object> result = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>() {
+                }.getType());
 
                 if (result.get("code").equals(200.0)) {
                     String msg = isAdmin ? "注册成功！请等待管理员审批" : "注册成功！请登录";
                     MessageDialog.showDialog(msg);
                     handleBack();
                 } else {
-                    MessageDialog.showDialog("注册失败：" + result.get("msg"));
+                    String errorMsg = result.get("msg") != null ? result.get("msg").toString() : "未知错误";
+                    System.err.println("注册失败: " + errorMsg);
+                    MessageDialog.showDialog("注册失败：" + errorMsg);
                 }
             } else {
-                MessageDialog.showDialog("请求失败");
+                String errorMsg = "HTTP请求失败，状态码: " + response.statusCode();
+                System.err.println(errorMsg);
+                System.err.println("响应内容: " + response.body());
+
+                try {
+                    Map<String, Object> errorResult = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>() {
+                    }.getType());
+                    String msg = errorResult.get("msg") != null ? errorResult.get("msg").toString() : "服务器错误";
+                    MessageDialog.showDialog("注册失败：" + msg);
+                } catch (Exception e) {
+                    MessageDialog.showDialog("注册失败：服务器响应异常");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
+            System.err.println("注册异常: " + e.getMessage());
             MessageDialog.showDialog("注册异常：" + e.getMessage());
         }
     }
-
-    @FXML
-    protected void handleBack() {
+        @FXML
+        protected void handleBack() {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), -1, -1);
