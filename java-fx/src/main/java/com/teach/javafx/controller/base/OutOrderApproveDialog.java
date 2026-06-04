@@ -101,8 +101,16 @@ public class OutOrderApproveDialog extends Stage {
         // 初始化表格
         detailTableView.setItems(detailList);
 
-        materialColumn.setCellValueFactory(param -> new SimpleStringProperty(
-                (String) param.getValue().getOrDefault("materialName", "未知")));
+        materialColumn.setCellValueFactory(param -> {
+            String materialName = (String) param.getValue().get("goodsName");
+            if (materialName == null || materialName.isEmpty()) {
+                materialName = (String) param.getValue().get("materialName");
+            }
+            if (materialName == null || materialName.isEmpty()) {
+                materialName = "未知";
+            }
+            return new SimpleStringProperty(materialName);
+        });
 
         unitPriceColumn.setCellValueFactory(param -> {
             Object price = param.getValue().get("unitPrice");
@@ -113,7 +121,10 @@ public class OutOrderApproveDialog extends Stage {
         });
 
         quantityColumn.setCellValueFactory(param -> {
-            Object quantity = param.getValue().get("outQuantity");
+            Object quantity = param.getValue().get("outNum");
+            if (quantity == null) {
+                quantity = param.getValue().get("quantity");
+            }
             if (quantity instanceof Number) {
                 return new SimpleObjectProperty<>(((Number) quantity).intValue());
             }
@@ -124,7 +135,10 @@ public class OutOrderApproveDialog extends Stage {
             Object price = param.getValue().get("unitPrice");
             BigDecimal unitPrice = price instanceof Number ? BigDecimal.valueOf(((Number) price).doubleValue()) : BigDecimal.ZERO;
 
-            Object quantity = param.getValue().get("outQuantity");
+            Object quantity = param.getValue().get("outNum");
+            if (quantity == null) {
+                quantity = param.getValue().get("quantity");
+            }
             Integer qty = quantity instanceof Number ? ((Number) quantity).intValue() : 0;
 
             return new SimpleObjectProperty<>(unitPrice.multiply(BigDecimal.valueOf(qty)));
@@ -137,56 +151,98 @@ public class OutOrderApproveDialog extends Stage {
                 System.out.println("\n=== [审批对话框] 开始加载明细 ===");
                 System.out.println("出库单ID: " + outOrder.getId());
 
-                String url = HttpRequestUtil.serverUrl + "/api/stockOut/getDetail/" + outOrder.getId();
-                System.out.println("请求URL: " + url);
+                // 尝试多种可能的路径
+                String[] possibleUrls = {
+                    HttpRequestUtil.serverUrl + "/api/stockOut/getDetail/" + outOrder.getId(),
+                    HttpRequestUtil.serverUrl + "/api/stockOut/detail/" + outOrder.getId(),
+                    HttpRequestUtil.serverUrl + "/stockOut/detail/" + outOrder.getId(),
+                    HttpRequestUtil.serverUrl + "/api/outOrder/detail/" + outOrder.getId()
+                };
+                
+                String url = null;
+                HttpResponse<String> response = null;
+                
+                // 尝试每个可能的URL
+                for (String testUrl : possibleUrls) {
+                    try {
+                        System.out.println("尝试URL: " + testUrl);
+                        
+                        HttpRequest request = HttpRequest.newBuilder()
+                                .uri(URI.create(testUrl))
+                                .GET()
+                                .headers("satoken", AppStore.getJwt().getToken())
+                                .build();
 
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
-                        .GET()
-                        .headers("satoken", AppStore.getJwt().getToken())
-                        .build();
+                        response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                        
+                        System.out.println("HTTP状态码: " + response.statusCode());
+                        
+                        if (response.statusCode() == 200) {
+                            url = testUrl;
+                            System.out.println("✓ 找到正确的URL: " + url);
+                            break;
+                        } else {
+                            System.out.println("✗ 此URL不可用，响应: " + response.body());
+                        }
+                    } catch (Exception e) {
+                        System.out.println("✗ 请求失败: " + e.getMessage());
+                    }
+                }
+                
+                if (url == null || response == null || response.statusCode() != 200) {
+                    System.err.println("\n所有URL都失败了！");
+                    javafx.application.Platform.runLater(() -> {
+                        MessageDialog.showDialog("无法加载出库单明细，请检查后端接口");
+                    });
+                    return;
+                }
 
-                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println("响应状态码: " + response.statusCode());
                 System.out.println("响应内容: " + response.body());
 
-                if (response.statusCode() == 200) {
-                    Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                    int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
 
-                    if (code == 200 || code == 0) {
+                if (code == 200 || code == 0) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> data = (Map<String, Object>) result.get("data");
+
+                    if (data != null) {
                         @SuppressWarnings("unchecked")
-                        Map<String, Object> data = (Map<String, Object>) result.get("data");
+                        List<Map<String, Object>> items = (List<Map<String, Object>>) data.get("items");
 
-                        if (data != null) {
-                            @SuppressWarnings("unchecked")
-                            List<Map<String, Object>> items = (List<Map<String, Object>>) data.get("items");
+                        if (items != null && !items.isEmpty()) {
+                            System.out.println("明细数量: " + items.size());
+                            System.out.println("明细字段: " + items.get(0).keySet());
+                            
+                            // 打印第一条明细数据用于调试
+                            System.out.println("第一条明细数据: " + items.get(0));
 
-                            if (items != null && !items.isEmpty()) {
-                                System.out.println("明细数量: " + items.size());
-                                System.out.println("明细字段: " + items.get(0).keySet());
-
-                                javafx.application.Platform.runLater(() -> {
-                                    detailList.clear();
-                                    detailList.addAll(items);
-                                    System.out.println("✅ 明细加载成功");
-                                });
-                            } else {
-                                System.out.println("⚠️ 没有明细数据");
-                            }
+                            javafx.application.Platform.runLater(() -> {
+                                detailList.clear();
+                                detailList.addAll(items);
+                                System.out.println("✅ 明细加载成功");
+                            });
                         } else {
-                            System.out.println("❌ data 为 null");
+                            System.out.println("️ 没有明细数据");
+                            javafx.application.Platform.runLater(() -> {
+                                MessageDialog.showDialog("该出库单没有明细数据");
+                            });
                         }
                     } else {
-                        System.err.println("❌ 业务错误: " + result.get("msg"));
+                        System.out.println("❌ data 为 null");
                     }
                 } else {
-                    System.err.println("❌ HTTP错误: " + response.statusCode());
+                    System.err.println("❌ 业务错误: " + result.get("msg"));
+                    javafx.application.Platform.runLater(() -> {
+                        MessageDialog.showDialog("加载明细失败：" + result.get("msg"));
+                    });
                 }
             } catch (Exception e) {
                 System.err.println("❌ 加载明细数据失败: " + e.getMessage());
                 e.printStackTrace();
+                javafx.application.Platform.runLater(() -> {
+                    MessageDialog.showDialog("加载明细异常：" + e.getMessage());
+                });
             }
         }).start();
     }
@@ -254,13 +310,6 @@ public class OutOrderApproveDialog extends Stage {
                     javafx.application.Platform.runLater(() -> {
                         if (code == 200 || code == 0) {
                             MessageDialog.showDialog(approved ? "批准成功" : "驳回成功");
-                            // 刷新列表
-                            if (getOwner() != null && getOwner().getScene() != null) {
-                                Object controller = getOwner().getScene().getUserData();
-                                if (controller instanceof OutOrderListController) {
-                                    ((OutOrderListController) controller).loadOutOrderList();
-                                }
-                            }
                         } else {
                             String errorMsg = result.get("msg") != null ? result.get("msg").toString() : "未知错误";
                             System.err.println("审批失败，错误信息: " + errorMsg);

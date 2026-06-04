@@ -33,7 +33,7 @@ public class MessageDialog {
         Stage stage;
         try {
             fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/message-dialog.fxml"));
-            scene = new Scene(fxmlLoader.load(), 300, 260);
+            scene = new Scene(fxmlLoader.load(), 380, 170);
             stage = new Stage();
             stage.initOwner(MainApplication.getMainStage());
             stage.setAlwaysOnTop(true);

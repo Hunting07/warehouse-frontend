@@ -295,7 +295,7 @@ public class OutOrderEditDialog extends Stage {
                 
                 {
                     textField.setPromptText("单价");
-                    // 统一输入框样式
+                    // 可编辑状态的样式
                     textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-prompt-text-fill: #bdc3c7; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
                     
                     textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
@@ -355,18 +355,20 @@ public class OutOrderEditDialog extends Stage {
                         setGraphic(null);
                         setText(null);
                     } else {
-                        // 根据出库类型设置编辑状态
+                        // 根据出库类型设置编辑状态和样式
                         String currentOutType = outTypeComboBox.getValue();
                         boolean isSales = "销售出库".equals(currentOutType);
                         
                         if (isSales) {
-                            // 销售出库：单价可编辑
+                            // 销售出库：单价可编辑，白色背景
                             textField.setEditable(true);
                             textField.setFocusTraversable(true);
+                            textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-prompt-text-fill: #bdc3c7; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
                         } else {
-                            // 领料、报损、其他出库：单价只读
+                            // 领料、报损、其他出库：单价只读，灰色背景
                             textField.setEditable(false);
                             textField.setFocusTraversable(false);
+                            textField.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #999999; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6;");
                         }
                         
                         if (price != null && price.compareTo(BigDecimal.ZERO) >= 0) {
@@ -397,7 +399,7 @@ public class OutOrderEditDialog extends Stage {
             {
                 textField.setEditable(false);
                 textField.setFocusTraversable(false);
-                // 样式与单价输入框完全一致（包括边框颜色#e0e6ed和粗细1.5）
+                // 默认样式（销售出库时可编辑）
                 textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
             }
             
@@ -409,19 +411,21 @@ public class OutOrderEditDialog extends Stage {
                     setGraphic(null);
                     setText(null);
                 } else {
-                    // 根据出库类型设置金额显示
+                    // 根据出库类型设置金额显示和样式
                     String currentOutType = outTypeComboBox.getValue();
                     boolean isSales = "销售出库".equals(currentOutType);
                     
                     if (isSales) {
-                        // 销售出库：金额自动计算显示
+                        // 销售出库：金额自动计算显示，白色背景
+                        textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
                         if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
                             textField.setText(String.format("%.2f", amount));
                         } else {
                             textField.setText("0.00");
                         }
                     } else {
-                        // 领料、报损、其他出库：金额固定为0
+                        // 领料、报损、其他出库：金额固定为0，灰色背景
+                        textField.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #999999; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6;");
                         textField.setText("0");
                     }
                     setGraphic(textField);
@@ -656,10 +660,22 @@ public class OutOrderEditDialog extends Stage {
                 if (((Number) mat.get("id")).intValue() == selectedMaterial.getId()) {
                     detail.setGoodsSpec((String) mat.getOrDefault("spec", "默认规格"));
                     detail.setUnit((String) mat.getOrDefault("unit", "件"));
-                    Object priceObj = mat.get("price");
-                    if (priceObj instanceof Number) {
-                        detail.setUnitPrice(BigDecimal.valueOf(((Number) priceObj).doubleValue()));
+                    
+                    // 根据当前出库类型决定是否设置单价
+                    String currentOutType = outTypeComboBox.getValue();
+                    boolean isSales = "销售出库".equals(currentOutType);
+                    
+                    if (isSales) {
+                        // 销售出库：设置物资的默认单价
+                        Object priceObj = mat.get("price");
+                        if (priceObj instanceof Number) {
+                            detail.setUnitPrice(BigDecimal.valueOf(((Number) priceObj).doubleValue()));
+                        }
+                    } else {
+                        // 领料、报损、其他出库：单价强制为0
+                        detail.setUnitPrice(BigDecimal.ZERO);
                     }
+                    
                     break;
                 }
             }

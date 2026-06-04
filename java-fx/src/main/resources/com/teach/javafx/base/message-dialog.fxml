@@ -7,21 +7,20 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.TextFlow?>
 
-<!-- 消息提示对话框FXML配置文件 对应页面交互控制类 com.teach.javafx.controller.base.MessageController -->
-<BorderPane style="-fx-background-color: white; -fx-background-radius: 8;" prefHeight="180.0" prefWidth="380.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.teach.javafx.controller.base.MessageController">
+<BorderPane style="-fx-background-color: white; -fx-background-radius: 8;" prefHeight="170.0" prefWidth="380.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.teach.javafx.controller.base.MessageController">
    <center>
-      <VBox alignment="CENTER" spacing="25" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
+      <VBox alignment="CENTER" spacing="0" style="-fx-background-color: white;" BorderPane.alignment="CENTER">
          <children>
-            <TextFlow fx:id="textFLow" prefWidth="320.0" textAlignment="CENTER">
+            <TextFlow fx:id="textFLow" prefWidth="340.0" textAlignment="CENTER" VBox.vgrow="ALWAYS">
                <VBox.margin>
-                  <Insets top="20"/>
+                  <Insets top="12" left="15" right="15" bottom="10"/>
                </VBox.margin>
             </TextFlow>
             <Button mnemonicParsing="false" text="确认" onAction="#okButtonClick"
-                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 8 40; -fx-background-radius: 6; -fx-cursor: hand;"
+                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 15px; -fx-font-weight: bold; -fx-padding: 10 0; -fx-pref-width: 140; -fx-pref-height: 44; -fx-background-radius: 8; -fx-cursor: hand;"
                     alignment="CENTER">
                <VBox.margin>
-                  <Insets top="10" bottom="20"/>
+                  <Insets top="12" bottom="15"/>
                </VBox.margin>
             </Button>
          </children>

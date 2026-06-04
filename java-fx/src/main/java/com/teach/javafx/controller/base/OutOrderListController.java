@@ -622,6 +622,19 @@ public class OutOrderListController extends ToolController {
         OutOrderApproveDialog dialog = OutOrderApproveDialog.createDialog(outOrder);
         if (dialog != null) {
             dialog.showAndWait();
+            
+            // 对话框关闭后，延迟刷新列表以确保数据已更新
+            new Thread(() -> {
+                try {
+                    Thread.sleep(300);
+                    javafx.application.Platform.runLater(() -> {
+                        System.out.println("=== 审批后刷新出库列表 ===");
+                        loadOutOrderList();
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }).start();
         }
     }
 
