@@ -240,22 +240,38 @@ public class OutOrderListController extends ToolController {
                             List<OutOrder> list = new ArrayList<>();
                             for (Map<String, Object> map : dataList) {
                                 OutOrder order = new OutOrder();
-                                order.setId(((Number) map.get("id")).intValue());
+                                
+                                if (map.get("id") != null) {
+                                    order.setId(((Number) map.get("id")).intValue());
+                                }
+                                
                                 order.setOrderNo((String) map.get("orderNo"));
-                                order.setOutType(((Number) map.get("outType")).intValue());
                                 
-                                // 设置出库类型名称
-                                Integer outType = ((Number) map.get("outType")).intValue();
-                                String outTypeName = getOutTypeName(outType);
-                                order.setOutTypeName(outTypeName);
+                                if (map.get("outType") != null) {
+                                    order.setOutType(((Number) map.get("outType")).intValue());
+                                    
+                                    // 设置出库类型名称
+                                    Integer outType = ((Number) map.get("outType")).intValue();
+                                    String outTypeName = getOutTypeName(outType);
+                                    order.setOutTypeName(outTypeName);
+                                } else {
+                                    order.setOutType(1); // 默认为领料出库
+                                    order.setOutTypeName("领料出库");
+                                }
                                 
-                                order.setApplicantId(((Number) map.get("applicantId")).intValue());
+                                if (map.get("applicantId") != null) {
+                                    order.setApplicantId(((Number) map.get("applicantId")).intValue());
+                                }
                                 
                                 // 处理申请人名称，如果为空则显示申请人ID
                                 String applicantName = (String) map.get("applicantName");
                                 if (applicantName == null || applicantName.trim().isEmpty()) {
-                                    Integer applicantId = ((Number) map.get("applicantId")).intValue();
-                                    applicantName = "用户" + applicantId;
+                                    Integer applicantId = order.getApplicantId();
+                                    if (applicantId != null) {
+                                        applicantName = "用户" + applicantId;
+                                    } else {
+                                        applicantName = "未知";
+                                    }
                                 }
                                 order.setApplicantName(applicantName);
 
@@ -264,12 +280,17 @@ public class OutOrderListController extends ToolController {
                                     order.setApplyTime(java.time.LocalDateTime.parse(applyTimeStr));
                                 }
 
-                                order.setStatus(((Number) map.get("status")).intValue());
-                                
-                                // 设置状态名称
-                                Integer status = ((Number) map.get("status")).intValue();
-                                String statusName = getStatusName(status);
-                                order.setStatusName(statusName);
+                                if (map.get("status") != null) {
+                                    order.setStatus(((Number) map.get("status")).intValue());
+                                    
+                                    // 设置状态名称
+                                    Integer status = ((Number) map.get("status")).intValue();
+                                    String statusName = getStatusName(status);
+                                    order.setStatusName(statusName);
+                                } else {
+                                    order.setStatus(0); // 默认为待审批
+                                    order.setStatusName("待审批");
+                                }
                                 
                                 order.setAuditUserId(map.get("auditUserId") != null ? ((Number) map.get("auditUserId")).intValue() : null);
                                 
