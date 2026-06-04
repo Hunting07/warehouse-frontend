@@ -17,7 +17,7 @@
     <!-- 页面标题区域 -->
     <VBox spacing="12" style="-fx-background-color: white; -fx-padding: 20 28; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2);">
         <HBox alignment="CENTER_LEFT" spacing="14">
-            <Label text="物资分类管理" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;">
+            <Label text="物资分类" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;">
                 <font>
                     <Font name="Microsoft YaHei UI" size="20"/>
                 </font>
@@ -25,6 +25,7 @@
             <Region HBox.hgrow="ALWAYS"/>
             <Button text="刷新列表" onAction="#refreshData" style="-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 6; -fx-cursor: hand;"/>
         </HBox>
+        <Label fx:id="subtitleLabel" text="管理和维护物资分类信息" style="-fx-font-size: 12px; -fx-text-fill: #8c8c8c;" />
     </VBox>
 
     <!-- 搜索和操作区域 -->
@@ -38,7 +39,7 @@
         <ComboBox fx:id="statusFilter" prefWidth="100" style="-fx-font-size: 13px;"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Button text="搜索" onAction="#searchCategory" style="-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;"/>
-        <Button text="重置" onAction="#resetSearch" style="-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;"/>
+        <Button text="重置" onAction="#resetSearch" style="-fx-background-color: #5BA8A8; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;"/>
         <Button fx:id="addCategoryBtn" text="新增分类" onAction="#addCategory" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 6; -fx-cursor: hand;"/>
     </HBox>
 

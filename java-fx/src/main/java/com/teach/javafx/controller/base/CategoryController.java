@@ -54,7 +54,14 @@ public class CategoryController extends ToolController {
     @FXML
     private Button addCategoryBtn;
 
+    @FXML
+    private Label titleLabel;
+
+    @FXML
+    private Label subtitleLabel;
+
     private final Gson gson = new Gson();
+
     private boolean isAdmin = false;
 
     @FXML
@@ -64,6 +71,11 @@ public class CategoryController extends ToolController {
         setupFilters();
         applyRolePermissions();
         loadCategoryTree();
+
+        // 设置页面说明文字
+        if (subtitleLabel != null) {
+            subtitleLabel.setText("管理和维护物资分类信息");
+        }
     }
 
     private void checkUserRole() {
@@ -274,6 +286,8 @@ public class CategoryController extends ToolController {
     private CategoryNode mapToCategoryNode(Map<String, Object> map) {
         CategoryNode node = new CategoryNode();
 
+        logger.info("后端返回的分类数据: " + map);
+
         if (map.get("id") != null) {
             node.setId(((Number) map.get("id")).intValue());
         }
@@ -282,6 +296,9 @@ public class CategoryController extends ToolController {
         }
         if (map.get("code") != null) {
             node.setCode((String) map.get("code"));
+            logger.info("分类编码: " + node.getCode());
+        } else {
+            logger.warning("后端返回的数据中没有 code 字段！");
         }
         if (map.get("sort") != null) {
             node.setSort(((Number) map.get("sort")).intValue());
@@ -310,7 +327,6 @@ public class CategoryController extends ToolController {
 
         return node;
     }
-
 
     private void loadMaterialCountForCategory(CategoryNode categoryNode) {
         Platform.runLater(() -> {
@@ -515,7 +531,10 @@ public class CategoryController extends ToolController {
         });
 
         TableColumn<MaterialNode, Integer> idCol = new TableColumn<>("编号");
-        idCol.setCellValueFactory(param -> param.getValue().getIdProperty().asObject());
+        idCol.setCellValueFactory(param -> {
+            int index = materialTable.getItems().indexOf(param.getValue()) + 1;
+            return new SimpleIntegerProperty(index).asObject();
+        });
         idCol.setPrefWidth(60);
         idCol.setStyle("-fx-alignment: CENTER;");
 
@@ -781,13 +800,6 @@ public class CategoryController extends ToolController {
         nameField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
         nameField.setPrefHeight(40);
 
-        Label codeLabel = new Label("分类编码:");
-        codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
-        TextField codeField = new TextField(node != null ? node.getCode() : "");
-        codeField.setPromptText("请输入分类编码");
-        codeField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
-        codeField.setPrefHeight(40);
-
         Label statusLabel = new Label("状态:");
         statusLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
         ComboBox<String> statusCombo = new ComboBox<>();
@@ -798,10 +810,8 @@ public class CategoryController extends ToolController {
 
         grid.add(nameLabel, 0, 0);
         grid.add(nameField, 1, 0);
-        grid.add(codeLabel, 0, 1);
-        grid.add(codeField, 1, 1);
-        grid.add(statusLabel, 0, 2);
-        grid.add(statusCombo, 1, 2);
+        grid.add(statusLabel, 0, 1);
+        grid.add(statusCombo, 1, 1);
 
         HBox buttonBox = new HBox(15);
         buttonBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
@@ -828,7 +838,11 @@ public class CategoryController extends ToolController {
 
                 DataRequest request = new DataRequest();
                 request.put("name", name);
-                request.put("code", codeField.getText());
+
+                if (node == null) {
+                    String code = generateCategoryCode();
+                    request.put("code", code);
+                }
 
                 String statusValue = statusCombo.getValue();
                 int statusCode = "启用".equals(statusValue) ? 1 : 0;
@@ -862,14 +876,23 @@ public class CategoryController extends ToolController {
 
         mainContainer.getChildren().addAll(titleBar, grid, buttonBox);
 
-        Scene scene = new Scene(mainContainer, 500, 320);
+        Scene scene = new Scene(mainContainer, 500, 280);
         scene.setFill(javafx.scene.paint.Color.WHITE);
         dialog.setScene(scene);
         dialog.setMinWidth(500);
-        dialog.setMinHeight(320);
+        dialog.setMinHeight(280);
         dialog.showAndWait();
     }
+    private String generateCategoryCode() {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        int year = now.getYear();
+        int month = now.getMonthValue();
+        int day = now.getDayOfMonth();
+        int hour = now.getHour();
+        int minute = now.getMinute();
 
+        return String.format("WZ%04d%02d%02d%02d%02d", year, month, day, hour, minute);
+    }
     private void showInfo(String title, String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);

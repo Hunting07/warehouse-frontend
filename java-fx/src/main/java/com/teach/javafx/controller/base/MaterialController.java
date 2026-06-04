@@ -72,7 +72,14 @@ public class MaterialController extends ToolController {
     @FXML
     private Button addMaterialBtn;
 
+    @FXML
+    private Label titleLabel;
+
+    @FXML
+    private Label subtitleLabel;
+
     private final ObservableList<MaterialNode> dataList = FXCollections.observableArrayList();
+
     private final Gson gson = new Gson();
     private boolean isAdmin = false;
     private List<Map<String, Object>> categoryListCache;
@@ -84,8 +91,12 @@ public class MaterialController extends ToolController {
         setupTable();
         setupFilters();
         loadMaterials();
-    }
 
+        // 设置页面说明文字
+        if (subtitleLabel != null) {
+            subtitleLabel.setText("管理仓库物资信息");
+        }
+    }
 
     private void checkUserRole() {
         JwtResponse jwt = AppStore.getJwt();
