@@ -113,6 +113,18 @@ public class MaterialController extends ToolController {
             }
         }
     }
+
+    private String generateMaterialCode() {
+        LocalDateTime now = LocalDateTime.now();
+        int year = now.getYear();
+        int month = now.getMonthValue();
+        int day = now.getDayOfMonth();
+        int hour = now.getHour();
+        int minute = now.getMinute();
+
+        return String.format("AW%04d%02d%02d%02d%02d", year, month, day, hour, minute);
+    }
+
     private void setupTable() {
         if (isAdmin) {
             actionCol.setPrefWidth(200);
@@ -705,10 +717,10 @@ public class MaterialController extends ToolController {
 
         Label codeLabel = new Label("物资编码:");
         codeLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
-        TextField codeField = new TextField(material != null ? material.getCode() : "");
-        codeField.setPromptText("请输入物资编码");
-        codeField.setStyle("-fx-font-size: 14px; -fx-padding: 8 12 8 12; -fx-background-color: #F5F7FA; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 5;");
-        codeField.setPrefHeight(40);
+
+        final String initialCode = material != null ? material.getCode() : generateMaterialCode();
+        Label codeValueLabel = new Label(initialCode);
+        codeValueLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #000000; -fx-padding: 8 0 8 0;");
 
         Label categoryLabel = new Label("所属分类:");
         categoryLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
@@ -793,7 +805,7 @@ public class MaterialController extends ToolController {
         grid.add(nameLabel, 0, 0);
         grid.add(nameField, 1, 0);
         grid.add(codeLabel, 0, 1);
-        grid.add(codeField, 1, 1);
+        grid.add(codeValueLabel, 1, 1);
         grid.add(categoryLabel, 0, 2);
         grid.add(categoryCombo, 1, 2);
         grid.add(unitLabel, 0, 3);
@@ -832,7 +844,7 @@ public class MaterialController extends ToolController {
 
                 DataRequest request = new DataRequest();
                 request.put("name", name);
-                request.put("code", codeField.getText());
+                request.put("code", initialCode);
 
                 String selectedCategory = categoryCombo.getValue();
                 if (selectedCategory != null && !"请选择分类".equals(selectedCategory)) {
@@ -902,22 +914,46 @@ public class MaterialController extends ToolController {
 
     private void showInfo(String title, String message) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.setTitle(title);
 
-            alert.getDialogPane().setStyle("-fx-background-color: white;");
-            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+            VBox mainBox = new VBox(30);
+            mainBox.setPadding(new Insets(40, 40, 30, 40));
+            mainBox.setAlignment(javafx.geometry.Pos.CENTER);
+            mainBox.setStyle("-fx-background-color: white;");
 
-            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
-            alert.getButtonTypes().setAll(okBtn);
+            VBox contentBox = new VBox(15);
+            contentBox.setAlignment(javafx.geometry.Pos.CENTER);
 
-            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
-            button.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
-            button.setDefaultButton(true);
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a1a2e;");
 
-            alert.showAndWait();
+            Label messageLabel = new Label(message);
+            messageLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4a5568; -fx-wrap-text: true; -fx-alignment: center;");
+            messageLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+            messageLabel.setMaxWidth(400);
+
+            contentBox.getChildren().addAll(titleLabel, messageLabel);
+
+            HBox buttonBox = new HBox(20);
+            buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
+            buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+            Button okBtn = new Button("确定");
+            okBtn.setPrefWidth(120);
+            okBtn.setPrefHeight(45);
+            okBtn.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10;");
+            okBtn.setOnAction(e -> dialog.close());
+
+            buttonBox.getChildren().add(okBtn);
+
+            mainBox.getChildren().addAll(contentBox, buttonBox);
+
+            Scene scene = new Scene(mainBox, 500, 250);
+            scene.setFill(javafx.scene.paint.Color.WHITE);
+            dialog.setScene(scene);
+            dialog.showAndWait();
         });
     }
 

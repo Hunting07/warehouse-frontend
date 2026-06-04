@@ -852,24 +852,49 @@ public class CategoryController extends ToolController {
 
         return String.format("WZ%04d%02d%02d%02d%02d", year, month, day, hour, minute);
     }
+
     private void showInfo(String title, String message) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.setTitle(title);
 
-            alert.getDialogPane().setStyle("-fx-background-color: white;");
-            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+            VBox mainBox = new VBox(30);
+            mainBox.setPadding(new Insets(40, 40, 30, 40));
+            mainBox.setAlignment(javafx.geometry.Pos.CENTER);
+            mainBox.setStyle("-fx-background-color: white;");
 
-            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
-            alert.getButtonTypes().setAll(okBtn);
+            VBox contentBox = new VBox(15);
+            contentBox.setAlignment(javafx.geometry.Pos.CENTER);
 
-            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
-            button.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
-            button.setDefaultButton(true);
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a1a2e;");
 
-            alert.showAndWait();
+            Label messageLabel = new Label(message);
+            messageLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4a5568; -fx-wrap-text: true; -fx-alignment: center;");
+            messageLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+            messageLabel.setMaxWidth(400);
+
+            contentBox.getChildren().addAll(titleLabel, messageLabel);
+
+            HBox buttonBox = new HBox(20);
+            buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
+            buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+            Button okBtn = new Button("确定");
+            okBtn.setPrefWidth(120);
+            okBtn.setPrefHeight(45);
+            okBtn.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10;");
+            okBtn.setOnAction(e -> dialog.close());
+
+            buttonBox.getChildren().add(okBtn);
+
+            mainBox.getChildren().addAll(contentBox, buttonBox);
+
+            Scene scene = new Scene(mainBox, 500, 250);
+            scene.setFill(javafx.scene.paint.Color.WHITE);
+            dialog.setScene(scene);
+            dialog.showAndWait();
         });
     }
 
