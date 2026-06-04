@@ -638,31 +638,28 @@ public class StockInEditDialog extends Stage {
     @FXML
     protected void onSubmitButtonClick() {
         if (itemList.isEmpty()) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("警告");
-            alert.setHeaderText(null);
-            alert.setContentText("请至少添加一条明细");
-            alert.showAndWait();
+            SimpleMessageDialog.showWarning("请至少添加一条明细");
             return;
         }
+
+        // 判断是否为退货入库
+        boolean isReturn = "退货入库".equals(typeComboBox.getValue());
 
         // 验证所有物资
         for (StockInItem item : itemList) {
             if (item.getMaterialName() == null || item.getMaterialName().trim().isEmpty()) {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-                alert.setTitle("警告");
-                alert.setHeaderText(null);
-                alert.setContentText("请填写物资名称");
-                alert.showAndWait();
+                SimpleMessageDialog.showWarning("请填写物资名称");
+                return;
+            }
+            
+            // 只有退货入库才必须选择物资（有 materialId）
+            if (isReturn && item.getMaterialId() == null) {
+                SimpleMessageDialog.showWarning("退货入库必须从列表中选择物资，物资「" + item.getMaterialName() + "」未选择");
                 return;
             }
             
             if (item.getQuantity() == null || item.getQuantity() <= 0) {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-                alert.setTitle("警告");
-                alert.setHeaderText(null);
-                alert.setContentText("物资数量必须大于0");
-                alert.showAndWait();
+                SimpleMessageDialog.showWarning("物资「" + item.getMaterialName() + "」数量必须大于0");
                 return;
             }
         }
@@ -677,25 +674,23 @@ public class StockInEditDialog extends Stage {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("提交异常：" + e.getMessage());
-            alert.showAndWait();
+            SimpleMessageDialog.showError("提交异常：" + e.getMessage());
         }
     }
     
     /**
-     * 新增模式：为每个物资创建独立入库单
+     * 新增模式：为每个物资创建独立入库单，但共享同一个入库单号
      */
     private void createStockIns() {
         try {
             int successCount = 0;
             int failCount = 0;
             StringBuilder errorMsg = new StringBuilder();
+            String batchInCode = null;  // 批次入库单号
             
             // 遍历每个物资，创建独立的入库单
-            for (StockInItem item : itemList) {
+            for (int i = 0; i < itemList.size(); i++) {
+                StockInItem item = itemList.get(i);
                 try {
                     // 计算金额
                     BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
@@ -705,18 +700,30 @@ public class StockInEditDialog extends Stage {
                     Map<String, Object> requestBody = new HashMap<>();
                     requestBody.put("type", getTypeValue(typeComboBox.getValue()));
                     
+                    // 如果是第二个及以后的物资，使用第一个物资的入库单号
+                    if (batchInCode != null) {
+                        System.out.println("物资 " + (i + 1) + " 使用批次单号: " + batchInCode);
+                        // 尝试不同的字段名
+                        requestBody.put("inCode", batchInCode);
+                    }
+                    
                     List<Map<String, Object>> items = new ArrayList<>();
                     Map<String, Object> itemMap = new HashMap<>();
                     
                     // 如果选择了物资（有materialId），则提交materialId
                     if (item.getMaterialId() != null) {
                         itemMap.put("materialId", item.getMaterialId());
+                    } else {
+                        // 如果没有选择物资，materialId设为null
+                        itemMap.put("materialId", null);
                     }
                     
                     // 始终提交物资名称
                     itemMap.put("materialName", item.getMaterialName());
                     itemMap.put("quantity", item.getQuantity());
+                    // 关键修复：同时提交 price 和 unitPrice，确保兼容性
                     itemMap.put("price", price);
+                    itemMap.put("unitPrice", price);
                     itemMap.put("amount", amount);
                     
                     // 如果有其他字段，也一并提交
@@ -725,6 +732,9 @@ public class StockInEditDialog extends Stage {
                     }
                     if (item.getMaterialSpec() != null && !item.getMaterialSpec().isEmpty()) {
                         itemMap.put("materialSpec", item.getMaterialSpec());
+                    }
+                    if (item.getId() != null) {
+                        itemMap.put("id", item.getId());  // 明细项ID
                     }
                     
                     items.add(itemMap);
@@ -737,14 +747,33 @@ public class StockInEditDialog extends Stage {
                             .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                             .build();
                     
-                    System.out.println("创建入库单 " + (successCount + 1) + ": " + item.getMaterialName());
+                    System.out.println("========== 创建入库单 " + (i + 1) + " ==========");
+                    System.out.println("物资名称: " + item.getMaterialName());
+                    if (batchInCode != null) {
+                        System.out.println("批次单号: " + batchInCode);
+                    }
+                    System.out.println("请求数据: " + gson.toJson(requestBody));
+                    System.out.println("========================================");
                     
                     HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                    
+                    System.out.println("响应状态码: " + response.statusCode());
+                    System.out.println("响应内容: " + response.body());
                     
                     if (response.statusCode() == 200) {
                         Map<String, Object> result = gson.fromJson(response.body(), Map.class);
                         if (result.get("code").equals(200.0)) {
                             successCount++;
+                            
+                            // 如果是第一个成功的入库单，保存其入库单号
+                            if (batchInCode == null && result.get("data") != null) {
+                                Map<String, Object> data = (Map<String, Object>) result.get("data");
+                                if (data.get("inCode") != null) {
+                                    batchInCode = data.get("inCode").toString();
+                                    System.out.println("获取到批次入库单号: " + batchInCode);
+                                }
+                            }
+                            
                             System.out.println("入库单 " + (successCount) + " 创建成功");
                         } else {
                             failCount++;
@@ -757,6 +786,7 @@ public class StockInEditDialog extends Stage {
                         errorMsg.append("物资「").append(item.getMaterialName()).append("」HTTP错误: ")
                                 .append(response.statusCode()).append("\n");
                         System.err.println("HTTP错误: " + response.statusCode());
+                        System.err.println("错误详情: " + response.body());
                     }
                     
                     // 稍微延迟，避免请求过快
@@ -779,6 +809,10 @@ public class StockInEditDialog extends Stage {
             resultMsg.append("提交完成！\n");
             resultMsg.append("成功: ").append(successCount).append(" 个\n");
             resultMsg.append("失败: ").append(failCount).append(" 个");
+            
+            if (batchInCode != null) {
+                resultMsg.append("\n入库单号: ").append(batchInCode);
+            }
             
             if (errorMsg.length() > 0) {
                 resultMsg.append("\n\n失败详情:\n").append(errorMsg.toString());
@@ -811,7 +845,7 @@ public class StockInEditDialog extends Stage {
      */
     private void updateStockIn() {
         try {
-            // 编辑模式只处理一个物资（根据业务规则：一物一单）
+            // 检查是否有明细项
             if (itemList.isEmpty()) {
                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
                 alert.setTitle("警告");
@@ -820,66 +854,74 @@ public class StockInEditDialog extends Stage {
                 alert.showAndWait();
                 return;
             }
-            
-            StockInItem item = itemList.get(0);
-            
-            // 计算金额
-            BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
-            BigDecimal amount = price.multiply(BigDecimal.valueOf(item.getQuantity()));
-            
+
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("id", editingStockIn.getId());  // 入库单ID
             requestBody.put("type", getTypeValue(typeComboBox.getValue()));
-            
+
             List<Map<String, Object>> items = new ArrayList<>();
-            Map<String, Object> itemMap = new HashMap<>();
-            
-            // 如果选择了物资（有materialId），则提交materialId
-            if (item.getMaterialId() != null) {
-                itemMap.put("materialId", item.getMaterialId());
+
+            // 遍历所有物资明细项
+            for (StockInItem item : itemList) {
+                // 计算金额
+                BigDecimal price = item.getPrice() != null ? item.getPrice() : BigDecimal.ZERO;
+                BigDecimal amount = price.multiply(BigDecimal.valueOf(item.getQuantity()));
+
+                Map<String, Object> itemMap = new HashMap<>();
+
+                // 如果选择了物资（有materialId），则提交materialId
+                if (item.getMaterialId() != null) {
+                    itemMap.put("materialId", item.getMaterialId());
+                } else {
+                    itemMap.put("materialId", null);
+                }
+
+                // 始终提交物资名称
+                itemMap.put("materialName", item.getMaterialName());
+                itemMap.put("quantity", item.getQuantity());
+                // 关键修复：同时提交 price 和 unitPrice，确保兼容性
+                itemMap.put("price", price);
+                itemMap.put("unitPrice", price);
+                itemMap.put("amount", amount);
+
+                // 如果有其他字段，也一并提交
+                if (item.getMaterialCode() != null && !item.getMaterialCode().isEmpty()) {
+                    itemMap.put("materialCode", item.getMaterialCode());
+                }
+                if (item.getMaterialSpec() != null && !item.getMaterialSpec().isEmpty()) {
+                    itemMap.put("materialSpec", item.getMaterialSpec());
+                }
+                if (item.getId() != null) {
+                    itemMap.put("id", item.getId());  // 明细项ID
+                }
+
+                items.add(itemMap);
             }
-            
-            // 始终提交物资名称
-            itemMap.put("materialName", item.getMaterialName());
-            itemMap.put("quantity", item.getQuantity());
-            itemMap.put("price", price);
-            itemMap.put("amount", amount);
-            
-            // 如果有其他字段，也一并提交
-            if (item.getMaterialCode() != null && !item.getMaterialCode().isEmpty()) {
-                itemMap.put("materialCode", item.getMaterialCode());
-            }
-            if (item.getMaterialSpec() != null && !item.getMaterialSpec().isEmpty()) {
-                itemMap.put("materialSpec", item.getMaterialSpec());
-            }
-            if (item.getId() != null) {
-                itemMap.put("id", item.getId());  // 明细项ID
-            }
-            
-            items.add(itemMap);
+
             requestBody.put("items", items);
-            
+
             // 打印请求数据
             String requestJson = gson.toJson(requestBody);
             System.out.println("========== 更新入库单 ==========");
             System.out.println("入库单ID: " + editingStockIn.getId());
             System.out.println("入库单号: " + editingStockIn.getInCode());
+            System.out.println("明细项数量: " + items.size());
             System.out.println("请求数据: " + requestJson);
             System.out.println("===============================");
-            
+
             // 尝试多个可能的接口路径
             String[] possibleUrls = {
-                HttpRequestUtil.serverUrl + "/api/stock-in/update",
-                HttpRequestUtil.serverUrl + "/api/stock-in/edit",
-                HttpRequestUtil.serverUrl + "/stock-in/edit",
-                HttpRequestUtil.serverUrl + "/stock-in/save",
-                HttpRequestUtil.serverUrl + "/api/stock-in/save"
+                    HttpRequestUtil.serverUrl + "/api/stock-in/update",
+                    HttpRequestUtil.serverUrl + "/api/stock-in/edit",
+                    HttpRequestUtil.serverUrl + "/stock-in/edit",
+                    HttpRequestUtil.serverUrl + "/stock-in/save",
+                    HttpRequestUtil.serverUrl + "/api/stock-in/save"
             };
-            
+
             HttpResponse<String> response = null;
             String successUrl = null;
-            
+
             // 逐个尝试接口
             for (String url : possibleUrls) {
                 try {
@@ -889,12 +931,12 @@ public class StockInEditDialog extends Stage {
                             .POST(HttpRequest.BodyPublishers.ofString(requestJson))
                             .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                             .build();
-                    
+
                     response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                    
+
                     System.out.println("响应状态码: " + response.statusCode());
                     System.out.println("响应内容: " + response.body());
-                    
+
                     if (response.statusCode() == 200) {
                         successUrl = url;
                         break;  // 找到一个可用的接口就停止
@@ -903,46 +945,34 @@ public class StockInEditDialog extends Stage {
                     System.err.println("接口 " + url + " 调用失败: " + e.getMessage());
                 }
             }
-            
+
             // 如果所有接口都失败，使用删除+创建的方式
             if (response == null || response.statusCode() != 200) {
                 System.out.println("所有更新接口都不可用，使用删除+创建方式");
                 deleteAndRecreate(requestJson);
                 return;
             }
-            
+
             // 解析响应
             Map<String, Object> result = gson.fromJson(response.body(), Map.class);
             System.out.println("解析结果: " + result);
-            
+
             Object codeObj = result.get("code");
             int code = codeObj instanceof Number ? ((Number) codeObj).intValue() : -1;
-            
+
             if (code == 200 || code == 0) {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-                alert.setTitle("成功");
-                alert.setHeaderText(null);
-                alert.setContentText("入库单更新成功");
-                alert.showAndWait();
+                SimpleMessageDialog.showSuccess("入库单更新成功");
                 this.close();
             } else {
                 String msg = (String) result.get("msg");
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                alert.setTitle("错误");
-                alert.setHeaderText(null);
-                alert.setContentText("更新失败：" + (msg != null ? msg : "未知错误"));
-                alert.showAndWait();
+                SimpleMessageDialog.showError("更新失败：" + (msg != null ? msg : "未知错误"));
             }
         } catch (Exception e) {
             e.printStackTrace();
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("异常");
-            alert.setHeaderText("更新异常");
-            alert.setContentText("错误信息: " + e.getMessage());
-            alert.showAndWait();
+            SimpleMessageDialog.showError("更新异常：" + e.getMessage());
         }
     }
-    
+
     /**
      * 备用方案：删除原入库单，然后创建新的
      */
@@ -967,78 +997,39 @@ public class StockInEditDialog extends Stage {
             // 检查删除是否成功
             if (deleteResponse.statusCode() == 200) {
                 Map<String, Object> deleteResult = gson.fromJson(deleteResponse.body(), Map.class);
-                Object codeObj = deleteResult.get("code");
-                int code = codeObj instanceof Number ? ((Number) codeObj).intValue() : -1;
-                
-                if (code != 200 && code != 0) {
-                    String msg = (String) deleteResult.get("msg");
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                    alert.setTitle("删除失败");
-                    alert.setHeaderText(null);
-                    alert.setContentText("删除原入库单失败：" + (msg != null ? msg : "未知错误"));
-                    alert.showAndWait();
-                    return;
-                }
-            } else {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                alert.setTitle("删除失败");
-                alert.setHeaderText(null);
-                alert.setContentText("删除原入库单失败，HTTP错误: " + deleteResponse.statusCode());
-                alert.showAndWait();
-                return;
-            }
-            
-            System.out.println("删除成功，开始创建新入库单...");
-            
-            // 2. 创建新的入库单
-            String createUrl = HttpRequestUtil.serverUrl + "/stock-in/create";
-            System.out.println("创建URL: " + createUrl);
-            System.out.println("创建数据: " + requestJson);
-            
-            HttpRequest createRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(createUrl))
-                    .POST(HttpRequest.BodyPublishers.ofString(requestJson))
-                    .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
-                    .build();
-            
-            HttpResponse<String> createResponse = httpClient.send(createRequest, HttpResponse.BodyHandlers.ofString());
-            System.out.println("创建响应状态码: " + createResponse.statusCode());
-            System.out.println("创建响应内容: " + createResponse.body());
-            
-            if (createResponse.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(createResponse.body(), Map.class);
-                Object codeObj = result.get("code");
-                int code = codeObj instanceof Number ? ((Number) codeObj).intValue() : -1;
-                
-                if (code == 200 || code == 0) {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-                    alert.setTitle("成功");
-                    alert.setHeaderText(null);
-                    alert.setContentText("入库单更新成功");
-                    alert.showAndWait();
-                    this.close();
+                        
+                if (deleteResult.get("code").equals(200.0)) {
+                    System.out.println("删除成功，开始创建新入库单...");
+                            
+                    HttpRequest createRequest = HttpRequest.newBuilder()
+                            .uri(URI.create(HttpRequestUtil.serverUrl + "/stock-in/create"))
+                            .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                            .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
+                            .build();
+
+                    HttpResponse<String> createResponse = httpClient.send(createRequest, HttpResponse.BodyHandlers.ofString());
+                            
+                    if (createResponse.statusCode() == 200) {
+                        Map<String, Object> createResult = gson.fromJson(createResponse.body(), Map.class);
+                                
+                        if (createResult.get("code").equals(200.0)) {
+                            SimpleMessageDialog.showSuccess("入库单更新成功");
+                            this.close();
+                        } else {
+                            SimpleMessageDialog.showError("创建失败：" + createResult.get("msg"));
+                        }
+                    } else {
+                        SimpleMessageDialog.showError("创建失败，HTTP错误：" + createResponse.statusCode());
+                    }
                 } else {
-                    String msg = (String) result.get("msg");
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                    alert.setTitle("创建失败");
-                    alert.setHeaderText(null);
-                    alert.setContentText("创建新入库单失败：" + (msg != null ? msg : "未知错误"));
-                    alert.showAndWait();
+                    SimpleMessageDialog.showError("删除失败：" + deleteResult.get("msg"));
                 }
             } else {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                alert.setTitle("创建失败");
-                alert.setHeaderText(null);
-                alert.setContentText("创建新入库单失败，HTTP错误: " + createResponse.statusCode() + "\n响应: " + createResponse.body());
-                alert.showAndWait();
+                SimpleMessageDialog.showError("删除失败，HTTP错误：" + deleteResponse.statusCode());
             }
         } catch (Exception e) {
             e.printStackTrace();
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("异常");
-            alert.setHeaderText("更新异常");
-            alert.setContentText("错误信息: " + e.getMessage());
-            alert.showAndWait();
+            SimpleMessageDialog.showError("操作异常：" + e.getMessage());
         }
     }
 

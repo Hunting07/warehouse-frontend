@@ -192,9 +192,6 @@
 .tree-table-view .tree-table-cell {
     -fx-padding: 10 12 10 12;
     -fx-text-fill: -fx-text-primary;
-    -fx-border-color: #e8edf2;
-    -fx-border-width: 0 1 1 0;
-    -fx-border-radius: 0;
 }
 
 .table-row-cell:odd {
@@ -737,6 +734,39 @@
 .password-toggle-btn:pressed {
     -fx-background-color: #e8f0f8;
     -fx-effect: none;
+}
+
+/* ========================================
+   入库单表格单元格合并样式
+   ======================================== */
+
+/* 合并单元格的第一行 */
+.table-cell.merged-cell-first {
+    -fx-alignment: CENTER;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 12 8 12 8;
+    -fx-border-color: transparent;
+    -fx-background-color: white;
+}
+
+/* 合并单元格的后续行（隐藏） */
+.table-cell.merged-cell-hidden {
+    -fx-text-fill: transparent;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+    -fx-pref-height: 0;
+}
+
+/* 普通合并单元格（非第一行也非隐藏） */
+.table-cell.merged-cell {
+    -fx-alignment: CENTER;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 5;
+    -fx-border-color: #e8edf2;
+    -fx-border-width: 0 1 1 0;
 }
 
 

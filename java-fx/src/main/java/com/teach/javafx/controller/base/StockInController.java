@@ -9,8 +9,17 @@ import com.teach.javafx.GsonUtil;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -24,6 +33,21 @@ import java.util.List;
 import java.util.Map;
 
 public class StockInController extends ToolController {
+
+    @FXML
+    private Label titleLabel;
+    
+    @FXML
+    private Label subtitleLabel;
+    
+    @FXML
+    private Button editButton;
+    
+    @FXML
+    private Button approveButton;
+    
+    @FXML
+    private Button deleteButton;
 
     @FXML
     private TextField searchCodeField;
@@ -50,40 +74,22 @@ public class StockInController extends ToolController {
     private TableColumn<StockIn, String> materialNameColumn;
 
     @FXML
-    private TableColumn<StockIn, BigDecimal> priceColumn;
-
-    @FXML
-    private TableColumn<StockIn, Integer> quantityColumn;
-
-    @FXML
     private TableColumn<StockIn, BigDecimal> totalAmountColumn;
 
     @FXML
     private TableColumn<StockIn, String> statusColumn;
-
+    
     @FXML
     private TableColumn<StockIn, String> applyUserColumn;
-
+    
     @FXML
     private TableColumn<StockIn, LocalDateTime> createTimeColumn;
-
+    
     @FXML
     private TableColumn<StockIn, LocalDateTime> approveTimeColumn;
-
-    @FXML
-    private Button editButton;
-
-    @FXML
-    private Button deleteButton;
-
-    @FXML
-    private Button approveButton;
     
     @FXML
-    private Label titleLabel;
-    
-    @FXML
-    private Label subtitleLabel;
+    private TableColumn<StockIn, Void> actionColumn;
 
     private final ObservableList<StockIn> stockInList = FXCollections.observableArrayList();
     private final Gson gson = GsonUtil.getGson();
@@ -97,7 +103,6 @@ public class StockInController extends ToolController {
         String role = AppStore.getJwt().getRole();
         isAdmin = "admin".equals(role);
 
-        // 根据角色设置页面标题
         if (isAdmin) {
             titleLabel.setText("入库审批管理");
             subtitleLabel.setText("管理和审批所有入库单据");
@@ -110,19 +115,20 @@ public class StockInController extends ToolController {
             approveButton.setManaged(false);
         }
 
-        serialNumberColumn.setCellValueFactory(new PropertyValueFactory<>("serialNumber"));
+        // 序号列：倒序显示
+        serialNumberColumn.setCellValueFactory(data -> {
+            int index = stockInTable.getItems().indexOf(data.getValue());
+            int total = stockInTable.getItems().size();
+            return new javafx.beans.property.SimpleIntegerProperty(total - index).asObject();
+        });
+
         inCodeColumn.setCellValueFactory(new PropertyValueFactory<>("inCode"));
         typeColumn.setCellValueFactory(cellData -> {
             StockIn stockIn = cellData.getValue();
             String typeName = getTypeName(stockIn.getType());
             return new javafx.beans.property.SimpleStringProperty(typeName);
         });
-        
-        // 新添加的三个列
         materialNameColumn.setCellValueFactory(new PropertyValueFactory<>("materialName"));
-        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
-        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        
         totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         statusColumn.setCellValueFactory(cellData -> {
             StockIn stockIn = cellData.getValue();
@@ -133,6 +139,9 @@ public class StockInController extends ToolController {
         createTimeColumn.setCellValueFactory(new PropertyValueFactory<>("createTime"));
         approveTimeColumn.setCellValueFactory(new PropertyValueFactory<>("approveTime"));
 
+        // 设置操作列
+        setupActionColumn();
+
         stockInTable.setItems(stockInList);
 
         typeComboBox.getItems().addAll("全部", "采购入库", "退货入库", "其他入库");
@@ -142,6 +151,47 @@ public class StockInController extends ToolController {
         statusComboBox.setValue("全部");
 
         loadStockInList();
+    }
+
+    /**
+     * 设置操作列
+     */
+    private void setupActionColumn() {
+        actionColumn.setCellFactory(col -> new TableCell<StockIn, Void>() {
+            private final Button viewBtn = new Button("查看明细");
+
+            {
+                viewBtn.setStyle("-fx-background-color: #4096ff; -fx-text-fill: white; -fx-font-size: 12px; -fx-padding: 4 12; -fx-background-radius: 4; -fx-cursor: hand;");
+                viewBtn.setOnAction(event -> {
+                    StockIn stockIn = getTableRow().getItem();
+                    if (stockIn != null) {
+                        onViewButtonClick(stockIn);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                
+                if (empty || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                    return;
+                }
+
+                HBox hbox = new HBox(5);
+                hbox.setAlignment(Pos.CENTER);
+                hbox.getChildren().add(viewBtn);
+                setGraphic(hbox);
+            }
+        });
+    }
+
+    /**
+     * 查看入库单详情
+     */
+    private void onViewButtonClick(StockIn stockIn) {
+        StockInViewDialog.showDialog(stockIn);
     }
 
     private String getTypeName(Integer type) {
@@ -265,38 +315,23 @@ public class StockInController extends ToolController {
         
         StockIn selected = stockInTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("警告");
-            alert.setHeaderText(null);
-            alert.setContentText("请选择要编辑的入库单");
-            alert.showAndWait();
+            SimpleMessageDialog.showWarning("请选择要编辑的入库单");
             return;
         }
 
         System.out.println("选中的入库单: ID=" + selected.getId() + ", 状态=" + selected.getStatus());
 
-        // 允许编辑待审批和已驳回的入库单
         if (selected.getStatus() != 0 && selected.getStatus() != 2) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("警告");
-            alert.setHeaderText(null);
-            alert.setContentText("只能编辑待审批或已驳回状态的入库单");
-            alert.showAndWait();
+            SimpleMessageDialog.showWarning("只能编辑待审批或已驳回状态的入库单");
             return;
         }
 
-        // 检查登录ID是否为空
         String loginIdStr = AppStore.getJwt().getLoginId();
         if (loginIdStr == null || loginIdStr.isEmpty()) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("会话已过期，请重新登录");
-            alert.showAndWait();
+            SimpleMessageDialog.showError("会话已过期，请重新登录");
             return;
         }
 
-        // 正确处理数字格式（可能是 "4" 或 "4.0"）
         Integer currentUserId;
         try {
             if (loginIdStr.contains(".")) {
@@ -306,40 +341,22 @@ public class StockInController extends ToolController {
             }
         } catch (NumberFormatException e) {
             System.err.println("用户ID格式错误: " + loginIdStr);
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("会话数据异常，请重新登录");
-            alert.showAndWait();
+            SimpleMessageDialog.showError("会话数据异常，请重新登录");
             return;
         }
 
         System.out.println("当前用户ID: " + currentUserId + ", 申请人ID: " + selected.getApplyUserId());
 
         if (!isAdmin && !selected.getApplyUserId().equals(currentUserId)) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("警告");
-            alert.setHeaderText(null);
-            alert.setContentText("只能编辑自己创建的入库单");
-            alert.showAndWait();
+            SimpleMessageDialog.showWarning("只能编辑自己创建的入库单");
             return;
         }
 
-        // 如果是已驳回状态，先显示驳回理由
         if (selected.getStatus() == 2) {
             String rejectReason = selected.getRejectReason();
             System.out.println("入库单已驳回，驳回理由: " + rejectReason);
             
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-            alert.setTitle("驳回理由");
-            alert.setHeaderText("该入库单已被驳回");
-            
-            String message = rejectReason != null && !rejectReason.isEmpty() 
-                ? "驳回理由：\n\n" + rejectReason + "\n\n点击确定后进入编辑模式"
-                : "该入库单已被驳回（无驳回理由）\n\n点击确定后进入编辑模式";
-            
-            alert.setContentText(message);
-            alert.showAndWait();
+            showRejectReasonDialog(rejectReason);
             
             System.out.println("驳回理由弹窗已关闭，准备打开编辑对话框...");
         }
@@ -357,20 +374,12 @@ public class StockInController extends ToolController {
                 loadStockInList();
             } else {
                 System.out.println("对话框创建失败");
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                alert.setTitle("错误");
-                alert.setHeaderText(null);
-                alert.setContentText("打开编辑窗口失败");
-                alert.showAndWait();
+                SimpleMessageDialog.showError("打开编辑窗口失败");
             }
         } catch (Exception e) {
             System.err.println("打开编辑窗口异常: " + e.getMessage());
             e.printStackTrace();
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("打开编辑窗口失败：" + e.getMessage());
-            alert.showAndWait();
+            SimpleMessageDialog.showError("打开编辑窗口失败：" + e.getMessage());
         }
     }
 
@@ -380,37 +389,23 @@ public class StockInController extends ToolController {
         
         StockIn selected = stockInTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("警告");
-            alert.setHeaderText(null);
-            alert.setContentText("请选择要删除的入库单");
-            alert.showAndWait();
+            SimpleMessageDialog.showWarning("请选择要删除的入库单");
             return;
         }
 
         System.out.println("选中的入库单: ID=" + selected.getId() + ", 状态=" + selected.getStatus());
 
         if (selected.getStatus() != 0) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("警告");
-            alert.setHeaderText(null);
-            alert.setContentText("只能删除待审批状态的入库单");
-            alert.showAndWait();
+            SimpleMessageDialog.showWarning("只能删除待审批状态的入库单");
             return;
         }
 
-        // 检查登录ID
         String loginIdStr = AppStore.getJwt().getLoginId();
         if (loginIdStr == null || loginIdStr.isEmpty()) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("会话已过期，请重新登录");
-            alert.showAndWait();
+            SimpleMessageDialog.showError("会话已过期，请重新登录");
             return;
         }
 
-        // 正确处理数字格式
         Integer currentUserId;
         try {
             if (loginIdStr.contains(".")) {
@@ -420,89 +415,53 @@ public class StockInController extends ToolController {
             }
         } catch (NumberFormatException e) {
             System.err.println("用户ID格式错误: " + loginIdStr);
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("会话数据异常，请重新登录");
-            alert.showAndWait();
+            SimpleMessageDialog.showError("会话数据异常，请重新登录");
             return;
         }
 
         System.out.println("当前用户ID: " + currentUserId + ", 申请人ID: " + selected.getApplyUserId());
 
         if (!isAdmin && !selected.getApplyUserId().equals(currentUserId)) {
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("警告");
-            alert.setHeaderText(null);
-            alert.setContentText("只能删除自己创建的入库单");
-            alert.showAndWait();
+            SimpleMessageDialog.showWarning("只能删除自己创建的入库单");
             return;
         }
 
-        // 确认删除
-        javafx.scene.control.Alert confirmAlert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
-        confirmAlert.setTitle("确认删除");
-        confirmAlert.setHeaderText(null);
-        confirmAlert.setContentText("确认删除入库单 " + selected.getInCode() + "？");
-        
-        java.util.Optional<javafx.scene.control.ButtonType> result = confirmAlert.showAndWait();
-        if (result.isPresent() && result.get().getButtonData() != javafx.scene.control.ButtonBar.ButtonData.OK_DONE) {
-            System.out.println("用户取消删除");
-            return;
-        }
+        showConfirmDialog("确认删除", "确认删除入库单 " + selected.getInCode() + "？", () -> {
+            System.out.println("开始删除入库单...");
 
-        System.out.println("开始删除入库单...");
+            try {
+                String url = HttpRequestUtil.serverUrl + "/stock-in/delete/" + selected.getId();
+                
+                HttpRequest httpRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .DELETE()
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
 
-        try {
-            // 后端接口是 DELETE /stock-in/delete/{id}
-            String url = HttpRequestUtil.serverUrl + "/stock-in/delete/" + selected.getId();
-            
-            HttpRequest httpRequest = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .DELETE()
-                    .headers("satoken", AppStore.getJwt().getToken())
-                    .build();
+                System.out.println("删除请求: DELETE " + url);
 
-            System.out.println("删除请求: DELETE " + url);
+                HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+                System.out.println("响应状态码: " + response.statusCode());
+                System.out.println("响应内容: " + response.body());
 
-            System.out.println("响应状态码: " + response.statusCode());
-            System.out.println("响应内容: " + response.body());
-
-            if (response.statusCode() == 200) {
-                Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
-                if (resultMap.get("code").equals(200.0)) {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-                    alert.setTitle("成功");
-                    alert.setHeaderText(null);
-                    alert.setContentText("删除成功");
-                    alert.showAndWait();
-                    
-                    loadStockInList();
+                if (response.statusCode() == 200) {
+                    Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
+                    if (resultMap.get("code").equals(200.0)) {
+                        SimpleMessageDialog.showSuccess("删除成功");
+                        loadStockInList();
+                    } else {
+                        SimpleMessageDialog.showError("删除失败：" + resultMap.get("msg"));
+                    }
                 } else {
-                    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                    alert.setTitle("错误");
-                    alert.setHeaderText(null);
-                    alert.setContentText("删除失败：" + resultMap.get("msg"));
-                    alert.showAndWait();
+                    SimpleMessageDialog.showError("请求失败");
                 }
-            } else {
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                alert.setTitle("错误");
-                alert.setHeaderText(null);
-                alert.setContentText("请求失败");
-                alert.showAndWait();
+            } catch (Exception e) {
+                System.err.println("删除异常: " + e.getMessage());
+                e.printStackTrace();
+                SimpleMessageDialog.showError("删除异常：" + e.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println("删除异常: " + e.getMessage());
-            e.printStackTrace();
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("删除异常：" + e.getMessage());
-            alert.showAndWait();
-        }
+        });
     }
 
     @FXML
@@ -604,37 +563,17 @@ public class StockInController extends ToolController {
 
         dialog.showAndWait().ifPresent(approved -> {
             if (approved) {
-                // 批准并直接完成入库
                 approveAndCompleteStockIn(stockIn);
             } else {
                 String rejectReason = rejectReasonArea.getText();
                 if (rejectReason == null || rejectReason.trim().isEmpty()) {
-                    // 使用标准 Alert，阻塞等待用户点击确认
-                    Alert warningAlert = new Alert(Alert.AlertType.WARNING);
-                    warningAlert.setTitle("提示");
-                    warningAlert.setHeaderText(null);
-                    warningAlert.setContentText("请填写驳回理由");
-                    warningAlert.showAndWait();
-                    
-                    // 用户点击确认后，重新显示审批对话框
+                    SimpleMessageDialog.showWarning("请填写驳回理由");
                     showApproveDialog(stockIn);
                     return;
                 }
                 
-                // 显示确认对话框
-                Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-                confirmAlert.setTitle("确认驳回");
-                confirmAlert.setHeaderText("确认要驳回该入库单吗？");
-                confirmAlert.setContentText("驳回理由：\n" + rejectReason);
-                
-                confirmAlert.showAndWait().ifPresent(buttonType -> {
-                    if (buttonType == ButtonType.OK) {
-                        // 用户确认驳回，执行驳回操作
-                        approveStockIn(stockIn, false, rejectReason);
-                    } else {
-                        // 用户取消驳回，重新显示审批对话框
-                        showApproveDialog(stockIn);
-                    }
+                showConfirmDialog("确认驳回", "确认要驳回该入库单吗？\n\n驳回理由：\n" + rejectReason, () -> {
+                    approveStockIn(stockIn, false, rejectReason);
                 });
             }
         });
@@ -693,7 +632,6 @@ public class StockInController extends ToolController {
             System.out.println("入库单号: " + stockIn.getInCode());
             System.out.println("当前状态: " + stockIn.getStatus());
             
-            // 调用approve接口，后端会完成批准+入库的操作
             Map<String, Object> approveBody = new HashMap<>();
             approveBody.put("stockInId", stockIn.getId());
             approveBody.put("approved", true);
@@ -764,4 +702,134 @@ public class StockInController extends ToolController {
             default: return null;
         }
     }
+
+    /**
+     * 创建美化的 Alert 对话框
+     */
+    private javafx.scene.control.Alert createStyledAlert(javafx.scene.control.Alert.AlertType type, String title) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        
+        // 美化对话框样式
+        alert.getDialogPane().setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff);");
+        alert.getDialogPane().getScene().getStylesheets().add(
+            getClass().getResource("/styles/modern-style.css").toExternalForm()
+        );
+        
+        // 美化按钮
+        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
+        if (okButton != null) {
+            okButton.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);");
+        }
+        
+        Button cancelButton = (Button) alert.getDialogPane().lookupButton(ButtonType.CANCEL);
+        if (cancelButton != null) {
+            cancelButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 25; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-cursor: hand;");
+        }
+        
+        return alert;
+    }
+
+    /**
+     * 显示美化的 Alert 对话框（简单消息）
+     */
+    private void showStyledAlert(javafx.scene.control.Alert.AlertType type, String title, String message) {
+        javafx.scene.control.Alert alert = createStyledAlert(type, title);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    /**
+     * 显示驳回理由对话框
+     */
+    private void showRejectReasonDialog(String rejectReason) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.DECORATED);
+        dialog.setTitle("驳回理由");
+
+        VBox root = new VBox(25);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(35, 45, 30, 45));
+        root.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
+
+        Label titleLabel = new Label("该入库单已被驳回");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        Label reasonLabel = new Label();
+        if (rejectReason != null && !rejectReason.isEmpty()) {
+            reasonLabel.setText("驳回理由：\n\n" + rejectReason);
+        } else {
+            reasonLabel.setText("该入库单已被驳回（无驳回理由）");
+        }
+        reasonLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a; -fx-text-alignment: center;");
+        reasonLabel.setWrapText(true);
+        reasonLabel.setMaxWidth(320);
+
+        Label hintLabel = new Label("点击确定后进入编辑模式");
+        hintLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #95a5a6;");
+
+        Button confirmBtn = new Button("确定");
+        confirmBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 45; -fx-background-radius: 8; -fx-cursor: hand;");
+        confirmBtn.setOnAction(e -> dialog.close());
+
+        root.getChildren().addAll(titleLabel, reasonLabel, hintLabel, confirmBtn);
+
+        Scene scene = new Scene(root);
+        scene.setFill(Color.WHITE);
+        dialog.setScene(scene);
+
+        dialog.showAndWait();
+    }
+
+    /**
+     * 显示确认对话框
+     */
+    private void showConfirmDialog(String title, String message, Runnable onConfirm) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.DECORATED);
+        dialog.setTitle(title);
+
+        VBox root = new VBox(30);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(45, 55, 35, 55));
+        root.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
+
+        Label messageLabel = new Label(message);
+        messageLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-text-alignment: center;");
+        messageLabel.setWrapText(true);
+        messageLabel.setMaxWidth(380);
+
+        HBox buttonBox = new HBox(20);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        Button cancelBtn = new Button("取消");
+        cancelBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 35; -fx-background-radius: 8; -fx-border-color: #e0e6ed; -fx-border-width: 2; -fx-border-radius: 8; -fx-cursor: hand;");
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button confirmBtn = new Button("确认");
+        confirmBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 45; -fx-background-radius: 8; -fx-cursor: hand;");
+        confirmBtn.setOnAction(e -> {
+            dialog.close();
+            onConfirm.run();
+        });
+
+        buttonBox.getChildren().addAll(cancelBtn, confirmBtn);
+        root.getChildren().addAll(messageLabel, buttonBox);
+
+        Scene scene = new Scene(root);
+        scene.setFill(Color.WHITE);
+        dialog.setScene(scene);
+
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
+                dialog.close();
+            }
+        });
+
+        dialog.showAndWait();
+    }
+
 }
