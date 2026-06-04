@@ -322,60 +322,19 @@ public class CategoryController extends ToolController {
                 logger.log(Level.WARNING, "解析创建时间失败", e);
             }
         }
-
-        loadMaterialCountForCategory(node);
+        if (map.get("materialCount") != null) {
+            Object countObj = map.get("materialCount");
+            if (countObj instanceof Number) {
+                node.setMaterialCount(((Number) countObj).intValue());
+            }
+        }
 
         return node;
     }
 
-    private void loadMaterialCountForCategory(CategoryNode categoryNode) {
-        Platform.runLater(() -> {
-            try {
-                DataRequest request = new DataRequest();
-                request.put("categoryName", categoryNode.getName());
-
-                DataResponse response = HttpRequestUtil.request("/api/material/search", request);
-
-                if (response != null && response.getCode() == 200 && response.getData() != null) {
-                    Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
-                    List<Map<String, Object>> materialList = gson.fromJson(gson.toJson(response.getData()), listType);
-
-                    int count = (materialList != null) ? materialList.size() : 0;
-                    categoryNode.setMaterialCount(count);
-                }
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "加载分类物资数量失败: " + categoryNode.getName(), e);
-            }
-        });
-    }
-
     @FXML
     private void searchCategory() {
-        String keyword = searchField.getText();
-        String status = statusFilter != null ? statusFilter.getValue() : "全部";
 
-        try {
-            DataRequest request = new DataRequest();
-            if (keyword != null && !keyword.isEmpty()) {
-                request.put("keyword", keyword);
-            }
-            if (status != null && !"全部".equals(status)) {
-                int statusCode = "启用".equals(status) ? 1 : 0;
-                request.put("status", statusCode);
-            }
-
-            DataResponse response = HttpRequestUtil.request("/api/category/search", request);
-
-            if (response != null && response.getCode() == 200) {
-                Platform.runLater(() -> buildTreeFromData(response.getData()));
-            } else {
-                String errorMsg = response != null ? response.getMsg() : "网络错误";
-                showError("搜索失败", "后端返回错误: " + errorMsg);
-            }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "搜索分类异常", e);
-            showError("搜索异常", e.getMessage());
-        }
     }
 
 
