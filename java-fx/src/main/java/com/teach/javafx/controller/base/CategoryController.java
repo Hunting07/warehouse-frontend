@@ -266,40 +266,30 @@ public class CategoryController extends ToolController {
     }
 
     private void buildTreeFromData(Object data) {
-        System.out.println("=== buildTreeFromData 被调用 ===");
-        System.out.println("data: " + data);
-
         Platform.runLater(() -> {
             categoryTreeTable.getRoot().getChildren().clear();
 
             if (data == null) {
-                System.out.println("data为null，清空树表格");
                 return;
             }
 
             Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
             List<Map<String, Object>> categoryList = gson.fromJson(gson.toJson(data), listType);
 
-            System.out.println("解析后的分类数量: " + (categoryList != null ? categoryList.size() : 0));
-
             if (categoryList != null) {
                 for (Map<String, Object> category : categoryList) {
                     CategoryNode node = mapToCategoryNode(category);
                     TreeItem<CategoryNode> treeItem = new TreeItem<>(node);
                     categoryTreeTable.getRoot().getChildren().add(treeItem);
-                    System.out.println("添加分类: " + node.getName());
                 }
             }
 
             categoryTreeTable.refresh();
-            System.out.println("树表格刷新完成");
         });
     }
 
     private CategoryNode mapToCategoryNode(Map<String, Object> map) {
         CategoryNode node = new CategoryNode();
-
-        logger.info("后端返回的分类数据: " + map);
 
         if (map.get("id") != null) {
             node.setId(((Number) map.get("id")).intValue());
@@ -309,10 +299,7 @@ public class CategoryController extends ToolController {
         }
         if (map.get("code") != null) {
             node.setCode((String) map.get("code"));
-            logger.info("分类编码: " + node.getCode());
-        } else {
-            logger.warning("后端返回的数据中没有 code 字段！");
-        }
+        } else {}
         if (map.get("sort") != null) {
             node.setSort(((Number) map.get("sort")).intValue());
         }
@@ -350,19 +337,10 @@ public class CategoryController extends ToolController {
         String keyword = searchField.getText();
         String status = statusFilter != null ? statusFilter.getValue() : "全部";
 
-        System.out.println("=== 物资分类搜索 ===");
-        System.out.println("keyword: [" + keyword + "]");
-        System.out.println("status: [" + status + "]");
-
         try {
             DataRequest request = new DataRequest();
 
-            System.out.println("发送的请求参数: " + request);
-
             DataResponse response = HttpRequestUtil.request("/api/category/tree", request);
-
-            System.out.println("搜索响应码: " + (response != null ? response.getCode() : "null"));
-            System.out.println("搜索数据: " + (response != null ? response.getData() : "null"));
 
             if (response != null && response.getCode() == 200) {
                 Platform.runLater(() -> {
@@ -371,8 +349,6 @@ public class CategoryController extends ToolController {
                         gson.toJson(response.getData()),
                         listType
                     );
-
-                    System.out.println("后端返回的分类数量: " + (allCategories != null ? allCategories.size() : 0));
 
                     if (allCategories == null) {
                         buildTreeFromData(null);
@@ -395,17 +371,12 @@ public class CategoryController extends ToolController {
                         }
                         String statusText = (statusCode == 1) ? "启用" : "禁用";
 
-                        System.out.println("分类: " + categoryName +
-                            " | 编码: " + categoryCode +
-                            " | 状态: " + statusText + " (" + statusCode + ")");
-
                         boolean matchesKeyword = true;
                         if (keyword != null && !keyword.trim().isEmpty()) {
                             String kw = keyword.trim().toLowerCase();
                             boolean nameMatch = categoryName != null && categoryName.toLowerCase().contains(kw);
                             boolean codeMatch = categoryCode != null && categoryCode.toLowerCase().contains(kw);
                             matchesKeyword = nameMatch || codeMatch;
-                            System.out.println("  -> 关键字匹配: " + matchesKeyword);
                         }
 
                         boolean matchesStatusFilter = true;
@@ -415,18 +386,13 @@ public class CategoryController extends ToolController {
                             } else if ("禁用".equals(status)) {
                                 matchesStatusFilter = (statusCode == 0);
                             }
-                            System.out.println("  -> 状态匹配: " + matchesStatusFilter);
                         }
 
                         if (matchesKeyword && matchesStatusFilter) {
                             filteredCategories.add(category);
-                            System.out.println("  -> ✓ 通过筛选");
-                        } else {
-                            System.out.println("  -> ✗ 未通过筛选");
-                        }
+                        } else {}
                     }
 
-                    System.out.println("过滤后的分类数量: " + filteredCategories.size());
                     buildTreeFromData(filteredCategories);
                 });
             } else {
@@ -949,7 +915,7 @@ public class CategoryController extends ToolController {
                 String name = nameField.getText().trim();
 
                 if (name.isEmpty()) {
-                    showError("新增失败", "分类名称不能为空，请输入分类名称！");
+                    showError(node == null ? "新增失败" : "编辑失败", "分类名称不能为空，请输入分类名称！");
                     nameField.requestFocus();
                     return;
                 }
@@ -968,6 +934,23 @@ public class CategoryController extends ToolController {
 
                     if (nameExists) {
                         showError("新增失败", "分类名称已存在，请使用其他名称！");
+                        nameField.requestFocus();
+                        return;
+                    }
+                } else {
+                    boolean nameExists = false;
+
+                    ObservableList<TreeItem<CategoryNode>> rootChildren = categoryTreeTable.getRoot().getChildren();
+                    for (TreeItem<CategoryNode> treeItem : rootChildren) {
+                        CategoryNode existingNode = treeItem.getValue();
+                        if (existingNode != null && existingNode.getId() != node.getId() && name.equals(existingNode.getName())) {
+                            nameExists = true;
+                            break;
+                        }
+                    }
+
+                    if (nameExists) {
+                        showError("编辑失败", "分类名称已存在，请使用其他名称！");
                         nameField.requestFocus();
                         return;
                     }

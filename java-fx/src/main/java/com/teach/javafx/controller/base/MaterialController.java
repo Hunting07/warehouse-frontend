@@ -384,7 +384,6 @@ public class MaterialController extends ToolController {
                 Platform.runLater(() -> buildDataList(response.getData()));
             } else {
                 String errorMsg = response != null ? response.getMsg() : "网络错误";
-                System.out.println("物资列表加载失败: " + errorMsg);
                 showError("加载失败", "后端接口返回错误: " + errorMsg);
             }
         } catch (Exception e) {
@@ -505,20 +504,10 @@ public class MaterialController extends ToolController {
         String stockStatus = stockStatusFilter.getValue();
         String materialStatus = materialStatusFilter != null ? materialStatusFilter.getValue() : "全部";
 
-        System.out.println("=== 物资管理搜索 ===");
-        System.out.println("keyword: [" + keyword + "]");
-        System.out.println("category: [" + category + "]");
-        System.out.println("stockStatus: [" + stockStatus + "]");
-        System.out.println("materialStatus: [" + materialStatus + "]");
-
         try {
             DataRequest request = new DataRequest();
 
-            System.out.println("发送的请求参数: " + request);
-
             DataResponse response = HttpRequestUtil.request("/api/material/list", request);
-
-            System.out.println("搜索响应码: " + (response != null ? response.getCode() : "null"));
 
             if (response != null && response.getCode() == 200) {
                 Platform.runLater(() -> {
@@ -526,8 +515,6 @@ public class MaterialController extends ToolController {
                         gson.toJson(response.getData()),
                         new TypeToken<List<Map<String, Object>>>(){}.getType()
                     );
-
-                    System.out.println("后端返回的物资数量: " + (allMaterials != null ? allMaterials.size() : 0));
 
                     if (allMaterials == null) {
                         buildDataList(null);
@@ -553,24 +540,17 @@ public class MaterialController extends ToolController {
                                 materialStatusCode = ("1".equals(statusStr) || "启用".equals(statusStr)) ? 1 : 0;
                             }
 
-                            System.out.println("物资: " + materialName +
-                                " | 分类: " + categoryName2 +
-                                " | 库存: " + currentStock + "/" + safetyStock +
-                                " | 状态码: " + materialStatusCode);
-
                             boolean matchesKeyword = true;
                             if (keyword != null && !keyword.trim().isEmpty()) {
                                 String kw = keyword.trim().toLowerCase();
                                 boolean nameMatch = materialName != null && materialName.toLowerCase().contains(kw);
                                 boolean codeMatch = materialCode != null && materialCode.toLowerCase().contains(kw);
                                 matchesKeyword = nameMatch || codeMatch;
-                                System.out.println("  -> 关键字匹配: " + matchesKeyword + " (nameMatch=" + nameMatch + ", codeMatch=" + codeMatch + ")");
                             }
 
                             boolean matchesCategoryFilter = true;
                             if (category != null && !"全部分类".equals(category)) {
                                 matchesCategoryFilter = category.equals(categoryName2);
-                                System.out.println("  -> 分类匹配: " + matchesCategoryFilter + " (期望=" + category + ", 实际=" + categoryName2 + ")");
                             }
 
                             boolean matchesStockFilter = true;
@@ -579,10 +559,8 @@ public class MaterialController extends ToolController {
 
                                 if ("预警".equals(stockStatus)) {
                                     matchesStockFilter = isWarning;
-                                    System.out.println("  -> 库存预警过滤: " + isWarning);
                                 } else if ("正常".equals(stockStatus)) {
                                     matchesStockFilter = !isWarning;
-                                    System.out.println("  -> 库存正常过滤: " + !isWarning);
                                 }
                             }
 
@@ -613,41 +591,27 @@ public class MaterialController extends ToolController {
                                     } else {
                                         matchesStatusFilter = categoryEnabled && (materialStatusCode == 1);
                                     }
-                                    System.out.println("  -> 启用状态过滤: 分类启用=" + categoryEnabled + ", 物资启用=" + (materialStatusCode == 1) + ", 结果=" + matchesStatusFilter);
                                 } else if ("停用".equals(materialStatus)) {
                                     if (categoryName2 == null || categoryName2.isEmpty()) {
                                         matchesStatusFilter = (materialStatusCode == 0);
                                     } else {
                                         matchesStatusFilter = !categoryEnabled || (materialStatusCode == 0);
                                     }
-                                    System.out.println("  -> 停用状态过滤: 分类启用=" + categoryEnabled + ", 物资停用=" + (materialStatusCode == 0) + ", 结果=" + matchesStatusFilter);
                                 }
                             }
 
                             boolean passAll = matchesKeyword && matchesCategoryFilter && matchesStockFilter && matchesStatusFilter;
-                            System.out.println("  -> 关键字: " + matchesKeyword +
-                                " | 分类: " + matchesCategoryFilter +
-                                " | 库存: " + matchesStockFilter +
-                                " | 状态: " + matchesStatusFilter +
-                                " | 总结果: " + passAll);
-
                             if (passAll) {
                                 filteredMaterials.add(material);
-                                System.out.println("  -> ✓ 通过筛选");
-                            } else {
-                                System.out.println("  -> ✗ 未通过筛选");
-                            }
+                            } else {}
                         } catch (Exception e) {
                             logger.log(Level.WARNING, "过滤物资数据失败", e);
                         }
                     }
-
-                    System.out.println("最终过滤后的物资数量: " + filteredMaterials.size());
                     buildDataList(filteredMaterials);
                 });
             } else {
                 String errorMsg = response != null ? response.getMsg() : "网络错误";
-                System.out.println("搜索失败: " + errorMsg);
                 showError("搜索失败", "后端返回错误: " + errorMsg);
             }
         } catch (Exception e) {
@@ -934,7 +898,7 @@ public class MaterialController extends ToolController {
                 String name = nameField.getText().trim();
 
                 if (name.isEmpty()) {
-                    showError("新增失败", "物资名称不能为空，请输入物资名称！");
+                    showError(material == null ? "新增失败" : "编辑失败", "物资名称不能为空，请输入物资名称！");
                     nameField.requestFocus();
                     return;
                 }
@@ -952,6 +916,26 @@ public class MaterialController extends ToolController {
                                 String existingName = (String) m.get("name");
                                 if (name.equals(existingName)) {
                                     showError("新增失败", "物资名称已存在，请使用其他名称！");
+                                    nameField.requestFocus();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    DataRequest checkRequest = new DataRequest();
+                    DataResponse checkResponse = HttpRequestUtil.request("/api/material/list", checkRequest);
+
+                    if (checkResponse != null && checkResponse.getCode() == 200 && checkResponse.getData() != null) {
+                        Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+                        List<Map<String, Object>> materialList = gson.fromJson(gson.toJson(checkResponse.getData()), listType);
+
+                        if (materialList != null) {
+                            for (Map<String, Object> m : materialList) {
+                                String existingName = (String) m.get("name");
+                                int existingId = ((Number) m.get("id")).intValue();
+                                if (existingId != material.getId() && name.equals(existingName)) {
+                                    showError("编辑失败", "物资名称已存在，请使用其他名称！");
                                     nameField.requestFocus();
                                     return;
                                 }
