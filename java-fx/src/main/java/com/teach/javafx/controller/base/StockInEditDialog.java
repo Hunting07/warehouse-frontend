@@ -10,14 +10,19 @@ import com.teach.javafx.request.HttpRequestUtil;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.StringConverter;
 import javafx.util.converter.DefaultStringConverter;
 import javafx.util.converter.IntegerStringConverter;
@@ -153,6 +158,7 @@ public class StockInEditDialog extends Stage {
                 private final TextField textField = new TextField();
                 private final Button selectBtn = new Button("选择");
                 private final HBox container = new HBox(5, textField, selectBtn);
+                private boolean isUpdatingFromSelection = false; // 标记是否是从选择按钮更新
 
                 {
                     // 设置容器垂直居中
@@ -163,11 +169,19 @@ public class StockInEditDialog extends Stage {
 
                     // 监听文本变化
                     textField.textProperty().addListener((obs, oldVal, newVal) -> {
+                        // 如果是从选择按钮更新的，不要清空 materialId
+                        if (isUpdatingFromSelection) {
+                            return;
+                        }
+                        
                         StockInItem item = getTableRow() != null ? getTableRow().getItem() : null;
                         if (item != null) {
                             item.setMaterialName(newVal);
-                            // 手动输入时清空 materialId
-                            item.setMaterialId(null);
+                            // 只有在非退货入库模式下，手动输入时才清空 materialId
+                            boolean isReturn = "退货入库".equals(typeComboBox.getValue());
+                            if (!isReturn) {
+                                item.setMaterialId(null);
+                            }
                         }
                     });
 
@@ -180,7 +194,43 @@ public class StockInEditDialog extends Stage {
                             MessageDialog.showDialog("请先添加物资行");
                             return;
                         }
-                        showMaterialSelectionDialog(item);
+                        
+                        // 显示物资选择对话框
+                        if (materialList.isEmpty()) {
+                            MessageDialog.showDialog("物资列表为空,无法选择。");
+                            return;
+                        }
+
+                        MaterialSelectionDialog dialog = MaterialSelectionDialog.createDialog(materialList);
+                        if (dialog == null) {
+                            return;
+                        }
+
+                        dialog.showAndWait();
+                        
+                        OptionItem selectedMaterial = dialog.getSelectedMaterial();
+                        if (selectedMaterial != null) {
+                            // 设置标记，防止文本变化监听器清空 materialId
+                            isUpdatingFromSelection = true;
+                            
+                            item.setMaterialId(selectedMaterial.getId());
+                            item.setMaterialName(selectedMaterial.getName());
+                            
+                            // 如果是退货入库,直接使用已加载的单价
+                            boolean isReturn = "退货入库".equals(typeComboBox.getValue());
+                            if (isReturn && selectedMaterial.getPrice() != null) {
+                                item.setPrice(selectedMaterial.getPrice());
+                                updateAmount(item);
+                                calculateTotal();
+                                System.out.println("已自动填充单价: " + selectedMaterial.getPrice());
+                            }
+                            
+                            System.out.println("✓ 已选择物资: " + selectedMaterial.getName() + " (ID: " + selectedMaterial.getId() + ")");
+                            
+                            // 刷新后重置标记
+                            itemTable.refresh();
+                            isUpdatingFromSelection = false;
+                        }
                     });
 
                     HBox.setHgrow(textField, Priority.ALWAYS);
@@ -196,7 +246,10 @@ public class StockInEditDialog extends Stage {
                     } else {
                         // 始终显示控件，即使 materialName 为空
                         if (materialName != null) {
-                            textField.setText(materialName);
+                            // 只在值真正变化时才更新，避免触发监听器
+                            if (!materialName.equals(textField.getText())) {
+                                textField.setText(materialName);
+                            }
                         } else {
                             textField.clear();
                         }
@@ -457,7 +510,7 @@ public class StockInEditDialog extends Stage {
      */
     private void showMaterialSelectionDialog(StockInItem item) {
         if (materialList.isEmpty()) {
-            MessageDialog.showDialog("物资列表为空,无法选择。您可以直接输入物资名称。");
+            MessageDialog.showDialog("物资列表为空,无法选择。");
             return;
         }
 
@@ -806,12 +859,7 @@ public class StockInEditDialog extends Stage {
                 resultMsg.append("\n\n失败详情:\n").append(errorMsg.toString());
             }
             
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                failCount == 0 ? javafx.scene.control.Alert.AlertType.INFORMATION : javafx.scene.control.Alert.AlertType.WARNING);
-            alert.setTitle("提交结果");
-            alert.setHeaderText(null);
-            alert.setContentText(resultMsg.toString());
-            alert.showAndWait();
+            showStyledResultDialog("提交结果", resultMsg.toString(), failCount == 0);
             
             // 如果全部成功，关闭对话框
             if (failCount == 0) {
@@ -820,11 +868,7 @@ public class StockInEditDialog extends Stage {
             
         } catch (Exception e) {
             e.printStackTrace();
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("错误");
-            alert.setHeaderText(null);
-            alert.setContentText("提交异常：" + e.getMessage());
-            alert.showAndWait();
+            showStyledResultDialog("错误", "提交异常：\n" + e.getMessage(), false);
         }
     }
     
@@ -845,7 +889,6 @@ public class StockInEditDialog extends Stage {
 
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("id", editingStockIn.getId());  // 入库单ID
             requestBody.put("type", getTypeValue(typeComboBox.getValue()));
 
             List<Map<String, Object>> items = new ArrayList<>();
@@ -896,50 +939,24 @@ public class StockInEditDialog extends Stage {
             System.out.println("入库单号: " + editingStockIn.getInCode());
             System.out.println("明细项数量: " + items.size());
             System.out.println("请求数据: " + requestJson);
-            System.out.println("===============================");
+            System.out.println("================================");
 
-            // 尝试多个可能的接口路径
-            String[] possibleUrls = {
-                    HttpRequestUtil.serverUrl + "/api/stock-in/update",
-                    HttpRequestUtil.serverUrl + "/api/stock-in/edit",
-                    HttpRequestUtil.serverUrl + "/stock-in/edit",
-                    HttpRequestUtil.serverUrl + "/stock-in/save",
-                    HttpRequestUtil.serverUrl + "/api/stock-in/save"
-            };
+            // 使用正确的 PUT 接口
+            String url = HttpRequestUtil.serverUrl + "/stock-in/update/" + editingStockIn.getId();
+            System.out.println("请求URL: " + url);
+            System.out.println("请求方法: PUT");
 
-            HttpResponse<String> response = null;
-            String successUrl = null;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .PUT(HttpRequest.BodyPublishers.ofString(requestJson))
+                    .headers("Content-Type", "application/json")
+                    .headers("satoken", AppStore.getJwt().getToken())
+                    .build();
 
-            // 逐个尝试接口
-            for (String url : possibleUrls) {
-                try {
-                    System.out.println("尝试接口: " + url);
-                    HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create(url))
-                            .POST(HttpRequest.BodyPublishers.ofString(requestJson))
-                            .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
-                            .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-                    response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                    System.out.println("响应状态码: " + response.statusCode());
-                    System.out.println("响应内容: " + response.body());
-
-                    if (response.statusCode() == 200) {
-                        successUrl = url;
-                        break;  // 找到一个可用的接口就停止
-                    }
-                } catch (Exception e) {
-                    System.err.println("接口 " + url + " 调用失败: " + e.getMessage());
-                }
-            }
-
-            // 如果所有接口都失败，使用删除+创建的方式
-            if (response == null || response.statusCode() != 200) {
-                System.out.println("所有更新接口都不可用，使用删除+创建方式");
-                deleteAndRecreate(requestJson);
-                return;
-            }
+            System.out.println("响应状态码: " + response.statusCode());
+            System.out.println("响应内容: " + response.body());
 
             // 解析响应
             Map<String, Object> result = gson.fromJson(response.body(), Map.class);
@@ -948,7 +965,7 @@ public class StockInEditDialog extends Stage {
             Object codeObj = result.get("code");
             int code = codeObj instanceof Number ? ((Number) codeObj).intValue() : -1;
 
-            if (code == 200 || code == 0) {
+            if (response.statusCode() == 200 && (code == 200 || code == 0)) {
                 SimpleMessageDialog.showSuccess("入库单更新成功");
                 this.close();
             } else {
@@ -1033,5 +1050,70 @@ public class StockInEditDialog extends Stage {
             case "其他入库": return 3;
             default: return 1;
         }
+    }
+
+    /**
+     * 显示美化的结果对话框（与 SimpleMessageDialog 风格一致）
+     */
+    private void showStyledResultDialog(String title, String message, boolean isSuccess) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.DECORATED);
+        dialog.setTitle(title);
+        dialog.setResizable(false);
+
+        VBox root = new VBox(0);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(15, 35, 15, 35));
+        root.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
+
+        // 消息文本 - 使用 VBox 而不是 Label，以便控制行间距
+        VBox messageBox = new VBox(8); // 8px 行间距
+        messageBox.setAlignment(Pos.CENTER);
+        messageBox.setPadding(new Insets(20, 20, 20, 20));
+        messageBox.setStyle("-fx-background-color: #f5f5f5; -fx-background-radius: 8;");
+        
+        // 将消息按行分割并分别显示
+        String[] lines = message.split("\n");
+        for (String line : lines) {
+            if (line != null && !line.trim().isEmpty()) {
+                Label lineLabel = new Label(line.trim());
+                lineLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-text-alignment: center;");
+                lineLabel.setAlignment(Pos.CENTER);
+                lineLabel.setMaxWidth(400);
+                messageBox.getChildren().add(lineLabel);
+            }
+        }
+        
+        // 将消息放入 ScrollPane，支持多行内容完整显示
+        ScrollPane scrollPane = new ScrollPane(messageBox);
+        scrollPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        scrollPane.setFitToWidth(true);
+        scrollPane.setVbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setPrefHeight(200);
+        scrollPane.setMaxHeight(280);
+        scrollPane.setPadding(new Insets(5, 5, 5, 5));
+
+        // 按钮
+        Button confirmBtn = new Button("确认");
+        confirmBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 45; -fx-background-radius: 8; -fx-cursor: hand;");
+        confirmBtn.setOnAction(e -> dialog.close());
+
+        root.getChildren().addAll(scrollPane, confirmBtn);
+
+        // 根据内容动态计算高度
+        Scene scene = new Scene(root, 520, 360);
+        scene.setFill(javafx.scene.paint.Color.WHITE);
+        dialog.setScene(scene);
+
+        // 按 ESC 键关闭
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
+                dialog.close();
+            }
+        });
+
+        dialog.showAndWait();
     }
 }
