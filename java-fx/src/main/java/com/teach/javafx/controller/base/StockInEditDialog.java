@@ -96,10 +96,6 @@ public class StockInEditDialog extends Stage {
                 throw new RuntimeException("无法获取控制器实例");
             }
 
-            System.out.println("=== FXML 加载成功 ===");
-            System.out.println("控制器实例: " + dialog);
-            System.out.println("typeComboBox: " + dialog.typeComboBox);
-
             dialog.setScene(scene);
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setTitle(stockIn == null ? "新增入库单" : "编辑入库单");
@@ -113,14 +109,9 @@ public class StockInEditDialog extends Stage {
                 dialog.loadStockInDetail(stockIn);
             }
 
-            System.out.println("=== 对话框初始化完成 ===");
-
             return dialog;
 
         } catch (Exception e) {
-            System.err.println("=== FXML 加载失败 ===");
-            System.err.println("错误类型: " + e.getClass().getName());
-            System.err.println("错误消息: " + e.getMessage());
             e.printStackTrace();
 
             StringBuilder errorMsg = new StringBuilder("打开对话框失败：\n");
@@ -138,11 +129,8 @@ public class StockInEditDialog extends Stage {
 
     private void initControls() {
         if (typeComboBox == null) {
-            System.err.println("错误：typeComboBox 为 null，FXML 绑定失败");
             return;
         }
-
-        System.out.println("开始初始化控件...");
 
         // 初始化入库类型
         typeComboBox.getItems().addAll("采购入库", "退货入库", "其他入库");

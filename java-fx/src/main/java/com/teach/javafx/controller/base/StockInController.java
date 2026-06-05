@@ -239,9 +239,6 @@ public class StockInController extends ToolController {
                     hasParam = true;
                 }
 
-                System.out.println("=== [前端] 加载入库列表 ===");
-                System.out.println("请求URL: " + urlBuilder.toString());
-
                 HttpRequest httpRequest = HttpRequest.newBuilder()
                         .uri(URI.create(urlBuilder.toString()))
                         .GET()
@@ -249,8 +246,6 @@ public class StockInController extends ToolController {
                         .build();
 
                 HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println("响应状态码: " + response.statusCode());
 
                 if (response.statusCode() == 200) {
                     Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
@@ -260,7 +255,6 @@ public class StockInController extends ToolController {
                         
                         javafx.application.Platform.runLater(() -> {
                             stockInList.setAll(list);
-                            System.out.println("成功加载 " + list.size() + " 条数据");
                         });
                     } else {
                         javafx.application.Platform.runLater(() -> {
@@ -311,15 +305,11 @@ public class StockInController extends ToolController {
 
     @FXML
     protected void onEditButtonClick() {
-        System.out.println("\n\n========== 编辑按钮被点击 ==========");
-        
         StockIn selected = stockInTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             SimpleMessageDialog.showWarning("请选择要编辑的入库单");
             return;
         }
-
-        System.out.println("选中的入库单: ID=" + selected.getId() + ", 状态=" + selected.getStatus());
 
         if (selected.getStatus() != 0 && selected.getStatus() != 2) {
             SimpleMessageDialog.showWarning("只能编辑待审批或已驳回状态的入库单");
@@ -340,12 +330,9 @@ public class StockInController extends ToolController {
                 currentUserId = Integer.valueOf(loginIdStr);
             }
         } catch (NumberFormatException e) {
-            System.err.println("用户ID格式错误: " + loginIdStr);
             SimpleMessageDialog.showError("会话数据异常，请重新登录");
             return;
         }
-
-        System.out.println("当前用户ID: " + currentUserId + ", 申请人ID: " + selected.getApplyUserId());
 
         if (!isAdmin && !selected.getApplyUserId().equals(currentUserId)) {
             SimpleMessageDialog.showWarning("只能编辑自己创建的入库单");
@@ -354,30 +341,19 @@ public class StockInController extends ToolController {
 
         if (selected.getStatus() == 2) {
             String rejectReason = selected.getRejectReason();
-            System.out.println("入库单已驳回，驳回理由: " + rejectReason);
-            
             showRejectReasonDialog(rejectReason);
-            
-            System.out.println("驳回理由弹窗已关闭，准备打开编辑对话框...");
         }
-
-        System.out.println("开始创建编辑对话框...");
         
         try {
             StockInEditDialog dialog = StockInEditDialog.createEditDialog(selected);
-            System.out.println("对话框创建结果: " + dialog);
             
             if (dialog != null) {
-                System.out.println("显示对话框...");
                 dialog.showAndWait();
-                System.out.println("对话框关闭，刷新列表...");
                 loadStockInList();
             } else {
-                System.out.println("对话框创建失败");
                 SimpleMessageDialog.showError("打开编辑窗口失败");
             }
         } catch (Exception e) {
-            System.err.println("打开编辑窗口异常: " + e.getMessage());
             e.printStackTrace();
             SimpleMessageDialog.showError("打开编辑窗口失败：" + e.getMessage());
         }
@@ -385,15 +361,11 @@ public class StockInController extends ToolController {
 
     @FXML
     protected void onDeleteButtonClick() {
-        System.out.println("========== 删除按钮被点击 ==========");
-        
         StockIn selected = stockInTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
             SimpleMessageDialog.showWarning("请选择要删除的入库单");
             return;
         }
-
-        System.out.println("选中的入库单: ID=" + selected.getId() + ", 状态=" + selected.getStatus());
 
         if (selected.getStatus() != 0) {
             SimpleMessageDialog.showWarning("只能删除待审批状态的入库单");
@@ -414,12 +386,9 @@ public class StockInController extends ToolController {
                 currentUserId = Integer.valueOf(loginIdStr);
             }
         } catch (NumberFormatException e) {
-            System.err.println("用户ID格式错误: " + loginIdStr);
             SimpleMessageDialog.showError("会话数据异常，请重新登录");
             return;
         }
-
-        System.out.println("当前用户ID: " + currentUserId + ", 申请人ID: " + selected.getApplyUserId());
 
         if (!isAdmin && !selected.getApplyUserId().equals(currentUserId)) {
             SimpleMessageDialog.showWarning("只能删除自己创建的入库单");
@@ -427,8 +396,6 @@ public class StockInController extends ToolController {
         }
 
         showConfirmDialog("确认删除", "确认删除入库单 " + selected.getInCode() + "？", () -> {
-            System.out.println("开始删除入库单...");
-
             try {
                 String url = HttpRequestUtil.serverUrl + "/stock-in/delete/" + selected.getId();
                 
@@ -438,12 +405,7 @@ public class StockInController extends ToolController {
                         .headers("satoken", AppStore.getJwt().getToken())
                         .build();
 
-                System.out.println("删除请求: DELETE " + url);
-
                 HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-
-                System.out.println("响应状态码: " + response.statusCode());
-                System.out.println("响应内容: " + response.body());
 
                 if (response.statusCode() == 200) {
                     Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
@@ -458,7 +420,6 @@ public class StockInController extends ToolController {
                 }
 
             } catch (Exception e) {
-                System.err.println("删除异常: " + e.getMessage());
                 e.printStackTrace();
                 SimpleMessageDialog.showError("删除异常：" + e.getMessage());
             }
@@ -628,18 +589,11 @@ public class StockInController extends ToolController {
 
     private void approveAndCompleteStockIn(StockIn stockIn) {
         try {
-            System.out.println("========== 开始批准并入库 ==========");
-            System.out.println("入库单ID: " + stockIn.getId());
-            System.out.println("入库单号: " + stockIn.getInCode());
-            System.out.println("当前状态: " + stockIn.getStatus());
-            
             Map<String, Object> approveBody = new HashMap<>();
             approveBody.put("stockInId", stockIn.getId());
             approveBody.put("approved", true);
 
             String approveUrl = HttpRequestUtil.serverUrl + "/stock-in/approve";
-            System.out.println("批准请求URL: " + approveUrl);
-            System.out.println("请求参数: " + gson.toJson(approveBody));
             
             HttpRequest approveRequest = HttpRequest.newBuilder()
                     .uri(URI.create(approveUrl))
@@ -648,8 +602,6 @@ public class StockInController extends ToolController {
                     .build();
 
             HttpResponse<String> approveResponse = httpClient.send(approveRequest, HttpResponse.BodyHandlers.ofString());
-            System.out.println("批准响应状态码: " + approveResponse.statusCode());
-            System.out.println("批准响应内容: " + approveResponse.body());
 
             if (approveResponse.statusCode() == 200) {
                 Map<String, Object> approveResult = gson.fromJson(approveResponse.body(), new TypeToken<Map<String, Object>>(){}.getType());
