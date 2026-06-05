@@ -38,7 +38,7 @@
         <Label text="所属分类:" style="-fx-font-size: 13px; -fx-text-fill: #1d3f66;"/>
         <ComboBox fx:id="categoryFilter" prefWidth="120" style="-fx-font-size: 13px;"/>
         <Label text="库存状态:" style="-fx-font-size: 13px; -fx-text-fill: #1d3f66;"/>
-        <ComboBox fx:id="stockStatusFilter" prefWidth="80" style="-fx-font-size: 13px;"/>
+        <ComboBox fx:id="stockStatusFilter" prefWidth="100" style="-fx-font-size: 13px;"/>
         <Label text="物资状态:" style="-fx-font-size: 13px; -fx-text-fill: #1d3f66;"/>
         <ComboBox fx:id="materialStatusFilter" prefWidth="100" style="-fx-font-size: 13px;"/>
         <Region HBox.hgrow="ALWAYS"/>

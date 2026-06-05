@@ -9,6 +9,7 @@ import com.teach.javafx.request.HttpRequestUtil;
 import com.teach.javafx.request.JwtResponse;
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import java.util.Optional;
 
 public class CategoryController extends ToolController {
     private static final Logger logger = Logger.getLogger(CategoryController.class.getName());
@@ -265,22 +266,34 @@ public class CategoryController extends ToolController {
     }
 
     private void buildTreeFromData(Object data) {
-        categoryTreeTable.getRoot().getChildren().clear();
+        System.out.println("=== buildTreeFromData 被调用 ===");
+        System.out.println("data: " + data);
 
-        if (data == null) {
-            return;
-        }
+        Platform.runLater(() -> {
+            categoryTreeTable.getRoot().getChildren().clear();
 
-        Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
-        List<Map<String, Object>> categoryList = gson.fromJson(gson.toJson(data), listType);
-
-        if (categoryList != null) {
-            for (Map<String, Object> category : categoryList) {
-                CategoryNode node = mapToCategoryNode(category);
-                TreeItem<CategoryNode> treeItem = new TreeItem<>(node);
-                categoryTreeTable.getRoot().getChildren().add(treeItem);
+            if (data == null) {
+                System.out.println("data为null，清空树表格");
+                return;
             }
-        }
+
+            Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+            List<Map<String, Object>> categoryList = gson.fromJson(gson.toJson(data), listType);
+
+            System.out.println("解析后的分类数量: " + (categoryList != null ? categoryList.size() : 0));
+
+            if (categoryList != null) {
+                for (Map<String, Object> category : categoryList) {
+                    CategoryNode node = mapToCategoryNode(category);
+                    TreeItem<CategoryNode> treeItem = new TreeItem<>(node);
+                    categoryTreeTable.getRoot().getChildren().add(treeItem);
+                    System.out.println("添加分类: " + node.getName());
+                }
+            }
+
+            categoryTreeTable.refresh();
+            System.out.println("树表格刷新完成");
+        });
     }
 
     private CategoryNode mapToCategoryNode(Map<String, Object> map) {
@@ -334,9 +347,97 @@ public class CategoryController extends ToolController {
 
     @FXML
     private void searchCategory() {
+        String keyword = searchField.getText();
+        String status = statusFilter != null ? statusFilter.getValue() : "全部";
 
+        System.out.println("=== 物资分类搜索 ===");
+        System.out.println("keyword: [" + keyword + "]");
+        System.out.println("status: [" + status + "]");
+
+        try {
+            DataRequest request = new DataRequest();
+
+            System.out.println("发送的请求参数: " + request);
+
+            DataResponse response = HttpRequestUtil.request("/api/category/tree", request);
+
+            System.out.println("搜索响应码: " + (response != null ? response.getCode() : "null"));
+            System.out.println("搜索数据: " + (response != null ? response.getData() : "null"));
+
+            if (response != null && response.getCode() == 200) {
+                Platform.runLater(() -> {
+                    Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+                    List<Map<String, Object>> allCategories = gson.fromJson(
+                        gson.toJson(response.getData()),
+                        listType
+                    );
+
+                    System.out.println("后端返回的分类数量: " + (allCategories != null ? allCategories.size() : 0));
+
+                    if (allCategories == null) {
+                        buildTreeFromData(null);
+                        return;
+                    }
+
+                    List<Map<String, Object>> filteredCategories = new java.util.ArrayList<>();
+
+                    for (Map<String, Object> category : allCategories) {
+                        String categoryName = (String) category.get("name");
+                        String categoryCode = (String) category.get("code");
+
+                        Object statusObj = category.get("status");
+                        int statusCode = 0;
+                        if (statusObj instanceof Number) {
+                            statusCode = ((Number) statusObj).intValue();
+                        } else if (statusObj != null) {
+                            String statusStr = statusObj.toString();
+                            statusCode = ("1".equals(statusStr) || "启用".equals(statusStr)) ? 1 : 0;
+                        }
+                        String statusText = (statusCode == 1) ? "启用" : "禁用";
+
+                        System.out.println("分类: " + categoryName +
+                            " | 编码: " + categoryCode +
+                            " | 状态: " + statusText + " (" + statusCode + ")");
+
+                        boolean matchesKeyword = true;
+                        if (keyword != null && !keyword.trim().isEmpty()) {
+                            String kw = keyword.trim().toLowerCase();
+                            boolean nameMatch = categoryName != null && categoryName.toLowerCase().contains(kw);
+                            boolean codeMatch = categoryCode != null && categoryCode.toLowerCase().contains(kw);
+                            matchesKeyword = nameMatch || codeMatch;
+                            System.out.println("  -> 关键字匹配: " + matchesKeyword);
+                        }
+
+                        boolean matchesStatusFilter = true;
+                        if (status != null && !"全部".equals(status)) {
+                            if ("启用".equals(status)) {
+                                matchesStatusFilter = (statusCode == 1);
+                            } else if ("禁用".equals(status)) {
+                                matchesStatusFilter = (statusCode == 0);
+                            }
+                            System.out.println("  -> 状态匹配: " + matchesStatusFilter);
+                        }
+
+                        if (matchesKeyword && matchesStatusFilter) {
+                            filteredCategories.add(category);
+                            System.out.println("  -> ✓ 通过筛选");
+                        } else {
+                            System.out.println("  -> ✗ 未通过筛选");
+                        }
+                    }
+
+                    System.out.println("过滤后的分类数量: " + filteredCategories.size());
+                    buildTreeFromData(filteredCategories);
+                });
+            } else {
+                String errorMsg = response != null ? response.getMsg() : "网络错误";
+                showError("搜索失败", "后端返回错误: " + errorMsg);
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "搜索分类异常", e);
+            showError("搜索异常", e.getMessage());
+        }
     }
-
 
     @FXML
     private void resetSearch() {
@@ -377,15 +478,22 @@ public class CategoryController extends ToolController {
 
         try {
             DataRequest checkRequest = new DataRequest();
-            checkRequest.put("categoryName", node.getName());
 
-            DataResponse checkResponse = HttpRequestUtil.request("/api/material/search", checkRequest);
+            DataResponse checkResponse = HttpRequestUtil.request("/api/material/list", checkRequest);
 
             if (checkResponse != null && checkResponse.getCode() == 200 && checkResponse.getData() != null) {
                 Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
                 List<Map<String, Object>> materialList = gson.fromJson(gson.toJson(checkResponse.getData()), listType);
 
-                int materialCount = (materialList != null) ? materialList.size() : 0;
+                int materialCount = 0;
+                if (materialList != null) {
+                    for (Map<String, Object> material : materialList) {
+                        String categoryName = (String) material.get("categoryName");
+                        if (node.getName().equals(categoryName)) {
+                            materialCount++;
+                        }
+                    }
+                }
 
                 if (materialCount > 0) {
                     showError("删除失败", "该分类下有 " + materialCount + " 个物资，无法删除！请先删除或转移这些物资。");
@@ -398,25 +506,62 @@ public class CategoryController extends ToolController {
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("确认删除");
-        confirm.setHeaderText("确定要删除分类 \"" + node.getName() + "\" 吗？");
-        confirm.setContentText("删除后无法恢复！");
+        Stage confirmDialog = new Stage();
+        confirmDialog.initModality(Modality.APPLICATION_MODAL);
+        confirmDialog.setTitle("确认删除");
 
-        confirm.getDialogPane().setStyle("-fx-background-color: white;");
-        confirm.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+        VBox mainBox = new VBox(30);
+        mainBox.setPadding(new Insets(40, 40, 30, 40));
+        mainBox.setAlignment(javafx.geometry.Pos.CENTER);
+        mainBox.setStyle("-fx-background-color: white;");
 
-        ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelBtn = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
-        confirm.getButtonTypes().setAll(okBtn, cancelBtn);
+        VBox contentBox = new VBox(15);
+        contentBox.setAlignment(javafx.geometry.Pos.CENTER);
 
-        Button okButton = (Button) confirm.getDialogPane().lookupButton(okBtn);
-        okButton.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+        Label titleLabel = new Label("确定要删除分类 \"" + node.getName() + "\" 吗？");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a1a2e;");
 
-        Button cancelButton = (Button) confirm.getDialogPane().lookupButton(cancelBtn);
-        cancelButton.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+        Label messageLabel = new Label("删除后无法恢复！");
+        messageLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4a5568; -fx-wrap-text: true; -fx-alignment: center;");
+        messageLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        messageLabel.setMaxWidth(400);
 
-        confirm.showAndWait().ifPresent(response -> {
+        contentBox.getChildren().addAll(titleLabel, messageLabel);
+
+        HBox buttonBox = new HBox(20);
+        buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+        Button okBtn = new Button("确定");
+        okBtn.setPrefWidth(120);
+        okBtn.setPrefHeight(45);
+        okBtn.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10;");
+
+        Button cancelBtn = new Button("取消");
+        cancelBtn.setPrefWidth(120);
+        cancelBtn.setPrefHeight(45);
+        cancelBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 16px; -fx-cursor: hand; -fx-background-radius: 10;");
+
+        final boolean[] confirmed = {false};
+
+        okBtn.setOnAction(e -> {
+            confirmed[0] = true;
+            confirmDialog.close();
+        });
+
+        cancelBtn.setOnAction(e -> confirmDialog.close());
+
+        buttonBox.getChildren().addAll(okBtn, cancelBtn);
+
+        mainBox.getChildren().addAll(contentBox, buttonBox);
+
+        Scene scene = new Scene(mainBox, 500, 280);
+        scene.setFill(javafx.scene.paint.Color.WHITE);
+        confirmDialog.setScene(scene);
+
+        confirmDialog.showAndWait();
+
+        if (confirmed[0]) {
             try {
                 DataRequest request = new DataRequest();
                 request.put("id", node.getId());
@@ -434,7 +579,7 @@ public class CategoryController extends ToolController {
                 logger.log(Level.SEVERE, "删除分类异常", e);
                 showError("删除异常", e.getMessage());
             }
-        });
+        }
     }
 
     private void viewMaterialsInCategory(CategoryNode category) {
@@ -445,12 +590,26 @@ public class CategoryController extends ToolController {
 
         try {
             DataRequest request = new DataRequest();
-            request.put("categoryName", category.getName());
 
-            DataResponse response = HttpRequestUtil.request("/api/material/search", request);
+            DataResponse response = HttpRequestUtil.request("/api/material/list", request);
 
             if (response != null && response.getCode() == 200) {
-                showMaterialsDialog(category.getName(), response.getData());
+                List<Map<String, Object>> allMaterials = gson.fromJson(
+                    gson.toJson(response.getData()),
+                    new TypeToken<List<Map<String, Object>>>(){}.getType()
+                );
+
+                List<Map<String, Object>> filteredMaterials = new java.util.ArrayList<>();
+                if (allMaterials != null) {
+                    for (Map<String, Object> material : allMaterials) {
+                        String categoryName = (String) material.get("categoryName");
+                        if (category.getName().equals(categoryName)) {
+                            filteredMaterials.add(material);
+                        }
+                    }
+                }
+
+                showMaterialsDialog(category.getName(), filteredMaterials);
             } else {
                 String errorMsg = response != null ? response.getMsg() : "网络错误";
                 showError("加载失败", "后端返回错误: " + errorMsg);
@@ -790,9 +949,28 @@ public class CategoryController extends ToolController {
                 String name = nameField.getText().trim();
 
                 if (name.isEmpty()) {
-                    showError("验证失败", "分类名称不能为空，请输入分类名称！");
+                    showError("新增失败", "分类名称不能为空，请输入分类名称！");
                     nameField.requestFocus();
                     return;
+                }
+
+                if (node == null) {
+                    boolean nameExists = false;
+
+                    ObservableList<TreeItem<CategoryNode>> rootChildren = categoryTreeTable.getRoot().getChildren();
+                    for (TreeItem<CategoryNode> treeItem : rootChildren) {
+                        CategoryNode existingNode = treeItem.getValue();
+                        if (existingNode != null && name.equals(existingNode.getName())) {
+                            nameExists = true;
+                            break;
+                        }
+                    }
+
+                    if (nameExists) {
+                        showError("新增失败", "分类名称已存在，请使用其他名称！");
+                        nameField.requestFocus();
+                        return;
+                    }
                 }
 
                 DataRequest request = new DataRequest();
@@ -828,6 +1006,7 @@ public class CategoryController extends ToolController {
                 showError("操作异常", ex.getMessage());
             }
         });
+
 
         cancelBtn.setOnAction(e -> dialog.close());
 
@@ -900,22 +1079,46 @@ public class CategoryController extends ToolController {
 
     private void showError(String title, String message) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.setTitle(title);
 
-            alert.getDialogPane().setStyle("-fx-background-color: white;");
-            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+            VBox mainBox = new VBox(30);
+            mainBox.setPadding(new Insets(40, 40, 30, 40));
+            mainBox.setAlignment(javafx.geometry.Pos.CENTER);
+            mainBox.setStyle("-fx-background-color: white;");
 
-            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
-            alert.getButtonTypes().setAll(okBtn);
+            VBox contentBox = new VBox(15);
+            contentBox.setAlignment(javafx.geometry.Pos.CENTER);
 
-            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
-            button.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
-            button.setDefaultButton(true);
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a1a2e;");
 
-            alert.showAndWait();
+            Label messageLabel = new Label(message);
+            messageLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4a5568; -fx-wrap-text: true; -fx-alignment: center;");
+            messageLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+            messageLabel.setMaxWidth(400);
+
+            contentBox.getChildren().addAll(titleLabel, messageLabel);
+
+            HBox buttonBox = new HBox(20);
+            buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
+            buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+            Button okBtn = new Button("确定");
+            okBtn.setPrefWidth(120);
+            okBtn.setPrefHeight(45);
+            okBtn.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10;");
+            okBtn.setOnAction(e -> dialog.close());
+
+            buttonBox.getChildren().add(okBtn);
+
+            mainBox.getChildren().addAll(contentBox, buttonBox);
+
+            Scene scene = new Scene(mainBox, 500, 250);
+            scene.setFill(javafx.scene.paint.Color.WHITE);
+            dialog.setScene(scene);
+            dialog.showAndWait();
         });
     }
 

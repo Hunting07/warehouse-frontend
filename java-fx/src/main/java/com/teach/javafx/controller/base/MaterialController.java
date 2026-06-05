@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Optional;
 
 public class MaterialController extends ToolController {
     private static final Logger logger = Logger.getLogger(MaterialController.class.getName());
@@ -504,19 +505,20 @@ public class MaterialController extends ToolController {
         String stockStatus = stockStatusFilter.getValue();
         String materialStatus = materialStatusFilter != null ? materialStatusFilter.getValue() : "全部";
 
+        System.out.println("=== 物资管理搜索 ===");
+        System.out.println("keyword: [" + keyword + "]");
+        System.out.println("category: [" + category + "]");
+        System.out.println("stockStatus: [" + stockStatus + "]");
+        System.out.println("materialStatus: [" + materialStatus + "]");
+
         try {
             DataRequest request = new DataRequest();
-            if (keyword != null && !keyword.isEmpty()) {
-                request.put("keyword", keyword);
-            }
-            if (category != null && !"全部分类".equals(category)) {
-                request.put("categoryName", category);
-            }
-            if (stockStatus != null && !"全部".equals(stockStatus)) {
-                request.put("stockStatus", stockStatus);
-            }
 
-            DataResponse response = HttpRequestUtil.request("/api/material/search", request);
+            System.out.println("发送的请求参数: " + request);
+
+            DataResponse response = HttpRequestUtil.request("/api/material/list", request);
+
+            System.out.println("搜索响应码: " + (response != null ? response.getCode() : "null"));
 
             if (response != null && response.getCode() == 200) {
                 Platform.runLater(() -> {
@@ -524,6 +526,8 @@ public class MaterialController extends ToolController {
                         gson.toJson(response.getData()),
                         new TypeToken<List<Map<String, Object>>>(){}.getType()
                     );
+
+                    System.out.println("后端返回的物资数量: " + (allMaterials != null ? allMaterials.size() : 0));
 
                     if (allMaterials == null) {
                         buildDataList(null);
@@ -534,49 +538,111 @@ public class MaterialController extends ToolController {
 
                     for (Map<String, Object> material : allMaterials) {
                         try {
+                            String materialName = (String) material.get("name");
+                            String materialCode = (String) material.get("code");
+                            String categoryName2 = (String) material.get("categoryName");
+                            int currentStock = ((Number) material.get("currentStock")).intValue();
+                            int safetyStock = ((Number) material.get("safetyStock")).intValue();
+
+                            Object statusObj = material.get("status");
+                            int materialStatusCode = 0;
+                            if (statusObj instanceof Number) {
+                                materialStatusCode = ((Number) statusObj).intValue();
+                            } else if (statusObj != null) {
+                                String statusStr = statusObj.toString();
+                                materialStatusCode = ("1".equals(statusStr) || "启用".equals(statusStr)) ? 1 : 0;
+                            }
+
+                            System.out.println("物资: " + materialName +
+                                " | 分类: " + categoryName2 +
+                                " | 库存: " + currentStock + "/" + safetyStock +
+                                " | 状态码: " + materialStatusCode);
+
+                            boolean matchesKeyword = true;
+                            if (keyword != null && !keyword.trim().isEmpty()) {
+                                String kw = keyword.trim().toLowerCase();
+                                boolean nameMatch = materialName != null && materialName.toLowerCase().contains(kw);
+                                boolean codeMatch = materialCode != null && materialCode.toLowerCase().contains(kw);
+                                matchesKeyword = nameMatch || codeMatch;
+                                System.out.println("  -> 关键字匹配: " + matchesKeyword + " (nameMatch=" + nameMatch + ", codeMatch=" + codeMatch + ")");
+                            }
+
+                            boolean matchesCategoryFilter = true;
+                            if (category != null && !"全部分类".equals(category)) {
+                                matchesCategoryFilter = category.equals(categoryName2);
+                                System.out.println("  -> 分类匹配: " + matchesCategoryFilter + " (期望=" + category + ", 实际=" + categoryName2 + ")");
+                            }
+
                             boolean matchesStockFilter = true;
                             if (stockStatus != null && !"全部".equals(stockStatus)) {
-                                int currentStock = ((Number) material.get("currentStock")).intValue();
-                                int safetyStock = ((Number) material.get("safetyStock")).intValue();
                                 boolean isWarning = currentStock < safetyStock;
 
                                 if ("预警".equals(stockStatus)) {
                                     matchesStockFilter = isWarning;
+                                    System.out.println("  -> 库存预警过滤: " + isWarning);
                                 } else if ("正常".equals(stockStatus)) {
                                     matchesStockFilter = !isWarning;
+                                    System.out.println("  -> 库存正常过滤: " + !isWarning);
                                 }
                             }
 
                             boolean matchesStatusFilter = true;
                             if (materialStatus != null && !"全部".equals(materialStatus)) {
-                                int materialStatusCode = 0;
-                                if (material.get("status") != null) {
-                                    Object statusObj = material.get("status");
-                                    if (statusObj instanceof Number) {
-                                        materialStatusCode = ((Number) statusObj).intValue();
-                                    } else {
-                                        String statusStr = statusObj.toString();
-                                        materialStatusCode = ("1".equals(statusStr) || "启用".equals(statusStr)) ? 1 : 0;
+                                boolean categoryEnabled = true;
+
+                                if (categoryName2 != null && !categoryName2.isEmpty()) {
+                                    if (categoryListCache != null) {
+                                        for (Map<String, Object> cat : categoryListCache) {
+                                            if (categoryName2.equals(cat.get("name"))) {
+                                                Object catStatusObj = cat.get("status");
+                                                if (catStatusObj instanceof Number) {
+                                                    categoryEnabled = ((Number) catStatusObj).intValue() == 1;
+                                                } else if (catStatusObj != null) {
+                                                    String catStatusStr = catStatusObj.toString();
+                                                    categoryEnabled = "1".equals(catStatusStr) || "启用".equals(catStatusStr);
+                                                }
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
 
-                                // 物资管理页面：只根据物资本身的状态过滤，不考虑分类状态
                                 if ("启用".equals(materialStatus)) {
-                                    matchesStatusFilter = (materialStatusCode == 1);
-                                } else {
-                                    matchesStatusFilter = (materialStatusCode == 0);
+                                    if (categoryName2 == null || categoryName2.isEmpty()) {
+                                        matchesStatusFilter = (materialStatusCode == 1);
+                                    } else {
+                                        matchesStatusFilter = categoryEnabled && (materialStatusCode == 1);
+                                    }
+                                    System.out.println("  -> 启用状态过滤: 分类启用=" + categoryEnabled + ", 物资启用=" + (materialStatusCode == 1) + ", 结果=" + matchesStatusFilter);
+                                } else if ("停用".equals(materialStatus)) {
+                                    if (categoryName2 == null || categoryName2.isEmpty()) {
+                                        matchesStatusFilter = (materialStatusCode == 0);
+                                    } else {
+                                        matchesStatusFilter = !categoryEnabled || (materialStatusCode == 0);
+                                    }
+                                    System.out.println("  -> 停用状态过滤: 分类启用=" + categoryEnabled + ", 物资停用=" + (materialStatusCode == 0) + ", 结果=" + matchesStatusFilter);
                                 }
                             }
 
+                            boolean passAll = matchesKeyword && matchesCategoryFilter && matchesStockFilter && matchesStatusFilter;
+                            System.out.println("  -> 关键字: " + matchesKeyword +
+                                " | 分类: " + matchesCategoryFilter +
+                                " | 库存: " + matchesStockFilter +
+                                " | 状态: " + matchesStatusFilter +
+                                " | 总结果: " + passAll);
 
-                            if (matchesStockFilter && matchesStatusFilter) {
+                            if (passAll) {
                                 filteredMaterials.add(material);
+                                System.out.println("  -> ✓ 通过筛选");
+                            } else {
+                                System.out.println("  -> ✗ 未通过筛选");
                             }
                         } catch (Exception e) {
                             logger.log(Level.WARNING, "过滤物资数据失败", e);
                         }
                     }
 
+                    System.out.println("最终过滤后的物资数量: " + filteredMaterials.size());
                     buildDataList(filteredMaterials);
                 });
             } else {
@@ -643,49 +709,80 @@ public class MaterialController extends ToolController {
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("确认删除");
-        confirm.setHeaderText("确定要删除物资 \"" + material.getName() + "\" 吗？");
-        confirm.setContentText("删除后无法恢复！");
+        Stage confirmDialog = new Stage();
+        confirmDialog.initModality(Modality.APPLICATION_MODAL);
+        confirmDialog.setTitle("确认删除");
 
-        confirm.getDialogPane().setStyle("-fx-background-color: white;");
-        confirm.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+        VBox mainBox = new VBox(30);
+        mainBox.setPadding(new Insets(40, 40, 30, 40));
+        mainBox.setAlignment(javafx.geometry.Pos.CENTER);
+        mainBox.setStyle("-fx-background-color: white;");
 
-        ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelBtn = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
-        confirm.getButtonTypes().setAll(okBtn, cancelBtn);
+        VBox contentBox = new VBox(15);
+        contentBox.setAlignment(javafx.geometry.Pos.CENTER);
 
-        Button okButton = (Button) confirm.getDialogPane().lookupButton(okBtn);
-        okButton.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+        Label titleLabel = new Label("确定要删除物资 \"" + material.getName() + "\" 吗？");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a1a2e;");
 
-        Button cancelButton = (Button) confirm.getDialogPane().lookupButton(cancelBtn);
-        cancelButton.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
+        Label messageLabel = new Label("删除后无法恢复！");
+        messageLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4a5568; -fx-wrap-text: true; -fx-alignment: center;");
+        messageLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        messageLabel.setMaxWidth(400);
 
-        System.out.println("=== 删除按钮被点击 ===");
-        System.out.println("isAdmin: " + isAdmin);
-        System.out.println("material: " + (material != null ? material.getName() : "null"));
+        contentBox.getChildren().addAll(titleLabel, messageLabel);
 
-        confirm.showAndWait().ifPresent(response -> {
-            if (response == okBtn) {
-                try {
-                    DataRequest request = new DataRequest();
-                    request.put("id", material.getId());
+        HBox buttonBox = new HBox(20);
+        buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
+        buttonBox.setPadding(new Insets(10, 0, 0, 0));
 
-                    DataResponse resp = HttpRequestUtil.request("/api/material/delete", request);
+        Button okBtn = new Button("确定");
+        okBtn.setPrefWidth(120);
+        okBtn.setPrefHeight(45);
+        okBtn.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10;");
 
-                    if (resp != null && resp.getCode() == 200) {
-                        showInfo("删除成功", "物资已删除");
-                        loadMaterials();
-                    } else {
-                        String errorMsg = resp != null ? resp.getMsg() : "网络错误";
-                        showError("删除失败", "后端返回错误: " + errorMsg);
-                    }
-                } catch (Exception e) {
-                    logger.log(Level.SEVERE, "删除物资异常", e);
-                    showError("删除异常", e.getMessage());
-                }
-            }
+        Button cancelBtn = new Button("取消");
+        cancelBtn.setPrefWidth(120);
+        cancelBtn.setPrefHeight(45);
+        cancelBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #666666; -fx-font-size: 16px; -fx-cursor: hand; -fx-background-radius: 10;");
+
+        final boolean[] confirmed = {false};
+
+        okBtn.setOnAction(e -> {
+            confirmed[0] = true;
+            confirmDialog.close();
         });
+
+        cancelBtn.setOnAction(e -> confirmDialog.close());
+
+        buttonBox.getChildren().addAll(okBtn, cancelBtn);
+
+        mainBox.getChildren().addAll(contentBox, buttonBox);
+
+        Scene scene = new Scene(mainBox, 500, 280);
+        scene.setFill(javafx.scene.paint.Color.WHITE);
+        confirmDialog.setScene(scene);
+
+        confirmDialog.showAndWait();
+
+        if (confirmed[0]) {
+            try {
+                DataRequest request = new DataRequest();
+                request.put("id", material.getId());
+
+                DataResponse resp = HttpRequestUtil.request("/api/material/delete", request);
+
+                if (resp != null && resp.getCode() == 200) {
+                    showInfo("删除成功", "物资已删除");
+                    loadMaterials();
+                } else {
+                    String errorMsg = resp != null ? resp.getMsg() : "网络错误";
+                    showError("删除失败", "后端返回错误: " + errorMsg);
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "删除物资异常", e);
+                showError("删除异常", e.getMessage());
+            }
+        }
     }
 
     private void showEditDialog(MaterialNode material) {
@@ -837,9 +934,30 @@ public class MaterialController extends ToolController {
                 String name = nameField.getText().trim();
 
                 if (name.isEmpty()) {
-                    showError("验证失败", "物资名称不能为空，请输入物资名称！");
+                    showError("新增失败", "物资名称不能为空，请输入物资名称！");
                     nameField.requestFocus();
                     return;
+                }
+
+                if (material == null) {
+                    DataRequest checkRequest = new DataRequest();
+                    DataResponse checkResponse = HttpRequestUtil.request("/api/material/list", checkRequest);
+
+                    if (checkResponse != null && checkResponse.getCode() == 200 && checkResponse.getData() != null) {
+                        Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+                        List<Map<String, Object>> materialList = gson.fromJson(gson.toJson(checkResponse.getData()), listType);
+
+                        if (materialList != null) {
+                            for (Map<String, Object> m : materialList) {
+                                String existingName = (String) m.get("name");
+                                if (name.equals(existingName)) {
+                                    showError("新增失败", "物资名称已存在，请使用其他名称！");
+                                    nameField.requestFocus();
+                                    return;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 DataRequest request = new DataRequest();
@@ -959,21 +1077,46 @@ public class MaterialController extends ToolController {
 
     private void showError(String title, String message) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.getDialogPane().setStyle("-fx-background-color: white;");
-            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.setTitle(title);
 
-            ButtonType okBtn = new ButtonType("确定", ButtonBar.ButtonData.OK_DONE);
-            alert.getButtonTypes().setAll(okBtn);
+            VBox mainBox = new VBox(30);
+            mainBox.setPadding(new Insets(40, 40, 30, 40));
+            mainBox.setAlignment(javafx.geometry.Pos.CENTER);
+            mainBox.setStyle("-fx-background-color: white;");
 
-            Button button = (Button) alert.getDialogPane().lookupButton(okBtn);
-            button.setStyle("-fx-background-color: #F44336; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 20 8 20;");
-            button.setDefaultButton(true);
+            VBox contentBox = new VBox(15);
+            contentBox.setAlignment(javafx.geometry.Pos.CENTER);
 
-            alert.showAndWait();
+            Label titleLabel = new Label(title);
+            titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a1a2e;");
+
+            Label messageLabel = new Label(message);
+            messageLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #4a5568; -fx-wrap-text: true; -fx-alignment: center;");
+            messageLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+            messageLabel.setMaxWidth(400);
+
+            contentBox.getChildren().addAll(titleLabel, messageLabel);
+
+            HBox buttonBox = new HBox(20);
+            buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
+            buttonBox.setPadding(new Insets(10, 0, 0, 0));
+
+            Button okBtn = new Button("确定");
+            okBtn.setPrefWidth(120);
+            okBtn.setPrefHeight(45);
+            okBtn.setStyle("-fx-background-color: #E57373; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 10;");
+            okBtn.setOnAction(e -> dialog.close());
+
+            buttonBox.getChildren().add(okBtn);
+
+            mainBox.getChildren().addAll(contentBox, buttonBox);
+
+            Scene scene = new Scene(mainBox, 500, 250);
+            scene.setFill(javafx.scene.paint.Color.WHITE);
+            dialog.setScene(scene);
+            dialog.showAndWait();
         });
     }
 
