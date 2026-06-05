@@ -21,6 +21,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import javafx.scene.layout.Priority;
 
 /**
  * 入库单详情查看弹窗
@@ -33,34 +34,38 @@ public class StockInViewDialog extends Stage {
             .build();
     
     private TableView<Map<String, Object>> itemTable;
+    private Label totalQuantityLabel;
+    private Label totalAmountLabel;
 
     public StockInViewDialog(StockIn stockIn) {
         initModality(Modality.APPLICATION_MODAL);
         setTitle("入库单详情");
         setResizable(true);
 
-        VBox mainContent = new VBox(20);
-        mainContent.setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff); -fx-padding: 25;");
+        VBox mainContent = new VBox(16);
+        mainContent.setStyle("-fx-background-color: #f5f7fa;");
+        mainContent.setPadding(new Insets(24, 24, 0, 24));
 
-        // 标题
+        // 标题区域
+        VBox titleBox = new VBox(8);
         Label titleLabel = new Label("入库单详情");
-        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
+        
         Separator separator = new Separator();
-        separator.setStyle("-fx-background-color: #e0e6ed;");
+        separator.setStyle("-fx-background-color: #e5e6eb;");
+        
+        titleBox.getChildren().addAll(titleLabel, separator);
 
-        HBox titleBox = new HBox(10, titleLabel);
-        titleBox.setAlignment(Pos.CENTER_LEFT);
+        // 基本信息卡片
+        VBox infoCard = createInfoCard(stockIn);
 
-        // 基本信息区域
-        VBox infoBox = createInfoBox(stockIn);
+        // 物资明细卡片
+        VBox tableCard = createTableCard();
 
-        // 物资明细表格
-        VBox tableBox = createTableBox();
+        mainContent.getChildren().addAll(titleBox, infoCard, tableCard);
+        VBox.setMargin(tableCard, new Insets(0, 0, 24, 0));
 
-        mainContent.getChildren().addAll(titleBox, separator, infoBox, tableBox);
-
-        Scene scene = new Scene(mainContent, 750, 550);
+        Scene scene = new Scene(mainContent, 750, 650);
         scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
         setScene(scene);
 
@@ -69,23 +74,75 @@ public class StockInViewDialog extends Stage {
     }
 
     /**
-     * 创建基本信息区域
+     * 创建基本信息卡片
      */
-    private VBox createInfoBox(StockIn stockIn) {
-        VBox infoBox = new VBox(12);
-        infoBox.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);");
+    private VBox createInfoCard(StockIn stockIn) {
+        VBox infoCard = new VBox(0);
+        infoCard.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 20 24 20 24;");
 
-        Label inCodeLabel = createInfoLabel("入库单号：", stockIn.getInCode());
-        Label applyUserLabel = createInfoLabel("申请人：", stockIn.getApplyUserName());
-        Label approveUserLabel = createInfoLabel("审批人：", getApproveUserName(stockIn));
-        Label typeLabel = createInfoLabel("入库类型：", getTypeName(stockIn.getType()));
-        Label statusLabel = createInfoLabel("状态：", getStatusName(stockIn.getStatus()));
-        Label createTimeLabel = createInfoLabel("申请时间：", stockIn.getCreateTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        Label approveTimeLabel = createInfoLabel("审批时间：", stockIn.getApproveTime() != null ? stockIn.getApproveTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "-");
+        // 第一行：入库单号、申请人、审批人
+        HBox row1 = new HBox(0);
+        row1.setSpacing(24);
+        row1.getChildren().addAll(
+            createInfoField("入库单号", stockIn.getInCode(), 180),
+            createInfoField("申请人", stockIn.getApplyUserName(), 180),
+            createInfoField("审批人", getApproveUserName(stockIn), 180)
+        );
 
-        infoBox.getChildren().addAll(inCodeLabel, applyUserLabel, approveUserLabel, typeLabel, statusLabel, createTimeLabel, approveTimeLabel);
+        // 第二行：入库类型、状态
+        HBox row2 = new HBox(0);
+        row2.setSpacing(24);
+        row2.getChildren().addAll(
+            createInfoField("入库类型", getTypeName(stockIn.getType()), 180),
+            createInfoField("状态", getStatusName(stockIn.getStatus()), 180)
+        );
 
-        return infoBox;
+        // 第三行：申请时间、审批时间
+        HBox row3 = new HBox(0);
+        row3.setSpacing(24);
+        row3.getChildren().addAll(
+            createInfoField("申请时间", stockIn.getCreateTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), 180),
+            createInfoField("审批时间", stockIn.getApproveTime() != null ? 
+                stockIn.getApproveTime().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) : "-", 180)
+        );
+
+        infoCard.getChildren().addAll(row1, row2, row3);
+        VBox.setMargin(row1, new Insets(0, 0, 12, 0));
+        VBox.setMargin(row2, new Insets(0, 0, 12, 0));
+
+        return infoCard;
+    }
+
+    /**
+     * 创建信息字段（标签+值）
+     */
+    private VBox createInfoField(String label, String value) {
+        return createInfoField(label, value, -1);
+    }
+    
+    /**
+     * 创建信息字段（标签+值），可指定宽度
+     */
+    private VBox createInfoField(String label, String value, double width) {
+        VBox field = new VBox(4);
+        if (width > 0) {
+            field.setPrefWidth(width);
+            field.setMaxWidth(width);
+            field.setMinWidth(width);
+        } else {
+            HBox.setHgrow(field, Priority.ALWAYS);
+        }
+        
+        Label labelNode = new Label(label);
+        labelNode.setStyle("-fx-font-size: 12px; -fx-text-fill: #86909c;");
+        
+        Label valueNode = new Label(value);
+        valueNode.setStyle("-fx-font-size: 14px; -fx-text-fill: #1d3f66; -fx-font-weight: bold;");
+        valueNode.setWrapText(true);
+        valueNode.setAlignment(Pos.TOP_LEFT);
+        
+        field.getChildren().addAll(labelNode, valueNode);
+        return field;
     }
 
     /**
@@ -103,46 +160,54 @@ public class StockInViewDialog extends Stage {
     }
 
     /**
-     * 创建信息标签
+     * 创建物资明细卡片
      */
-    private Label createInfoLabel(String prefix, String value) {
-        Label label = new Label(prefix + value);
-        label.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
-        return label;
-    }
-
-    /**
-     * 创建物资明细表格区域
-     */
-    private VBox createTableBox() {
-        VBox tableBox = new VBox(10);
-        tableBox.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);");
+    private VBox createTableCard() {
+        VBox tableCard = new VBox(12);
+        tableCard.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 20 24 20 24;");
 
         Label tableTitle = new Label("物资明细");
-        tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+        tableTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
 
         itemTable = new TableView<>();
-        itemTable.setStyle("-fx-background-color: white; -fx-background-radius: 4;");
+        itemTable.setStyle("-fx-background-color: white; -fx-border-color: #f0f0f0; -fx-border-width: 1; -fx-border-radius: 6; -fx-padding: 2;");
         itemTable.setMinHeight(180);
-        itemTable.setPrefHeight(250);
-        itemTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);  // 固定列宽策略
+        itemTable.setPrefHeight(200);
+        itemTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
+        // 物资名称列 - 左对齐，垂直居中
         TableColumn<Map<String, Object>, String> materialColumn = new TableColumn<>("物资名称");
+        materialColumn.setPrefWidth(160);
         materialColumn.setCellValueFactory(data -> {
             Map<String, Object> item = data.getValue();
             String value = item != null ? (String) item.get("materialName") : null;
             return new javafx.beans.property.SimpleStringProperty(value);
         });
-        materialColumn.setPrefWidth(200);
+        materialColumn.setCellFactory(col -> new TableCell<Map<String, Object>, String>() {
+            {
+                setStyle("-fx-alignment: CENTER_LEFT;");
+            }
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item);
+                }
+            }
+        });
 
+        // 单价列 - 居中对齐
         TableColumn<Map<String, Object>, BigDecimal> priceColumn = new TableColumn<>("单价");
+        priceColumn.setPrefWidth(100);
         priceColumn.setCellValueFactory(data -> {
             Map<String, Object> item = data.getValue();
             Object value = item != null ? item.get("price") : null;
             BigDecimal decimalValue = value != null ? new BigDecimal(value.toString()) : null;
             return new javafx.beans.property.SimpleObjectProperty<>(decimalValue);
         });
-        priceColumn.setPrefWidth(120);
         priceColumn.setCellFactory(col -> new TableCell<Map<String, Object>, BigDecimal>() {
             @Override
             protected void updateItem(BigDecimal item, boolean empty) {
@@ -157,14 +222,15 @@ public class StockInViewDialog extends Stage {
             }
         });
 
+        // 数量列 - 居中对齐
         TableColumn<Map<String, Object>, Integer> quantityColumn = new TableColumn<>("数量");
+        quantityColumn.setPrefWidth(100);
         quantityColumn.setCellValueFactory(data -> {
             Map<String, Object> item = data.getValue();
             Object value = item != null ? item.get("quantity") : null;
             Integer intValue = value != null ? ((Number) value).intValue() : null;
             return new javafx.beans.property.SimpleObjectProperty<>(intValue);
         });
-        quantityColumn.setPrefWidth(100);
         quantityColumn.setCellFactory(col -> new TableCell<Map<String, Object>, Integer>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
@@ -179,18 +245,18 @@ public class StockInViewDialog extends Stage {
             }
         });
 
+        // 总金额列 - 居中对齐
         TableColumn<Map<String, Object>, BigDecimal> totalAmountColumn = new TableColumn<>("总金额");
+        totalAmountColumn.setPrefWidth(120);
         totalAmountColumn.setCellValueFactory(data -> {
             Map<String, Object> item = data.getValue();
             Object value = item != null ? item.get("totalAmount") : null;
-            // 兼容 amount 字段
             if (value == null) {
                 value = item != null ? item.get("amount") : null;
             }
             BigDecimal decimalValue = value != null ? new BigDecimal(value.toString()) : null;
             return new javafx.beans.property.SimpleObjectProperty<>(decimalValue);
         });
-        totalAmountColumn.setPrefWidth(120);
         totalAmountColumn.setCellFactory(col -> new TableCell<Map<String, Object>, BigDecimal>() {
             @Override
             protected void updateItem(BigDecimal item, boolean empty) {
@@ -199,7 +265,7 @@ public class StockInViewDialog extends Stage {
                     setText(null);
                     setAlignment(Pos.CENTER);
                 } else {
-                    setText(String.format("%.2f", item));
+                    setText(String.format("¥%.2f", item));
                     setAlignment(Pos.CENTER);
                 }
             }
@@ -207,7 +273,6 @@ public class StockInViewDialog extends Stage {
 
         itemTable.getColumns().addAll(materialColumn, priceColumn, quantityColumn, totalAmountColumn);
 
-        // 设置行样式
         itemTable.setRowFactory(tv -> new TableRow<Map<String, Object>>() {
             @Override
             protected void updateItem(Map<String, Object> item, boolean empty) {
@@ -224,10 +289,31 @@ public class StockInViewDialog extends Stage {
             }
         });
 
-        tableBox.getChildren().addAll(tableTitle, itemTable);
+        // 合计行
+        HBox summaryBox = new HBox(24);
+        summaryBox.setAlignment(Pos.CENTER_LEFT);
+        summaryBox.setStyle("-fx-padding: 12 0 0 0; -fx-border-color: #e5e6eb; -fx-border-width: 1 0 0 0;");
+        
+        Label totalQtyLabel = new Label("总数量:");
+        totalQtyLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
+        
+        totalQuantityLabel = new Label("0");
+        totalQuantityLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #389e0d; -fx-font-weight: bold;");
+        HBox.setHgrow(totalQuantityLabel, Priority.ALWAYS);
+        
+        Label totalAmtLabel = new Label("合计总金额:");
+        totalAmtLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
+        
+        totalAmountLabel = new Label("¥0.00");
+        totalAmountLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #f53f3f; -fx-font-weight: bold;");
+        HBox.setHgrow(totalAmountLabel, Priority.ALWAYS);
+        
+        summaryBox.getChildren().addAll(totalQtyLabel, totalQuantityLabel, totalAmtLabel, totalAmountLabel);
+
+        tableCard.getChildren().addAll(tableTitle, itemTable, summaryBox);
         VBox.setVgrow(itemTable, Priority.ALWAYS);
 
-        return tableBox;
+        return tableCard;
     }
 
     /**
@@ -271,6 +357,29 @@ public class StockInViewDialog extends Stage {
                                 
                                 itemTable.getItems().setAll(items);
                                 System.out.println("=== [查看详情] 已填充 " + items.size() + " 条数据到表格");
+                                
+                                // 计算合计
+                                int totalQuantity = items.stream()
+                                    .mapToInt(item -> {
+                                        Object quantity = item.get("quantity");
+                                        return quantity instanceof Number ? ((Number) quantity).intValue() : 0;
+                                    })
+                                    .sum();
+                                
+                                BigDecimal totalAmount = items.stream()
+                                    .map(item -> {
+                                        Object value = item.get("totalAmount");
+                                        if (value == null) {
+                                            value = item.get("amount");
+                                        }
+                                        return value != null ? new BigDecimal(value.toString()) : BigDecimal.ZERO;
+                                    })
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                
+                                totalQuantityLabel.setText(String.valueOf(totalQuantity));
+                                totalAmountLabel.setText("¥" + String.format("%.2f", totalAmount));
+                                
+                                System.out.println("=== [查看详情] 合计 - 总数量: " + totalQuantity + ", 总金额: " + totalAmount);
                             } else {
                                 System.out.println("=== [查看详情] items为空或null");
                                 MessageDialog.showDialog("该入库单没有物资明细");
