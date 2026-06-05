@@ -89,7 +89,6 @@ public class DictionaryController {
         TreeTableView.TreeTableViewSelectionModel<MyTreeNode> tsm = treeTable.getSelectionModel();
         ObservableList<Integer> list = tsm.getSelectedIndices();
         list.addListener((ListChangeListener.Change<? extends Integer> change) -> {
-            System.out.println("Row selection has changed");
         });
     }
 

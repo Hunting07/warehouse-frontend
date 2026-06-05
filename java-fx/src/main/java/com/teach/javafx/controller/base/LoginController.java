@@ -79,7 +79,6 @@ public class LoginController {
             scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
             MainApplication.resetStage("用户注册", scene);
         } catch (IOException e) {
-            e.printStackTrace();
             MessageDialog.showDialog("打开注册页面失败：" + e.getMessage());
         }
     }
@@ -228,7 +227,6 @@ public class LoginController {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
             MessageDialog.showDialog("登录异常：" + e.getMessage());
         }
     }

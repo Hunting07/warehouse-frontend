@@ -83,10 +83,6 @@ public class OutOrderListController extends ToolController {
         String role = AppStore.getJwt().getRole();
         isAdmin = "admin".equals(role) || "ADMIN".equals(role);
         
-        System.out.println("\n=== [出库列表] 初始化 ===");
-        System.out.println("当前用户角色: " + role);
-        System.out.println("是否管理员: " + isAdmin);
-        System.out.println("用户ID: " + AppStore.getJwt().getId());
 
         indexColumn.setCellValueFactory(data -> {
             int index = outOrderTable.getItems().indexOf(data.getValue());
@@ -244,21 +240,13 @@ public class OutOrderListController extends ToolController {
                 StringBuilder urlBuilder = new StringBuilder(HttpRequestUtil.serverUrl + "/api/stockOut/getAllStockOutList");
                 boolean hasParam = false;
 
-                System.out.println("\n=== [出库列表] 加载数据 ===");
-                System.out.println("当前用户角色: " + AppStore.getJwt().getRole());
-                System.out.println("是否管理员: " + isAdmin);
-                System.out.println("用户ID: " + AppStore.getJwt().getId());
                 
-                System.out.println("完整 JwtResponse 对象: " + AppStore.getJwt());
 
                 if (!isAdmin && AppStore.getJwt() != null && AppStore.getJwt().getId() != null) {
                     urlBuilder.append(hasParam ? "&" : "?").append("userId=").append(AppStore.getJwt().getId());
                     hasParam = true;
-                    System.out.println("添加 userId 参数（非管理员，只看自己的数据）");
                 } else if (!isAdmin) {
-                    System.out.println("警告：非管理员但用户ID为null，不添加userId参数");
                 } else {
-                    System.out.println("不添加 userId 参数（管理员，看所有数据）");
                 }
 
                 if (currentStatus != null && !currentStatus.equals("全部")) {
@@ -281,10 +269,6 @@ public class OutOrderListController extends ToolController {
                     hasParam = true;
                 }
 
-                System.out.println("=== [前端] 加载出库列表 ===");
-                System.out.println("请求URL: " + urlBuilder.toString());
-                System.out.println("Token: " + AppStore.getJwt().getToken());
-                System.out.println("用户角色: " + AppStore.getJwt().getRole());
 
                 HttpRequest httpRequest = HttpRequest.newBuilder()
                         .uri(URI.create(urlBuilder.toString()))
@@ -294,8 +278,6 @@ public class OutOrderListController extends ToolController {
 
                 HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
 
-                System.out.println("响应状态码: " + response.statusCode());
-                System.out.println("响应内容: " + response.body());
 
                 if (response.statusCode() == 200) {
                     Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
@@ -306,11 +288,8 @@ public class OutOrderListController extends ToolController {
                         Map<String, Object> dataMap = (Map<String, Object>) resultMap.get("data");
                         List<Map<String, Object>> dataList = (List<Map<String, Object>>) dataMap.get("records");
                         if (dataList != null) {
-                            System.out.println("成功加载 " + dataList.size() + " 条数据");
                             
                             if (!dataList.isEmpty()) {
-                                System.out.println("第一条数据的 totalAmount: " + dataList.get(0).get("totalAmount"));
-                                System.out.println("第一条数据的 totalNum: " + dataList.get(0).get("totalNum"));
                             }
 
                             List<OutOrder> list = new ArrayList<>();
@@ -390,7 +369,6 @@ public class OutOrderListController extends ToolController {
                                 }
                                 order.setMaterialNames(materialNames);
                                 
-                                System.out.println("出库单 " + order.getId() + " 物品名称: " + materialNames);
                                 
                                 if (map.get("totalAmount") != null) {
                                     Object amountObj = map.get("totalAmount");
@@ -421,14 +399,12 @@ public class OutOrderListController extends ToolController {
                                 outOrderList.setAll(list);
                             });
                         } else {
-                            System.out.println("records 为 null");
                             javafx.application.Platform.runLater(() -> {
                                 outOrderList.clear();
                             });
                         }
                     } else {
                         final String errorMsg = resultMap.get("msg") != null ? resultMap.get("msg").toString() : "未知错误";
-                        System.out.println("业务错误: " + errorMsg);
                         javafx.application.Platform.runLater(() -> {
                             MessageDialog.showDialog("加载数据失败：" + errorMsg);
                         });
@@ -447,14 +423,11 @@ public class OutOrderListController extends ToolController {
                         }
                     }
                     final String finalErrorMsg = errorMsg;
-                    System.out.println("HTTP错误: " + finalErrorMsg);
                     javafx.application.Platform.runLater(() -> {
                         MessageDialog.showDialog(finalErrorMsg);
                     });
                 }
             } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("网络异常: " + e.getMessage());
                 javafx.application.Platform.runLater(() -> {
                     MessageDialog.showDialog("加载数据异常：" + e.getMessage());
                 });
@@ -487,16 +460,13 @@ public class OutOrderListController extends ToolController {
                     try {
                         Thread.sleep(500);
                         javafx.application.Platform.runLater(() -> {
-                            System.out.println("=== 刷新出库列表 ===");
                             loadOutOrderList();
                         });
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 }).start();
             }
         } catch (Exception e) {
-            e.printStackTrace();
             MessageDialog.showDialog("打开新增窗口失败：" + e.getMessage());
         }
     }
@@ -556,7 +526,6 @@ public class OutOrderListController extends ToolController {
                 loadOutOrderList();
             }
         } catch (Exception e) {
-            e.printStackTrace();
             MessageDialog.showDialog("打开编辑窗口失败：" + e.getMessage());
         }
     }
@@ -614,7 +583,6 @@ public class OutOrderListController extends ToolController {
             
             for (String testUrl : possibleUrls) {
                 try {
-                    System.out.println("尝试删除URL: " + testUrl);
                     
                     HttpRequest httpRequest = HttpRequest.newBuilder()
                             .uri(URI.create(testUrl))
@@ -624,8 +592,6 @@ public class OutOrderListController extends ToolController {
 
                     response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
                     
-                    System.out.println("HTTP状态码: " + response.statusCode());
-                    System.out.println("响应内容: " + response.body());
                     
                     if (response.statusCode() == 200) {
                         Map<String, Object> result = gson.fromJson(response.body(), Map.class);
@@ -633,16 +599,12 @@ public class OutOrderListController extends ToolController {
                         
                         if (code == 200 || code == 0) {
                             successUrl = testUrl;
-                            System.out.println("✓ 删除成功，使用URL: " + successUrl);
                             break;
                         } else {
-                            System.out.println("✗ 业务错误: " + result.get("msg"));
                         }
                     } else {
-                        System.out.println("✗ HTTP错误");
                     }
                 } catch (Exception e) {
-                    System.out.println("✗ 请求异常: " + e.getMessage());
                 }
             }
             
@@ -654,7 +616,6 @@ public class OutOrderListController extends ToolController {
                 MessageDialog.showDialog("删除失败，请检查后端接口");
             }
         } catch (Exception e) {
-            e.printStackTrace();
             System.err.println("删除异常: " + e.getMessage());
             MessageDialog.showDialog("删除异常：" + e.getMessage());
         }
@@ -689,11 +650,9 @@ public class OutOrderListController extends ToolController {
                 try {
                     Thread.sleep(300);
                     javafx.application.Platform.runLater(() -> {
-                        System.out.println("=== 审批后刷新出库列表 ===");
                         loadOutOrderList();
                     });
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
                 }
             }).start();
         }
@@ -970,7 +929,6 @@ public class OutOrderListController extends ToolController {
         new Thread(() -> {
             try {
                 String url = HttpRequestUtil.serverUrl + "/api/stockOut/detail/" + order.getId();
-                System.out.println("=== [出库明细] 请求URL: " + url);
                 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(url))
@@ -979,8 +937,6 @@ public class OutOrderListController extends ToolController {
                         .build();
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
                 
-                System.out.println("=== [出库明细] 响应状态码: " + response.statusCode());
-                System.out.println("=== [出库明细] 响应内容: " + response.body());
                 
                 if (response.statusCode() == 200) {
                     Map<String, Object> result = gson.fromJson(response.body(), Map.class);
@@ -989,9 +945,7 @@ public class OutOrderListController extends ToolController {
                         Map<String, Object> dataMap = (Map<String, Object>) result.get("data");
                         List<Map<String, Object>> items = (List<Map<String, Object>>) dataMap.get("items");
                         
-                        System.out.println("=== [出库明细] 数据条数: " + (items != null ? items.size() : "null"));
                         if (items != null && !items.isEmpty()) {
-                            System.out.println("=== [出库明细] 第一条数据: " + items.get(0));
                         }
                         
                         Platform.runLater(() -> {
@@ -1054,8 +1008,6 @@ public class OutOrderListController extends ToolController {
                                     totalNum += qty;
                                     totalAmt = totalAmt.add(amount);
                                     
-                                    System.out.println("=== [明细项] 名称=" + name + ", 单价=" + unitPrice + ", 数量=" + qty + ", 金额=" + amount);
-                                    System.out.println("  原始数据: " + item);
                                 }
                                 
                                 detailTable.setItems(filtered);
@@ -1066,15 +1018,12 @@ public class OutOrderListController extends ToolController {
                                 double tableHeight = rowCount * 40 + 40;
                                 scrollPane.setPrefHeight(tableHeight);
                                 
-                                System.out.println("=== [出库明细] 有效数据: " + filtered.size() + " 条, 总数量: " + totalNum + ", 总金额: " + totalAmt);
                             } else {
-                                System.out.println("=== [出库明细] 数据为空");
                             }
                         });
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 Platform.runLater(() -> MessageDialog.showDialog("加载明细异常：" + e.getMessage()));
             }
         }).start();

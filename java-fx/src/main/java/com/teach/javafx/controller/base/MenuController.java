@@ -49,7 +49,6 @@ public class MenuController {
 
     public void valueChanged(TreeItem.TreeModificationEvent<MyTreeNode> e) {
         MyTreeNode nodeValue = e.getSource().getValue();
-        System.out.println(nodeValue);
     }
 
     /**

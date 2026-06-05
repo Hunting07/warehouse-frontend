@@ -34,8 +34,6 @@ public class PasswordController {
             return;
         }
 
-        System.out.println("新密码: [" + newPassword + "] 长度: " + newPassword.length());
-        System.out.println("确认密码: [" + confirmPassword + "] 长度: " + confirmPassword.length());
 
         if(!newPassword.equals(confirmPassword)) {
             MessageDialog.showDialog("两次输入的新密码不一致");

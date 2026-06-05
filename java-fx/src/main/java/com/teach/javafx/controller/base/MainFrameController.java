@@ -202,7 +202,6 @@ public class MainFrameController {
                         Method m = this.getClass().getMethod(menuName);
                         m.invoke(this);
                     } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 } else {
                     changeContent(menuName, menu.getLabel());
@@ -416,7 +415,6 @@ public class MainFrameController {
                         }
                         updateLabel(totalMaterialsLabel, count);
                     } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 });
 
@@ -438,7 +436,6 @@ public class MainFrameController {
                         }
                         updateLabel(todayInLabel, count);
                     } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 });
 
@@ -475,7 +472,6 @@ public class MainFrameController {
                         }
                         updateLabel(todayOutLabel, count);
                     } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 });
 
@@ -488,7 +484,6 @@ public class MainFrameController {
                         }
                         updateLabel(warningCountLabel, count);
                     } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 });
 
@@ -508,7 +503,6 @@ public class MainFrameController {
 
             } catch (Exception e) {
                 System.err.println("仪表盘数据加载失败");
-                e.printStackTrace();
             }
         }).start();
     }
@@ -610,7 +604,6 @@ public class MainFrameController {
                     sceneMap.put(fxmlPath, scene);
                 } catch (IOException e) {
                     System.err.println("加载 FXML 失败: " + e.getMessage());
-                    e.printStackTrace();
                     showError("加载失败", e.getMessage());
                     return;
                 }
