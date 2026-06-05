@@ -24,6 +24,7 @@ import java.net.http.HttpResponse;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OutOrderApproveDialog extends Stage {
 
@@ -41,6 +42,8 @@ public class OutOrderApproveDialog extends Stage {
     @FXML
     private TableView<Map<String, Object>> detailTableView;
     @FXML
+    private TableColumn<Map<String, Object>, String> materialCodeColumn;
+    @FXML
     private TableColumn<Map<String, Object>, String> materialColumn;
     @FXML
     private TableColumn<Map<String, Object>, BigDecimal> unitPriceColumn;
@@ -48,6 +51,11 @@ public class OutOrderApproveDialog extends Stage {
     private TableColumn<Map<String, Object>, Integer> quantityColumn;
     @FXML
     private TableColumn<Map<String, Object>, BigDecimal> amountColumn;
+
+    @FXML
+    private Label totalQuantityLabel;
+    @FXML
+    private Label totalAmountSummaryLabel;
 
     @FXML
     private TextArea rejectReasonArea;
@@ -98,8 +106,23 @@ public class OutOrderApproveDialog extends Stage {
         applyTimeLabel.setText(outOrder.getApplyTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         totalAmountLabel.setText("¥" + String.format("%.2f", outOrder.getTotalAmount()));
 
+        // 初始化合计标签
+        totalQuantityLabel.setText("0");
+        totalAmountSummaryLabel.setText("¥0.00");
+
         // 初始化表格
         detailTableView.setItems(detailList);
+
+        materialCodeColumn.setCellValueFactory(param -> {
+            String code = (String) param.getValue().get("goodsCode");
+            if (code == null || code.isEmpty()) {
+                code = (String) param.getValue().get("materialCode");
+            }
+            if (code == null || code.isEmpty()) {
+                code = "-";
+            }
+            return new SimpleStringProperty(code);
+        });
 
         materialColumn.setCellValueFactory(param -> {
             String materialName = (String) param.getValue().get("goodsName");
@@ -121,7 +144,6 @@ public class OutOrderApproveDialog extends Stage {
         });
 
         quantityColumn.setCellValueFactory(param -> {
-            // 尝试多种可能的字段名
             Object quantity = param.getValue().get("outNum");
             if (quantity == null) {
                 quantity = param.getValue().get("quantity");
@@ -158,7 +180,6 @@ public class OutOrderApproveDialog extends Stage {
                 System.out.println("\n=== [审批对话框] 开始加载明细 ===");
                 System.out.println("出库单ID: " + outOrder.getId());
 
-                // 尝试多种可能的路径
                 String[] possibleUrls = {
                     HttpRequestUtil.serverUrl + "/api/stockOut/getDetail/" + outOrder.getId(),
                     HttpRequestUtil.serverUrl + "/api/stockOut/detail/" + outOrder.getId(),
@@ -169,7 +190,6 @@ public class OutOrderApproveDialog extends Stage {
                 String url = null;
                 HttpResponse<String> response = null;
                 
-                // 尝试每个可能的URL
                 for (String testUrl : possibleUrls) {
                     try {
                         System.out.println("尝试URL: " + testUrl);
@@ -221,20 +241,83 @@ public class OutOrderApproveDialog extends Stage {
                             System.out.println("明细数量: " + items.size());
                             System.out.println("明细字段: " + items.get(0).keySet());
                             
-                            // 打印第一条明细数据用于调试
                             System.out.println("第一条明细数据: " + items.get(0));
                             
-                            // 特别检查数量字段
                             Map<String, Object> firstItem = items.get(0);
+                            System.out.println("  - goodsCode: " + firstItem.get("goodsCode"));
+                            System.out.println("  - goodsName: " + firstItem.get("goodsName"));
+                            System.out.println("  - unitPrice: " + firstItem.get("unitPrice"));
                             System.out.println("  - outNum: " + firstItem.get("outNum"));
-                            System.out.println("  - quantity: " + firstItem.get("quantity"));
-                            System.out.println("  - outQuantity: " + firstItem.get("outQuantity"));
-                            System.out.println("  - num: " + firstItem.get("num"));
 
                             javafx.application.Platform.runLater(() -> {
                                 detailList.clear();
-                                detailList.addAll(items);
-                                System.out.println("✅ 明细加载成功");
+                                
+                                List<Map<String, Object>> filteredItems = items.stream()
+                                    .filter(item -> {
+                                        String name = (String) item.get("goodsName");
+                                        if (name == null || name.isEmpty()) {
+                                            name = (String) item.get("materialName");
+                                        }
+                                        if (name == null || name.isEmpty()) {
+                                            return false;
+                                        }
+                                        
+                                        Object quantity = item.get("outNum");
+                                        if (quantity == null) {
+                                            quantity = item.get("quantity");
+                                        }
+                                        if (quantity == null) {
+                                            quantity = item.get("outQuantity");
+                                        }
+                                        if (quantity == null) {
+                                            quantity = item.get("num");
+                                        }
+                                        int qty = quantity instanceof Number ? ((Number) quantity).intValue() : 0;
+                                        
+                                        return qty > 0;
+                                    })
+                                    .collect(Collectors.toList());
+                                
+                                System.out.println("过滤后有效物资数量: " + filteredItems.size());
+                                
+                                detailList.addAll(filteredItems);
+                                
+                                int totalQuantity = filteredItems.stream()
+                                    .mapToInt(item -> {
+                                        Object quantity = item.get("outNum");
+                                        if (quantity == null) {
+                                            quantity = item.get("quantity");
+                                        }
+                                        if (quantity == null) {
+                                            quantity = item.get("outQuantity");
+                                        }
+                                        if (quantity == null) {
+                                            quantity = item.get("num");
+                                        }
+                                        return quantity instanceof Number ? ((Number) quantity).intValue() : 0;
+                                    })
+                                    .sum();
+                                
+                                BigDecimal totalAmount = filteredItems.stream()
+                                    .map(item -> {
+                                        Object price = item.get("unitPrice");
+                                        BigDecimal unitPrice = price instanceof Number ? 
+                                            BigDecimal.valueOf(((Number) price).doubleValue()) : BigDecimal.ZERO;
+                                        
+                                        Object quantity = item.get("outNum");
+                                        if (quantity == null) {
+                                            quantity = item.get("quantity");
+                                        }
+                                        int qty = quantity instanceof Number ? ((Number) quantity).intValue() : 0;
+                                        
+                                        return unitPrice.multiply(BigDecimal.valueOf(qty));
+                                    })
+                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                                
+                                totalQuantityLabel.setText(String.valueOf(totalQuantity));
+                                totalAmountSummaryLabel.setText("¥" + String.format("%.2f", totalAmount));
+                                
+                                System.out.println("✅ 明细加载成功 - 总数量: " + totalQuantity + ", 总金额: " + totalAmount);
                             });
                         } else {
                             System.out.println("️ 没有明细数据");

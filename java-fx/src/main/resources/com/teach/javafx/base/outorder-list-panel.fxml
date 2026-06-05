@@ -65,21 +65,27 @@
     <!-- 表格区域 -->
     <center>
         <TableView fx:id="outOrderTable" BorderPane.alignment="CENTER"
-                   style="-fx-background-color: white; -fx-background-radius: 0 0 8 8; -fx-border-color: #f0f0f0; -fx-border-width: 0 1 1 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 2;">
+                   style="-fx-background-color: white; -fx-background-radius: 0 0 8 8; -fx-border-color: #f0f0f0; -fx-border-width: 0 1 1 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 2;"
+                   VBox.vgrow="ALWAYS">
+            <placeholder>
+                <Label text="暂无数据" style="-fx-font-size: 14px; -fx-text-fill: #86909c;" />
+            </placeholder>
             <columns>
                 <TableColumn fx:id="indexColumn" text="序号" prefWidth="60" />
-                <TableColumn fx:id="orderNoColumn" text="出库单号" prefWidth="150" />
-                <TableColumn fx:id="outTypeColumn" text="出库类型" prefWidth="100" />
-                <TableColumn fx:id="applicantNameColumn" text="申请人" prefWidth="100" />
-                <TableColumn fx:id="materialNamesColumn" text="物品名称" prefWidth="200" />
-                <TableColumn fx:id="applyTimeColumn" text="申请时间" prefWidth="150" />
-                <TableColumn fx:id="totalNumColumn" text="数量" prefWidth="80" />
-                <TableColumn fx:id="totalAmountColumn" text="金额（元）" prefWidth="100" />
-                <TableColumn fx:id="statusColumn" text="状态" prefWidth="90" />
-                <TableColumn fx:id="auditUserNameColumn" text="审批人" prefWidth="100" />
-                <TableColumn fx:id="auditTimeColumn" text="审批时间" prefWidth="150" />
-                <TableColumn fx:id="remarkColumn" text="备注" prefWidth="180" />
+                <TableColumn fx:id="orderNoColumn" text="出库单号" prefWidth="140" />
+                <TableColumn fx:id="outTypeColumn" text="出库类型" prefWidth="90" />
+                <TableColumn fx:id="applicantNameColumn" text="申请人" prefWidth="80" />
+                <TableColumn fx:id="materialNamesColumn" text="物资" prefWidth="150" />
+                <TableColumn fx:id="totalAmountColumn" text="总金额" prefWidth="100" />
+                <TableColumn fx:id="applyTimeColumn" text="申请时间" prefWidth="120" />
+                <TableColumn fx:id="auditTimeColumn" text="审批时间" prefWidth="120" />
+                <TableColumn fx:id="statusColumn" text="状态" prefWidth="80" />
+                <TableColumn fx:id="auditUserNameColumn" text="审批人" prefWidth="80" />
+                <TableColumn fx:id="actionColumn" text="操作" prefWidth="100" />
             </columns>
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+            </columnResizePolicy>
         </TableView>
     </center>
 </BorderPane>

@@ -243,6 +243,49 @@
     -fx-text-fill: #2c3e50;
 }
 
+/* 出库单明细对话框表格样式 */
+.detail-table > .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #5a9fd4, #4a8fc4);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.08), 4, 0, 0, 1);
+}
+
+.detail-table > .column-header-background > .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 12 5 12 5;
+}
+
+.detail-table > .column-header-background > .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.detail-table .table-row-cell {
+    -fx-background-color: #ffffff;
+}
+
+.detail-table .table-row-cell:odd {
+    -fx-background-color: #fafbfc;
+}
+
+.detail-table .table-row-cell:hover {
+    -fx-background-color: #f0f4f8;
+}
+
+.detail-table .table-cell {
+    -fx-padding: 10 12 10 12;
+    -fx-text-fill: #2c3e50;
+    -fx-border-color: #e8edf2;
+    -fx-border-width: 0 1 1 0;
+}
+
+.detail-table .empty-table-placeholder {
+    -fx-background-color: transparent;
+}
+
 .table-view .scroll-bar:vertical,
 .tree-table-view .scroll-bar:vertical {
     -fx-background-color: transparent;

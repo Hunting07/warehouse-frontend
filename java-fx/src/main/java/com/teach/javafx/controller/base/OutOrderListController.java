@@ -5,11 +5,21 @@ import com.google.gson.reflect.TypeToken;
 import com.teach.javafx.AppStore;
 import com.teach.javafx.bean.OutOrder;
 import com.teach.javafx.request.HttpRequestUtil;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -51,19 +61,17 @@ public class OutOrderListController extends ToolController {
     @FXML
     private TableColumn<OutOrder, String> materialNamesColumn;
     @FXML
+    private TableColumn<OutOrder, BigDecimal> totalAmountColumn;
+    @FXML
     private TableColumn<OutOrder, LocalDateTime> applyTimeColumn;
     @FXML
-    private TableColumn<OutOrder, Integer> totalNumColumn;
-    @FXML
-    private TableColumn<OutOrder, BigDecimal> totalAmountColumn;
+    private TableColumn<OutOrder, LocalDateTime> auditTimeColumn;
     @FXML
     private TableColumn<OutOrder, String> statusColumn;
     @FXML
     private TableColumn<OutOrder, String> auditUserNameColumn;
     @FXML
-    private TableColumn<OutOrder, LocalDateTime> auditTimeColumn;
-    @FXML
-    private TableColumn<OutOrder, String> remarkColumn;
+    private TableColumn<OutOrder, Void> actionColumn;
 
     private final ObservableList<OutOrder> outOrderList = FXCollections.observableArrayList();
     private final Gson gson = new Gson();
@@ -72,7 +80,6 @@ public class OutOrderListController extends ToolController {
 
     @FXML
     public void initialize() {
-        // 判断是否为管理员
         String role = AppStore.getJwt().getRole();
         isAdmin = "admin".equals(role) || "ADMIN".equals(role);
         
@@ -81,28 +88,101 @@ public class OutOrderListController extends ToolController {
         System.out.println("是否管理员: " + isAdmin);
         System.out.println("用户ID: " + AppStore.getJwt().getId());
 
-        // 序号列：显示行号
         indexColumn.setCellValueFactory(data -> {
             int index = outOrderTable.getItems().indexOf(data.getValue());
             int total = outOrderTable.getItems().size();
             return new javafx.beans.property.SimpleIntegerProperty(total - index).asObject();
         });
+        
         outTypeColumn.setCellValueFactory(new PropertyValueFactory<>("outTypeName"));
         orderNoColumn.setCellValueFactory(new PropertyValueFactory<>("orderNo"));
         applicantNameColumn.setCellValueFactory(new PropertyValueFactory<>("applicantName"));
-        materialNamesColumn.setCellValueFactory(new PropertyValueFactory<>("materialNames"));
-        applyTimeColumn.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
-        totalNumColumn.setCellValueFactory(new PropertyValueFactory<>("totalNum"));
-        totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+        
+        if (materialNamesColumn != null) {
+            materialNamesColumn.setCellValueFactory(new PropertyValueFactory<>("materialNames"));
+        }
+        
+        if (totalAmountColumn != null) {
+            totalAmountColumn.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
+            totalAmountColumn.setCellFactory(col -> new TableCell<>() {
+                @Override
+                protected void updateItem(BigDecimal item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null || item.compareTo(BigDecimal.ZERO) == 0) {
+                        setText("--");
+                        setStyle("-fx-text-fill: #86909c;");
+                    } else {
+                        setText(String.format("¥%.2f", item));
+                        setStyle("-fx-text-fill: #1d3f66;");
+                    }
+                }
+            });
+        }
+        
+        if (applyTimeColumn != null) {
+            applyTimeColumn.setCellValueFactory(new PropertyValueFactory<>("applyTime"));
+            applyTimeColumn.setCellFactory(col -> new TableCell<>() {
+                @Override
+                protected void updateItem(LocalDateTime item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText("");
+                    } else {
+                        setText(item.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    }
+                }
+            });
+        }
+        
+        if (auditTimeColumn != null) {
+            auditTimeColumn.setCellValueFactory(new PropertyValueFactory<>("auditTime"));
+            auditTimeColumn.setCellFactory(col -> new TableCell<>() {
+                @Override
+                protected void updateItem(LocalDateTime item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText("");
+                    } else {
+                        setText(item.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    }
+                }
+            });
+        }
+        
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("statusName"));
         auditUserNameColumn.setCellValueFactory(new PropertyValueFactory<>("auditUserName"));
-        auditTimeColumn.setCellValueFactory(new PropertyValueFactory<>("auditTime"));
-        remarkColumn.setCellValueFactory(new PropertyValueFactory<>("remark"));
+
+        if (actionColumn != null) {
+            actionColumn.setCellFactory(param -> new TableCell<>() {
+                private final Button viewDetailBtn = new Button("查看明细");
+
+                {
+                    viewDetailBtn.setStyle("-fx-background-color: #4A90E2; -fx-text-fill: white; -fx-font-size: 13px; -fx-cursor: hand; -fx-background-radius: 5; -fx-padding: 8 18 8 18; -fx-font-weight: bold;");
+                    viewDetailBtn.setOnAction(e -> {
+                        OutOrder order = getTableView().getItems().get(getIndex());
+                        showDetailDialog(order);
+                    });
+                }
+
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty) {
+                        setGraphic(null);
+                    } else {
+                        setGraphic(viewDetailBtn);
+                        setAlignment(javafx.geometry.Pos.CENTER);
+                    }
+                }
+            });
+        } else {
+            System.err.println("⚠️ 警告: actionColumn 为 null，操作列将不会显示");
+        }
 
         outOrderTable.setItems(outOrderList);
         outOrderTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        outOrderTable.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.SINGLE);
+        outOrderTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
         typeComboBox.getItems().addAll("全部", "领料出库", "销售出库", "报损出库", "其他出库");
         typeComboBox.setValue("全部");
@@ -164,13 +244,11 @@ public class OutOrderListController extends ToolController {
                 StringBuilder urlBuilder = new StringBuilder(HttpRequestUtil.serverUrl + "/api/stockOut/getAllStockOutList");
                 boolean hasParam = false;
 
-                // 添加调试日志
                 System.out.println("\n=== [出库列表] 加载数据 ===");
                 System.out.println("当前用户角色: " + AppStore.getJwt().getRole());
                 System.out.println("是否管理员: " + isAdmin);
                 System.out.println("用户ID: " + AppStore.getJwt().getId());
                 
-                // 调试：打印 JwtResponse 的所有信息
                 System.out.println("完整 JwtResponse 对象: " + AppStore.getJwt());
 
                 if (!isAdmin && AppStore.getJwt() != null && AppStore.getJwt().getId() != null) {
@@ -178,7 +256,6 @@ public class OutOrderListController extends ToolController {
                     hasParam = true;
                     System.out.println("添加 userId 参数（非管理员，只看自己的数据）");
                 } else if (!isAdmin) {
-                    // 非管理员但 ID 为 null，尝试从 Token 获取
                     System.out.println("警告：非管理员但用户ID为null，不添加userId参数");
                 } else {
                     System.out.println("不添加 userId 参数（管理员，看所有数据）");
@@ -231,7 +308,6 @@ public class OutOrderListController extends ToolController {
                         if (dataList != null) {
                             System.out.println("成功加载 " + dataList.size() + " 条数据");
                             
-                            // 打印第一条数据的 totalAmount，用于调试
                             if (!dataList.isEmpty()) {
                                 System.out.println("第一条数据的 totalAmount: " + dataList.get(0).get("totalAmount"));
                                 System.out.println("第一条数据的 totalNum: " + dataList.get(0).get("totalNum"));
@@ -250,7 +326,6 @@ public class OutOrderListController extends ToolController {
                                 if (map.get("outType") != null) {
                                     order.setOutType(((Number) map.get("outType")).intValue());
                                     
-                                    // 设置出库类型名称
                                     Integer outType = ((Number) map.get("outType")).intValue();
                                     String outTypeName = getOutTypeName(outType);
                                     order.setOutTypeName(outTypeName);
@@ -263,7 +338,6 @@ public class OutOrderListController extends ToolController {
                                     order.setApplicantId(((Number) map.get("applicantId")).intValue());
                                 }
                                 
-                                // 处理申请人名称，如果为空则显示申请人ID
                                 String applicantName = (String) map.get("applicantName");
                                 if (applicantName == null || applicantName.trim().isEmpty()) {
                                     Integer applicantId = order.getApplicantId();
@@ -283,7 +357,6 @@ public class OutOrderListController extends ToolController {
                                 if (map.get("status") != null) {
                                     order.setStatus(((Number) map.get("status")).intValue());
                                     
-                                    // 设置状态名称
                                     Integer status = ((Number) map.get("status")).intValue();
                                     String statusName = getStatusName(status);
                                     order.setStatusName(statusName);
@@ -294,7 +367,6 @@ public class OutOrderListController extends ToolController {
                                 
                                 order.setAuditUserId(map.get("auditUserId") != null ? ((Number) map.get("auditUserId")).intValue() : null);
                                 
-                                // 处理审批人名称
                                 String auditUserName = (String) map.get("auditUserName");
                                 if (auditUserName == null || auditUserName.isEmpty()) {
                                     Integer auditUserId = map.get("auditUserId") != null ? ((Number) map.get("auditUserId")).intValue() : null;
@@ -312,17 +384,14 @@ public class OutOrderListController extends ToolController {
                                 order.setRemark((String) map.get("remark"));
                                 order.setRejectReason((String) map.get("rejectReason"));
                                 
-                                // 设置物品名称（后端已返回）
                                 String materialNames = (String) map.get("materialNames");
                                 if (materialNames == null || materialNames.isEmpty()) {
                                     materialNames = "暂无物品";
                                 }
                                 order.setMaterialNames(materialNames);
                                 
-                                // 调试日志
                                 System.out.println("出库单 " + order.getId() + " 物品名称: " + materialNames);
                                 
-                                // 优先使用后端返回的 totalAmount
                                 if (map.get("totalAmount") != null) {
                                     Object amountObj = map.get("totalAmount");
                                     if (amountObj instanceof Number) {
@@ -331,11 +400,9 @@ public class OutOrderListController extends ToolController {
                                         order.setTotalAmount(java.math.BigDecimal.ZERO);
                                     }
                                 } else {
-                                    // 后端未返回，暂时设置为 0
                                     order.setTotalAmount(java.math.BigDecimal.ZERO);
                                 }
                                 
-                                // 使用后端返回的 totalNum
                                 if (map.get("totalNum") != null) {
                                     Object numObj = map.get("totalNum");
                                     if (numObj instanceof Number) {
@@ -344,15 +411,12 @@ public class OutOrderListController extends ToolController {
                                         order.setTotalNum(0);
                                     }
                                 } else {
-                                    // 后端未返回，设置为 0
                                     order.setTotalNum(0);
                                 }
 
                                 list.add(order);
                             }
 
-                            // 后端已返回 totalNum，不需要异步加载明细
-                            
                             javafx.application.Platform.runLater(() -> {
                                 outOrderList.setAll(list);
                             });
@@ -538,7 +602,6 @@ public class OutOrderListController extends ToolController {
         if (ret != MessageDialog.CHOICE_YES) return;
 
         try {
-            // 尝试多种可能的删除接口路径
             String[] possibleUrls = {
                 HttpRequestUtil.serverUrl + "/api/stockOut/delete/" + selected.getId(),
                 HttpRequestUtil.serverUrl + "/stockOut/delete/" + selected.getId(),
@@ -549,7 +612,6 @@ public class OutOrderListController extends ToolController {
             String successUrl = null;
             HttpResponse<String> response = null;
             
-            // 尝试每个可能的URL
             for (String testUrl : possibleUrls) {
                 try {
                     System.out.println("尝试删除URL: " + testUrl);
@@ -623,7 +685,6 @@ public class OutOrderListController extends ToolController {
         if (dialog != null) {
             dialog.showAndWait();
             
-            // 对话框关闭后，延迟刷新列表以确保数据已更新
             new Thread(() -> {
                 try {
                     Thread.sleep(300);
@@ -650,62 +711,356 @@ public class OutOrderListController extends ToolController {
             MessageDialog.showDialog("请选择要查看的出库单");
             return;
         }
+        showDetailDialog(selected);
+    }
 
-        try {
-            String url = HttpRequestUtil.serverUrl + "/api/stockOut/getDetails/" + selected.getId();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .headers("satoken", AppStore.getJwt().getToken())
-                    .build();
+    private void showDetailDialog(OutOrder order) {
+        Stage dialog = new Stage();
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        dialog.setTitle("出库单明细");
+        dialog.setMinWidth(800);
+        dialog.setMinHeight(550);
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        VBox mainContainer = new VBox(15);
+        mainContainer.setPadding(new javafx.geometry.Insets(20));
+        mainContainer.setStyle("-fx-background-color: white;");
 
-            if (response.statusCode() == 200) {
-                Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-                int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
-                if (code == 200 || code == 0) {
-                    List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+        VBox titleBar = new VBox(5);
+        Label titleLabel = new Label("出库单明细");
+        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
+        Label subtitleLabel = new Label("查看出库单详细信息");
+        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #86909c;");
+        titleBar.getChildren().addAll(titleLabel, subtitleLabel);
 
-                    StringBuilder detail = new StringBuilder();
-                    detail.append("出库单号：").append(selected.getOrderNo()).append("\n");
-                    detail.append("出库类型：").append(getOutTypeName(selected.getOutType())).append("\n");
-                    detail.append("申请人：").append(selected.getApplicantName()).append("\n");
-                    detail.append("申请时间：").append(selected.getApplyTime()).append("\n");
-                    detail.append("状态：").append(getStatusName(selected.getStatus())).append("\n");
-                    detail.append("\n=== 出库明细 ===\n\n");
+        GridPane headerGrid = new GridPane();
+        headerGrid.setHgap(20);
+        headerGrid.setVgap(12);
+        headerGrid.setPadding(new javafx.geometry.Insets(15));
+        headerGrid.setStyle("-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-border-color: #E9ECEF; -fx-border-width: 1; -fx-border-radius: 8;");
 
-                    if (data != null && !data.isEmpty()) {
-                        int index = 1;
-                        for (Map<String, Object> item : data) {
-                            detail.append(index++).append(". ");
-                            detail.append(item.get("goodsName")).append(" ");
-                            detail.append(item.get("goodsSpec")).append(" ");
-                            detail.append(item.get("unit")).append(" ");
-                            detail.append("×").append(item.get("outNum")).append("\n");
-                        }
-                    } else {
-                        detail.append("暂无明细");
-                    }
+        Label orderNoLabel = new Label("出库单号：");
+        orderNoLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label orderNoValue = new Label(order.getOrderNo() != null ? order.getOrderNo() : "无");
+        orderNoValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #4A90E2; -fx-font-weight: bold;");
 
-                    detail.append("\n备注：").append(selected.getRemark() != null ? selected.getRemark() : "无");
+        Label outTypeLabel = new Label("出库类型：");
+        outTypeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label outTypeValue = new Label(getOutTypeName(order.getOutType()));
+        outTypeValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #5CB85C; -fx-font-weight: bold;");
 
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("出库单明细");
-                    alert.setHeaderText("出库单详情");
-                    alert.setContentText(detail.toString());
-                    alert.getDialogPane().setPrefSize(500, 400);
-                    alert.showAndWait();
-                } else {
-                    MessageDialog.showDialog("加载失败：" + result.get("msg"));
+        Label applicantLabel = new Label("申请人：");
+        applicantLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label applicantValue = new Label(order.getApplicantName() != null ? order.getApplicantName() : "无");
+        applicantValue.setStyle("-fx-font-size: 14px;");
+
+        Label applyTimeLabel = new Label("申请时间：");
+        applyTimeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        Label applyTimeValue = new Label(order.getApplyTime() != null ? order.getApplyTime().format(formatter) : "无");
+        applyTimeValue.setStyle("-fx-font-size: 14px;");
+
+        Label statusLabel = new Label("审批状态：");
+        statusLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label statusValue = new Label(getStatusName(order.getStatus()));
+        statusValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFA940; -fx-font-weight: bold;");
+
+        Label remarkLabel = new Label("备注：");
+        remarkLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label remarkValue = new Label(order.getRemark() != null && !order.getRemark().isEmpty() ? order.getRemark() : "无");
+        remarkValue.setStyle("-fx-font-size: 14px;");
+
+        headerGrid.add(orderNoLabel, 0, 0);
+        headerGrid.add(orderNoValue, 1, 0);
+        headerGrid.add(outTypeLabel, 2, 0);
+        headerGrid.add(outTypeValue, 3, 0);
+        headerGrid.add(applicantLabel, 4, 0);
+        headerGrid.add(applicantValue, 5, 0);
+        headerGrid.add(applyTimeLabel, 0, 1);
+        headerGrid.add(applyTimeValue, 1, 1);
+        headerGrid.add(statusLabel, 2, 1);
+        headerGrid.add(statusValue, 3, 1);
+        headerGrid.add(remarkLabel, 0, 2);
+        headerGrid.add(remarkValue, 1, 2);
+        GridPane.setColumnSpan(remarkValue, 5);
+
+        Label totalNumLabel = new Label("总数量：");
+        totalNumLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label totalNumValue = new Label("0");
+        totalNumValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #4A90E2; -fx-font-weight: bold;");
+        Label totalAmountLabel = new Label("合计总金额：");
+        totalAmountLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label totalAmountValue = new Label("\u00a50.00");
+        totalAmountValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #F5222D; -fx-font-weight: bold;");
+
+        HBox summaryBar = new HBox(30);
+        summaryBar.setPadding(new javafx.geometry.Insets(10, 15, 10, 15));
+        summaryBar.setStyle("-fx-background-color: #F8F9FA; -fx-background-radius: 6;");
+        summaryBar.getChildren().addAll(totalNumLabel, totalNumValue, totalAmountLabel, totalAmountValue);
+
+        TableView<Map<String, Object>> detailTable = new TableView<>();
+        detailTable.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-width: 1; -fx-border-radius: 8;");
+        detailTable.getStyleClass().add("detail-table");
+        
+        TableColumn<Map<String, Object>, String> seqCol = new TableColumn<>("序号");
+        seqCol.setMinWidth(60);
+        seqCol.setPrefWidth(60);
+        seqCol.getStyleClass().add("table-header");
+        seqCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) { setText(null); }
+                else {
+                    int idx = getIndex();
+                    if (idx >= 0 && idx < getTableView().getItems().size()) { setText(String.valueOf(idx + 1)); }
+                    else { setText(null); }
                 }
-            } else {
-                MessageDialog.showDialog("请求失败");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            MessageDialog.showDialog("加载异常：" + e.getMessage());
-        }
+        });
+
+        TableColumn<Map<String, Object>, String> goodsNameCol = new TableColumn<>("物品名称");
+        goodsNameCol.setMinWidth(150);
+        goodsNameCol.setPrefWidth(180);
+        goodsNameCol.getStyleClass().add("table-header");
+        goodsNameCol.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty(
+            param.getValue().getOrDefault("goodsName", "无").toString()
+        ));
+        goodsNameCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.isEmpty()) { setText("无"); }
+                else { setText(item); }
+            }
+        });
+
+        TableColumn<Map<String, Object>, BigDecimal> unitPriceCol = new TableColumn<>("单价");
+        unitPriceCol.setMinWidth(100);
+        unitPriceCol.setPrefWidth(110);
+        unitPriceCol.getStyleClass().add("table-header");
+        unitPriceCol.setCellValueFactory(param -> {
+            Object value = param.getValue().get("unitPrice");
+            if (value instanceof BigDecimal) {
+                return new javafx.beans.property.SimpleObjectProperty<>((BigDecimal) value);
+            } else if (value instanceof Number) {
+                return new javafx.beans.property.SimpleObjectProperty<>(new BigDecimal(value.toString()));
+            }
+            return new javafx.beans.property.SimpleObjectProperty<>(BigDecimal.ZERO);
+        });
+        unitPriceCol.setCellFactory(col -> new TableCell<>() {
+            private final TextField tf = new TextField();
+            {
+                tf.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+                tf.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 0 5 0 5;");
+                tf.setFont(javafx.scene.text.Font.font("Microsoft YaHei", 13));
+                tf.setEditable(false);
+                tf.setFocusTraversable(false);
+                tf.setCursor(javafx.scene.Cursor.DEFAULT);
+            }
+            @Override
+            protected void updateItem(BigDecimal item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) { 
+                    setGraphic(null); 
+                    setText(null);
+                }
+                else {
+                    tf.setText(item != null ? String.format("%.2f", item) : "0.00");
+                    setGraphic(tf);
+                    setText(null);
+                }
+            }
+        });
+
+        TableColumn<Map<String, Object>, Integer> outNumCol = new TableColumn<>("出库数量");
+        outNumCol.setMinWidth(90);
+        outNumCol.setPrefWidth(100);
+        outNumCol.getStyleClass().add("table-header");
+        outNumCol.setCellValueFactory(param -> {
+            Object value = param.getValue().get("outNum");
+            if (value instanceof Integer) {
+                return new javafx.beans.property.SimpleObjectProperty<>((Integer) value);
+            } else if (value instanceof Number) {
+                return new javafx.beans.property.SimpleObjectProperty<>(((Number) value).intValue());
+            }
+            return new javafx.beans.property.SimpleObjectProperty<>(0);
+        });
+        outNumCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText("0"); }
+                else { setText(String.valueOf(item)); }
+            }
+        });
+
+        TableColumn<Map<String, Object>, BigDecimal> totalPriceCol = new TableColumn<>("单品金额");
+        totalPriceCol.setMinWidth(120);
+        totalPriceCol.setPrefWidth(130);
+        totalPriceCol.getStyleClass().add("table-header");
+        totalPriceCol.setCellValueFactory(param -> {
+            Object value = param.getValue().get("amount");
+            if (value instanceof BigDecimal) {
+                return new javafx.beans.property.SimpleObjectProperty<>((BigDecimal) value);
+            } else if (value instanceof Number) {
+                return new javafx.beans.property.SimpleObjectProperty<>(new BigDecimal(value.toString()));
+            }
+            return new javafx.beans.property.SimpleObjectProperty<>(BigDecimal.ZERO);
+        });
+        totalPriceCol.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(BigDecimal item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText("\u00a50.00"); }
+                else { setText(String.format("\u00a5%.2f", item)); }
+            }
+        });
+
+        detailTable.getColumns().addAll(seqCol, goodsNameCol, unitPriceCol, outNumCol, totalPriceCol);
+        detailTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        detailTable.setPlaceholder(new Label("暂无数据"));
+        
+        detailTable.setFixedCellSize(40);
+        detailTable.setTableMenuButtonVisible(false);
+        detailTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        ScrollPane scrollPane = new ScrollPane(detailTable);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setPrefHeight(300);
+        scrollPane.setMinHeight(100);
+        scrollPane.setMaxHeight(400);
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+
+        HBox buttonBar = new HBox();
+        buttonBar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        Button closeBtn = new Button("关闭");
+        closeBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 8 24 8 24;");
+        closeBtn.setOnAction(e -> dialog.close());
+        buttonBar.getChildren().add(closeBtn);
+
+        mainContainer.getChildren().addAll(titleBar, headerGrid, scrollPane, summaryBar, buttonBar);
+        
+        Scene scene = new Scene(mainContainer, 850, 620);
+        scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+        scene.setFill(Color.WHITE);
+        dialog.setScene(scene);
+
+        new Thread(() -> {
+            try {
+                String url = HttpRequestUtil.serverUrl + "/api/stockOut/detail/" + order.getId();
+                System.out.println("=== [出库明细] 请求URL: " + url);
+                
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .GET()
+                        .headers("satoken", AppStore.getJwt().getToken())
+                        .build();
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                
+                System.out.println("=== [出库明细] 响应状态码: " + response.statusCode());
+                System.out.println("=== [出库明细] 响应内容: " + response.body());
+                
+                if (response.statusCode() == 200) {
+                    Map<String, Object> result = gson.fromJson(response.body(), Map.class);
+                    int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
+                    if (code == 200 || code == 0) {
+                        Map<String, Object> dataMap = (Map<String, Object>) result.get("data");
+                        List<Map<String, Object>> items = (List<Map<String, Object>>) dataMap.get("items");
+                        
+                        System.out.println("=== [出库明细] 数据条数: " + (items != null ? items.size() : "null"));
+                        if (items != null && !items.isEmpty()) {
+                            System.out.println("=== [出库明细] 第一条数据: " + items.get(0));
+                        }
+                        
+                        Platform.runLater(() -> {
+                            if (items != null && !items.isEmpty()) {
+                                ObservableList<Map<String, Object>> filtered = FXCollections.observableArrayList();
+                                int totalNum = 0;
+                                BigDecimal totalAmt = BigDecimal.ZERO;
+                                int seq = 1;
+                                
+                                for (Map<String, Object> item : items) {
+                                    String name = (String) item.get("goodsName");
+                                    if (name == null || name.isEmpty()) {
+                                        name = (String) item.get("materialName");
+                                    }
+                                    if (name == null || name.isEmpty()) {
+                                        name = (String) item.get("name");
+                                    }
+                                    
+                                    Object qtyObj = item.get("outNum");
+                                    if (qtyObj == null) {
+                                        qtyObj = item.get("outQuantity");
+                                    }
+                                    if (qtyObj == null) {
+                                        qtyObj = item.get("quantity");
+                                    }
+                                    int qty = qtyObj instanceof Number ? ((Number) qtyObj).intValue() : 0;
+                                    
+                                    BigDecimal unitPrice = BigDecimal.ZERO;
+                                    Object priceObj = item.get("unitPrice");
+                                    if (priceObj instanceof Number) {
+                                        unitPrice = new BigDecimal(priceObj.toString());
+                                    }
+                                    
+                                    BigDecimal amount = BigDecimal.ZERO;
+                                    Object amountObj = item.get("amount");
+                                    if (amountObj == null) {
+                                        amountObj = item.get("totalAmount");
+                                    }
+                                    if (amountObj == null) {
+                                        amountObj = item.get("totalPrice");
+                                    }
+                                    if (amountObj instanceof Number) {
+                                        amount = new BigDecimal(amountObj.toString());
+                                    }
+                                    
+                                    if (amount.compareTo(BigDecimal.ZERO) == 0 && unitPrice.compareTo(BigDecimal.ZERO) > 0 && qty > 0) {
+                                        amount = unitPrice.multiply(BigDecimal.valueOf(qty));
+                                    }
+                                    
+                                    Map<String, Object> detail = new HashMap<>(item);
+                                    detail.put("seq", seq++);
+                                    if (name != null) {
+                                        detail.put("goodsName", name);
+                                    }
+                                    detail.put("outNum", qty);
+                                    detail.put("unitPrice", unitPrice);
+                                    detail.put("amount", amount);
+                                    
+                                    filtered.add(detail);
+                                    totalNum += qty;
+                                    totalAmt = totalAmt.add(amount);
+                                    
+                                    System.out.println("=== [明细项] 名称=" + name + ", 单价=" + unitPrice + ", 数量=" + qty + ", 金额=" + amount);
+                                    System.out.println("  原始数据: " + item);
+                                }
+                                
+                                detailTable.setItems(filtered);
+                                totalNumValue.setText(String.valueOf(totalNum));
+                                totalAmountValue.setText(String.format("¥%.2f", totalAmt));
+                                
+                                int rowCount = filtered.size();
+                                double tableHeight = rowCount * 40 + 40;
+                                scrollPane.setPrefHeight(tableHeight);
+                                
+                                System.out.println("=== [出库明细] 有效数据: " + filtered.size() + " 条, 总数量: " + totalNum + ", 总金额: " + totalAmt);
+                            } else {
+                                System.out.println("=== [出库明细] 数据为空");
+                            }
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> MessageDialog.showDialog("加载明细异常：" + e.getMessage()));
+            }
+        }).start();
+
+        dialog.showAndWait();
     }
 
     @Override

@@ -52,15 +52,24 @@
         <TableView fx:id="detailTableView" VBox.vgrow="ALWAYS" prefHeight="200"
                    style="-fx-background-color: white; -fx-border-color: #f0f0f0; -fx-border-width: 1; -fx-border-radius: 6; -fx-padding: 2;">
             <columns>
-                <TableColumn fx:id="materialColumn" text="物资名称" prefWidth="200" />
-                <TableColumn fx:id="unitPriceColumn" text="单价" prefWidth="120" />
-                <TableColumn fx:id="quantityColumn" text="数量" prefWidth="100" />
-                <TableColumn fx:id="amountColumn" text="金额" prefWidth="120" />
+                <TableColumn fx:id="materialCodeColumn" text="物资编号" prefWidth="120" />
+                <TableColumn fx:id="materialColumn" text="物资名称" prefWidth="160" />
+                <TableColumn fx:id="unitPriceColumn" text="单价" prefWidth="100" />
+                <TableColumn fx:id="quantityColumn" text="出库数量" prefWidth="100" />
+                <TableColumn fx:id="amountColumn" text="单品金额" prefWidth="100" />
             </columns>
             <columnResizePolicy>
                 <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
             </columnResizePolicy>
         </TableView>
+
+        <!-- 合计行 -->
+        <HBox spacing="24" alignment="CENTER_LEFT" style="-fx-padding: 12 0 0 0; -fx-border-color: #e5e6eb; -fx-border-width: 1 0 0 0;">
+            <Label text="总数量:" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+            <Label fx:id="totalQuantityLabel" text="0" style="-fx-font-size: 14px; -fx-text-fill: #389e0d; -fx-font-weight: bold;" HBox.hgrow="ALWAYS" />
+            <Label text="合计总金额:" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+            <Label fx:id="totalAmountSummaryLabel" text="¥0.00" style="-fx-font-size: 14px; -fx-text-fill: #f53f3f; -fx-font-weight: bold;" HBox.hgrow="ALWAYS" />
+        </HBox>
     </VBox>
 
     <!-- 审批意见卡片 -->

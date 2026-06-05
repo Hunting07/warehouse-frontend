@@ -6,6 +6,7 @@ public class OutOrderDetail {
     private Integer id;
     private Integer orderId;
     private Integer goodsId;
+    private String goodsCode;
     private String goodsName;
     private String goodsSpec;
     private String unit;
@@ -35,6 +36,14 @@ public class OutOrderDetail {
 
     public void setGoodsId(Integer goodsId) {
         this.goodsId = goodsId;
+    }
+
+    public String getGoodsCode() {
+        return goodsCode;
+    }
+
+    public void setGoodsCode(String goodsCode) {
+        this.goodsCode = goodsCode;
     }
 
     public String getGoodsName() {
