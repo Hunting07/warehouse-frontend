@@ -721,21 +721,21 @@ public class OutOrderListController extends ToolController {
         dialog.setMinWidth(800);
         dialog.setMinHeight(550);
 
-        VBox mainContainer = new VBox(15);
-        mainContainer.setPadding(new javafx.geometry.Insets(20));
+        VBox mainContainer = new VBox(12);
+        mainContainer.setPadding(new javafx.geometry.Insets(15));
         mainContainer.setStyle("-fx-background-color: white;");
 
-        VBox titleBar = new VBox(5);
+        VBox titleBar = new VBox(3);
         Label titleLabel = new Label("出库单明细");
-        titleLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
         Label subtitleLabel = new Label("查看出库单详细信息");
-        subtitleLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #86909c;");
+        subtitleLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #86909c;");
         titleBar.getChildren().addAll(titleLabel, subtitleLabel);
 
         GridPane headerGrid = new GridPane();
         headerGrid.setHgap(20);
-        headerGrid.setVgap(12);
-        headerGrid.setPadding(new javafx.geometry.Insets(15));
+        headerGrid.setVgap(10);
+        headerGrid.setPadding(new javafx.geometry.Insets(12));
         headerGrid.setStyle("-fx-background-color: #F8F9FA; -fx-background-radius: 8; -fx-border-color: #E9ECEF; -fx-border-width: 1; -fx-border-radius: 8;");
 
         Label orderNoLabel = new Label("出库单号：");
@@ -764,10 +764,10 @@ public class OutOrderListController extends ToolController {
         Label statusValue = new Label(getStatusName(order.getStatus()));
         statusValue.setStyle("-fx-font-size: 14px; -fx-text-fill: #FFA940; -fx-font-weight: bold;");
 
-        Label remarkLabel = new Label("备注：");
-        remarkLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        Label remarkValue = new Label(order.getRemark() != null && !order.getRemark().isEmpty() ? order.getRemark() : "无");
-        remarkValue.setStyle("-fx-font-size: 14px;");
+        Label auditTimeLabel = new Label("审批时间：");
+        auditTimeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        Label auditTimeValue = new Label(order.getAuditTime() != null ? order.getAuditTime().format(formatter) : "无");
+        auditTimeValue.setStyle("-fx-font-size: 14px;");
 
         headerGrid.add(orderNoLabel, 0, 0);
         headerGrid.add(orderNoValue, 1, 0);
@@ -779,9 +779,8 @@ public class OutOrderListController extends ToolController {
         headerGrid.add(applyTimeValue, 1, 1);
         headerGrid.add(statusLabel, 2, 1);
         headerGrid.add(statusValue, 3, 1);
-        headerGrid.add(remarkLabel, 0, 2);
-        headerGrid.add(remarkValue, 1, 2);
-        GridPane.setColumnSpan(remarkValue, 5);
+        headerGrid.add(auditTimeLabel, 4, 1);
+        headerGrid.add(auditTimeValue, 5, 1);
 
         Label totalNumLabel = new Label("总数量：");
         totalNumLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
@@ -823,14 +822,18 @@ public class OutOrderListController extends ToolController {
         goodsNameCol.setPrefWidth(180);
         goodsNameCol.getStyleClass().add("table-header");
         goodsNameCol.setCellValueFactory(param -> new javafx.beans.property.SimpleStringProperty(
-            param.getValue().getOrDefault("goodsName", "无").toString()
+            param.getValue().getOrDefault("goodsName", "").toString()
         ));
         goodsNameCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null || item.isEmpty()) { setText("无"); }
-                else { setText(item); }
+                if (empty || item == null || item.isEmpty()) { 
+                    setText(null); 
+                }
+                else { 
+                    setText(item); 
+                }
             }
         });
 
@@ -845,7 +848,7 @@ public class OutOrderListController extends ToolController {
             } else if (value instanceof Number) {
                 return new javafx.beans.property.SimpleObjectProperty<>(new BigDecimal(value.toString()));
             }
-            return new javafx.beans.property.SimpleObjectProperty<>(BigDecimal.ZERO);
+            return new javafx.beans.property.SimpleObjectProperty<>(null);
         });
         unitPriceCol.setCellFactory(col -> new TableCell<>() {
             private final TextField tf = new TextField();
@@ -860,12 +863,12 @@ public class OutOrderListController extends ToolController {
             @Override
             protected void updateItem(BigDecimal item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) { 
+                if (empty || item == null) { 
                     setGraphic(null); 
                     setText(null);
                 }
                 else {
-                    tf.setText(item != null ? String.format("%.2f", item) : "0.00");
+                    tf.setText(String.format("%.2f", item));
                     setGraphic(tf);
                     setText(null);
                 }
@@ -883,14 +886,18 @@ public class OutOrderListController extends ToolController {
             } else if (value instanceof Number) {
                 return new javafx.beans.property.SimpleObjectProperty<>(((Number) value).intValue());
             }
-            return new javafx.beans.property.SimpleObjectProperty<>(0);
+            return new javafx.beans.property.SimpleObjectProperty<>(null);
         });
         outNumCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setText("0"); }
-                else { setText(String.valueOf(item)); }
+                if (empty || item == null) { 
+                    setText(null); 
+                }
+                else { 
+                    setText(String.valueOf(item)); 
+                }
             }
         });
 
@@ -905,14 +912,18 @@ public class OutOrderListController extends ToolController {
             } else if (value instanceof Number) {
                 return new javafx.beans.property.SimpleObjectProperty<>(new BigDecimal(value.toString()));
             }
-            return new javafx.beans.property.SimpleObjectProperty<>(BigDecimal.ZERO);
+            return new javafx.beans.property.SimpleObjectProperty<>(null);
         });
         totalPriceCol.setCellFactory(col -> new TableCell<>() {
             @Override
             protected void updateItem(BigDecimal item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) { setText("\u00a50.00"); }
-                else { setText(String.format("\u00a5%.2f", item)); }
+                if (empty || item == null) { 
+                    setText(null); 
+                }
+                else { 
+                    setText(String.format("¥%.2f", item)); 
+                }
             }
         });
 
@@ -924,26 +935,34 @@ public class OutOrderListController extends ToolController {
         detailTable.setTableMenuButtonVisible(false);
         detailTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         
+        VBox.setVgrow(headerGrid, javafx.scene.layout.Priority.NEVER);
+        VBox.setVgrow(summaryBar, javafx.scene.layout.Priority.NEVER);
+
+        VBox tableContainer = new VBox(8);
+        VBox.setVgrow(tableContainer, javafx.scene.layout.Priority.ALWAYS);
+        
         ScrollPane scrollPane = new ScrollPane(detailTable);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setPrefHeight(300);
-        scrollPane.setMinHeight(100);
-        scrollPane.setMaxHeight(400);
+        scrollPane.setMinHeight(40);
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+        
+        tableContainer.getChildren().add(scrollPane);
 
         HBox buttonBar = new HBox();
         buttonBar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        buttonBar.setPadding(new javafx.geometry.Insets(5, 0, 0, 0));
+        VBox.setVgrow(buttonBar, javafx.scene.layout.Priority.NEVER);
         Button closeBtn = new Button("关闭");
-        closeBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #333333; -fx-font-size: 14px; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 8 24 8 24;");
+        closeBtn.setStyle("-fx-background-color: #E0E0E0; -fx-text-fill: #333333; -fx-font-size: 13px; -fx-cursor: hand; -fx-background-radius: 4; -fx-padding: 6 20 6 20;");
         closeBtn.setOnAction(e -> dialog.close());
         buttonBar.getChildren().add(closeBtn);
 
-        mainContainer.getChildren().addAll(titleBar, headerGrid, scrollPane, summaryBar, buttonBar);
+        mainContainer.getChildren().addAll(titleBar, headerGrid, tableContainer, summaryBar, buttonBar);
         
-        Scene scene = new Scene(mainContainer, 850, 620);
+        Scene scene = new Scene(mainContainer, 820, 580);
         scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
         scene.setFill(Color.WHITE);
         dialog.setScene(scene);

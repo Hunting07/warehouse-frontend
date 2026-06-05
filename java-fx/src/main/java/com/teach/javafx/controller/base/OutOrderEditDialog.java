@@ -109,15 +109,32 @@ public class OutOrderEditDialog extends Stage {
             dialog.editingOutOrder = order;
             dialog.isNew = isNew;
             
-            // 先同步加载物资列表，确保数据已经加载完成
-            System.out.println("=== 开始同步加载物资列表 ===");
-            dialog.loadMaterialListSync();
-            System.out.println("=== 物资列表加载完成 ===");
-            
             dialog.initControls();
             
+            // 异步加载物资列表，避免阻塞UI
+            new Thread(() -> {
+                try {
+                    System.out.println("=== 开始异步加载物资列表 ===");
+                    dialog.loadMaterialListSync();
+                    System.out.println("=== 物资列表加载完成 ===");
+                } catch (Exception e) {
+                    System.err.println("加载物资列表异常: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }).start();
+            
             if (order != null) {
-                dialog.loadOutOrderDetail(order);
+                // 编辑模式：异步加载出库单详情
+                new Thread(() -> {
+                    try {
+                        System.out.println("=== 开始异步加载出库单详情 ===");
+                        dialog.loadOutOrderDetail(order);
+                        System.out.println("=== 出库单详情加载完成 ===");
+                    } catch (Exception e) {
+                        System.err.println("加载出库单详情异常: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }).start();
             }
             
             return dialog;
