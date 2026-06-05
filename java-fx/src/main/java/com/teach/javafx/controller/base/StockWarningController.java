@@ -325,53 +325,29 @@ public class StockWarningController {
     private void searchWarning() {
         String keyword = searchField.getText();
 
-        showLoading(true);
-        try {
-            DataRequest request = new DataRequest();
-
-            String responseStr = HttpRequestUtil.post("/api/material/list", gson.toJson(request.getParams()));
-
-            if (responseStr != null) {
-                DataResponse response = gson.fromJson(responseStr, DataResponse.class);
-                if (response != null && response.getCode() == 200) {
-                    Platform.runLater(() -> {
-                        buildDataList(response.getData());
-
-                        if (keyword != null && !keyword.isEmpty()) {
-                            ObservableList<WarningNode> filteredList = FXCollections.observableArrayList();
-                            for (WarningNode node : dataList) {
-                                if (node.getName().contains(keyword) || node.getCode().contains(keyword)) {
-                                    filteredList.add(node);
-                                }
-                            }
-                            warningTable.setItems(filteredList);
-                        } else {
-                            warningTable.setItems(dataList);
-                        }
-
-                        updateStatistics();
-                        showLoading(false);
-                    });
-                } else {
-                    Platform.runLater(() -> {
-                        showError("搜索失败", response != null ? response.getMsg() : "网络错误");
-                        showLoading(false);
-                    });
-                }
-            }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "搜索库存预警异常", e);
-            Platform.runLater(() -> {
-                showError("搜索异常", e.getMessage());
-                showLoading(false);
-            });
+        if (keyword == null || keyword.trim().isEmpty()) {
+            warningTable.setItems(dataList);
+            updateStatistics();
+            return;
         }
+
+        ObservableList<WarningNode> filteredList = FXCollections.observableArrayList();
+        for (WarningNode node : dataList) {
+            if (node.getName().contains(keyword) || node.getCode().contains(keyword)) {
+                filteredList.add(node);
+            }
+        }
+        warningTable.setItems(filteredList);
+        updateStatistics();
     }
+
+// ... existing code ...
 
     @FXML
     private void resetSearch() {
         searchField.clear();
-        loadWarnings();
+        warningTable.setItems(dataList);
+        updateStatistics();
     }
 
     @FXML
