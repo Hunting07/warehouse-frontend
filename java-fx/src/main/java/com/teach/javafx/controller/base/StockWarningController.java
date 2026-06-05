@@ -219,22 +219,19 @@ public class StockWarningController {
         showLoading(true);
         try {
             DataRequest request = new DataRequest();
-            String responseStr = HttpRequestUtil.post("/api/material/list", gson.toJson(request.getParams()));
+            DataResponse response = HttpRequestUtil.request("/api/material/list", request);
 
-            if (responseStr != null) {
-                DataResponse response = gson.fromJson(responseStr, DataResponse.class);
-                if (response != null && response.getCode() == 200) {
-                    Platform.runLater(() -> {
-                        buildDataList(response.getData());
-                        updateStatistics();
-                        showLoading(false);
-                    });
-                } else {
-                    Platform.runLater(() -> {
-                        showError("加载失败", response != null ? response.getMsg() : "网络错误");
-                        showLoading(false);
-                    });
-                }
+            if (response != null && response.getCode() == 200) {
+                Platform.runLater(() -> {
+                    buildDataList(response.getData());
+                    updateStatistics();
+                    showLoading(false);
+                });
+            } else {
+                Platform.runLater(() -> {
+                    showError("加载失败", response != null ? response.getMsg() : "网络错误");
+                    showLoading(false);
+                });
             }
         } catch (Exception e) {
             logger.log(Level.SEVERE, "加载库存预警列表异常", e);
