@@ -448,7 +448,7 @@ public class StockInController extends ToolController {
                 if (response.statusCode() == 200) {
                     Map<String, Object> resultMap = gson.fromJson(response.body(), new TypeToken<Map<String, Object>>(){}.getType());
                     if (resultMap.get("code").equals(200.0)) {
-                        SimpleMessageDialog.showSuccess("删除成功");
+                        MessageDialog.showDialog("删除成功");
                         loadStockInList();
                     } else {
                         SimpleMessageDialog.showError("删除失败：" + resultMap.get("msg"));
@@ -456,6 +456,7 @@ public class StockInController extends ToolController {
                 } else {
                     SimpleMessageDialog.showError("请求失败");
                 }
+
             } catch (Exception e) {
                 System.err.println("删除异常: " + e.getMessage());
                 e.printStackTrace();
