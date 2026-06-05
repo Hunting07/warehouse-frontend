@@ -19,6 +19,7 @@ public class SimpleMessageDialog extends Stage {
         initModality(Modality.APPLICATION_MODAL);
         initStyle(StageStyle.DECORATED);
         setTitle(title);
+        setResizable(false);
 
         VBox root = new VBox(30);
         root.setAlignment(Pos.CENTER);
@@ -27,7 +28,8 @@ public class SimpleMessageDialog extends Stage {
 
         // 消息文本
         Label messageLabel = new Label(message);
-        messageLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-text-alignment: center;");
+        messageLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-text-alignment: center;");
+        messageLabel.setAlignment(Pos.CENTER);
         messageLabel.setWrapText(true);
         messageLabel.setMaxWidth(380);
 
@@ -38,7 +40,7 @@ public class SimpleMessageDialog extends Stage {
 
         root.getChildren().addAll(messageLabel, confirmBtn);
 
-        Scene scene = new Scene(root);
+        Scene scene = new Scene(root, 450, 220);
         scene.setFill(javafx.scene.paint.Color.WHITE);
         setScene(scene);
 

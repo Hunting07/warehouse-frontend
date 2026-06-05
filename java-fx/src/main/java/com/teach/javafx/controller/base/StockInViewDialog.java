@@ -39,7 +39,7 @@ public class StockInViewDialog extends Stage {
 
     public StockInViewDialog(StockIn stockIn) {
         initModality(Modality.APPLICATION_MODAL);
-        setTitle("入库单详情");
+        setTitle("入库单明细");
         setResizable(true);
 
         VBox mainContent = new VBox(16);
@@ -48,7 +48,7 @@ public class StockInViewDialog extends Stage {
 
         // 标题区域
         VBox titleBox = new VBox(8);
-        Label titleLabel = new Label("入库单详情");
+        Label titleLabel = new Label("入库单明细");
         titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;");
         
         Separator separator = new Separator();
