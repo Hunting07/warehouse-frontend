@@ -1079,7 +1079,7 @@ public class OutOrderEditDialog extends Stage {
                 } else {
                     String errorMsg = result.get("msg") != null ? result.get("msg").toString() : "未知错误";
                     System.err.println("提交失败，错误信息: " + errorMsg);
-                    MessageDialog.showDialog("失败：" + errorMsg);
+                    MessageDialog.showDialog(errorMsg);
                 }
             } else {
                 System.err.println("HTTP请求失败，状态码: " + response.statusCode());

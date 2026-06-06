@@ -378,7 +378,6 @@ public class OutOrderApproveDialog extends Stage {
     @FXML
     protected void onApproveButtonClick() {
         System.out.println("✅ 用户点击批准按钮");
-        close();
         approveOutOrder(true, null);
     }
 
@@ -390,7 +389,6 @@ public class OutOrderApproveDialog extends Stage {
             return;
         }
         System.out.println("❌ 用户点击驳回按钮，理由: " + rejectReason);
-        close();
         approveOutOrder(false, rejectReason);
     }
 
@@ -438,10 +436,11 @@ public class OutOrderApproveDialog extends Stage {
                     javafx.application.Platform.runLater(() -> {
                         if (code == 200 || code == 0) {
                             MessageDialog.showDialog(approved ? "批准成功" : "驳回成功");
+                            close();
                         } else {
                             String errorMsg = result.get("msg") != null ? result.get("msg").toString() : "未知错误";
                             System.err.println("审批失败，错误信息: " + errorMsg);
-                            MessageDialog.showDialog("审批失败：" + errorMsg);
+                            MessageDialog.showDialog(errorMsg);
                         }
                     });
                 } else {
