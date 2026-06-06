@@ -508,6 +508,8 @@ public class OutOrderEditDialog extends Stage {
         System.out.println("\n=== 开始加载出库单详情 ===");
         System.out.println("出库单ID: " + outOrder.getId());
         System.out.println("出库类型: " + outOrder.getOutType());
+        System.out.println("当前用户ID: " + AppStore.getJwt().getId());
+        System.out.println("当前用户名: " + AppStore.getJwt().getUsername());
 
         // 设置出库类型
         String outTypeName = getOutTypeName(outOrder.getOutType());
@@ -565,6 +567,15 @@ public class OutOrderEditDialog extends Stage {
 
             if (code == 200 || code == 0) {
                 Map<String, Object> data = (Map<String, Object>) result.get("data");
+
+                // 打印出库单的详细信息
+                System.out.println("\n=== 出库单主表信息 ===");
+                System.out.println("完整数据: " + data);
+                System.out.println("申请人ID: " + data.get("applicantId"));
+                System.out.println("申请人姓名: " + data.get("applicantName"));
+                System.out.println("审批状态: " + data.get("status"));
+                System.out.println("备注: " + data.get("remark"));
+
                 List<Map<String, Object>> items = (List<Map<String, Object>>) data.get("items");
 
                 System.out.println("明细数量: " + (items != null ? items.size() : 0));
@@ -757,81 +768,111 @@ public class OutOrderEditDialog extends Stage {
         }
     }
 
+    // ... existing code ...
+
     /**
      * 同步加载物资列表（阻塞式，确保数据加载完成后再继续）
      */
     private void loadMaterialListSync() {
         try {
-            System.out.println("开始同步加载物资列表...");
+            System.out.println("\n=== 开始同步加载物资列表 ===");
             String url = HttpRequestUtil.serverUrl + "/api/material/list";
             System.out.println("请求URL: " + url);
-            
-            // 使用 POST 方法，发送空的 JSON 对象（与入库单保持一致）
+
+            // 使用 POST 方法，发送空的 JSON 对象
             Map<String, Object> emptyBody = new HashMap<>();
-            
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(emptyBody)))
                     .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                     .build();
-            
+
             System.out.println("发送HTTP请求...");
-            // 使用 send() 方法同步发送请求，会阻塞直到收到响应
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            
+
             System.out.println("HTTP状态码: " + response.statusCode());
-            
+
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
                 int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
                 System.out.println("返回code: " + code);
-                
+
                 if (code == 200 || code == 0) {
                     List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
                     System.out.println("data列表大小: " + (data != null ? data.size() : "null"));
-                    
+
                     materialList.clear();
                     materialMapList.clear();
                     if (data != null) {
-                        // 打印前3条数据用于调试
-                        for (int i = 0; i < data.size() && i < 3; i++) {
+                        System.out.println("\n=== 开始处理物资数据 ===");
+
+                        for (int i = 0; i < data.size(); i++) {
                             Map<String, Object> item = data.get(i);
-                            System.out.println("物资项 " + i + ": name=" + item.get("name") + ", price=" + item.get("price") + ", status=" + item.get("status"));
-                        }
-                        
-                        for (Map<String, Object> item : data) {
-                            // 修复：只添加启用状态的物资（status=1）
+
+                            String name = (String) item.get("name");
                             Object statusObj = item.get("status");
-                            Integer status = statusObj instanceof Number ? ((Number) statusObj).intValue() : 1;
-                            
-                            // 只添加启用状态的物资
-                            if (status == 1) {
-                                OptionItem option = new OptionItem();
-                                option.setId(((Number) item.get("id")).intValue());
-                                
-                                // 修复：后端返回的字段是 name，不是 materialName
-                                String materialName = (String) item.get("name");
-                                option.setName(materialName);
-                                
-                                // 修复：后端返回的字段是 price，不是 unitPrice
-                                if (item.get("price") instanceof Number) {
-                                    option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
-                                }
-                                
-                                // 设置状态字段
-                                option.setStatus(status);
-                                
-                                materialList.add(option);
-                                materialMapList.add(item);
+                            Object categoryIdObj = item.get("categoryId");
+                            Object categoryStatusObj = item.get("categoryStatus");
+
+                            Integer materialStatus = statusObj instanceof Number ? ((Number) statusObj).intValue() : 1;
+                            Integer categoryId = categoryIdObj instanceof Number ? ((Number) categoryIdObj).intValue() : null;
+                            Integer categoryStatus = categoryStatusObj instanceof Number ? ((Number) categoryStatusObj).intValue() : null;
+
+                            System.out.println("\n--- 物资 " + (i+1) + ": " + name + " ---");
+                            System.out.println("  status=" + materialStatus);
+                            System.out.println("  categoryId=" + categoryId);
+                            System.out.println("  categoryStatus=" + categoryStatus);
+
+                            // 规则1：物资本身必须启用
+                            if (materialStatus != 1) {
+                                System.out.println("  ✗ 跳过：物资未启用");
+                                continue;
                             }
+
+                            // 规则2：如果物资有分类，检查分类状态
+                            if (categoryId != null && categoryId != 0) {
+                                System.out.println("  → 该物资有分类（ID=" + categoryId + "）");
+
+                                if (categoryStatus == null) {
+                                    System.out.println("  ⚠️ 警告：后端未返回 categoryStatus 字段");
+                                    System.out.println("  → 假设分类启用，添加该物资");
+                                } else if (categoryStatus != 1) {
+                                    System.out.println("  ✗ 跳过：分类未启用（categoryStatus=" + categoryStatus + "）");
+                                    continue;
+                                } else {
+                                    System.out.println("  ✓ 分类已启用");
+                                }
+                            } else {
+                                System.out.println("  → 该物资无分类");
+                            }
+
+                            // 所有条件满足，添加到列表
+                            OptionItem option = new OptionItem();
+                            option.setId(((Number) item.get("id")).intValue());
+                            option.setName(name);
+
+                            if (item.get("price") instanceof Number) {
+                                option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
+                            }
+
+                            option.setStatus(materialStatus);
+
+                            materialList.add(option);
+                            materialMapList.add(item);
+                            System.out.println("  ✓✓✓ 添加成功！当前列表共 " + materialList.size() + " 个物资");
                         }
                     }
-                    System.out.println("物资列表加载成功，共 " + materialList.size() + " 条数据");
-                    System.out.println("物资Map列表加载成功，共 " + materialMapList.size() + " 条数据");
+
+                    System.out.println("\n=== 物资列表加载完成 ===");
+                    System.out.println("总共加载 " + materialList.size() + " 条可用物资");
                     if (!materialList.isEmpty()) {
-                        System.out.println("第一个物资: id=" + materialList.get(0).getId() + 
-                                         ", name=" + materialList.get(0).getName() + 
-                                         ", price=" + materialList.get(0).getPrice());
+                        System.out.println("\n前3个物资：");
+                        for (int i = 0; i < materialList.size() && i < 3; i++) {
+                            System.out.println("  " + (i+1) + ". " + materialList.get(i).getName() +
+                                    " (ID=" + materialList.get(i).getId() +
+                                    ", price=" + materialList.get(i).getPrice() + ")");
+                        }
                     }
                 } else {
                     System.err.println("加载物资列表失败: code=" + code);
@@ -846,6 +887,12 @@ public class OutOrderEditDialog extends Stage {
             e.printStackTrace();
         }
     }
+
+// ... existing code ...
+
+
+
+
 
     private void loadMaterialList() {
         try {
