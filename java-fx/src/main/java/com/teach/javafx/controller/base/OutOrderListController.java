@@ -539,8 +539,12 @@ public class OutOrderListController extends ToolController {
         }
 
         String status = String.valueOf(selected.getStatus());
-        if (!"0".equals(status) && !"2".equals(status)) {
-            MessageDialog.showDialog("只能删除待审批或已驳回状态的出库单");
+        if (!"0".equals(status)) {
+            if ("2".equals(status)) {
+                MessageDialog.showDialog("已驳回的出库单无法删除\n\n请修改后重新提交审批");
+            } else {
+                MessageDialog.showDialog("只能删除待审批状态的出库单\n\n已完成审批流程的单据不可删除");
+            }
             return;
         }
 

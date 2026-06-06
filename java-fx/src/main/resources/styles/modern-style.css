@@ -212,6 +212,29 @@
     -fx-background-color: linear-gradient(to bottom, #5a9fd4, #4a8fc4);
 }
 
+/* 库存预警表格表头样式 - 柔和红色（覆盖全局蓝色样式） */
+#warningTable .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #ff9999, #ff6666) !important;
+    -fx-background-insets: 0;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(255, 102, 102, 0.2), 4, 0, 0, 1);
+}
+
+#warningTable .column-header .label {
+    -fx-text-fill: white !important;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 12 5 12 5;
+}
+
+#warningTable .filler {
+    -fx-background-color: linear-gradient(to bottom, #ff9999, #ff6666) !important;
+}
+
+#warningTable .corner {
+    -fx-background-color: linear-gradient(to bottom, #ff9999, #ff6666) !important;
+}
+
 /* 新增：入库/出库编辑对话框表格样式 */
 .stockin-edit-table, .stockin-edit-table .column-header-background {
     -fx-background-color: linear-gradient(to bottom, #5a9fd4, #4a8fc4);

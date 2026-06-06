@@ -476,7 +476,7 @@ public class MainFrameController {
                                         if (createTime != null && createTime.toString().startsWith(today)) {
                                             if (status != null) {
                                                 int statusValue = status instanceof Number ? ((Number) status).intValue() : -1;
-                                                if (statusValue == 3) {
+                                                if (statusValue == 1) {
                                                     count++;
                                                 }
                                             }
