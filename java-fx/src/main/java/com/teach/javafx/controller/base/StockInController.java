@@ -444,102 +444,17 @@ public class StockInController extends ToolController {
             return;
         }
 
-        showApproveDialog(selected);
+        showStockInApproveDialog(selected);
     }
 
-    private void showApproveDialog(StockIn stockIn) {
-        Dialog<Boolean> dialog = new Dialog<>();
-        dialog.setTitle("入库单审批");
-
-        ButtonType approveButtonType = new ButtonType("批准并入库", ButtonBar.ButtonData.OK_DONE);
-        ButtonType rejectButtonType = new ButtonType("驳回", ButtonBar.ButtonData.OTHER);
-        ButtonType cancelButtonType = new ButtonType("取消", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        dialog.getDialogPane().getButtonTypes().addAll(approveButtonType, rejectButtonType, cancelButtonType);
-
-        TextArea rejectReasonArea = new TextArea();
-        rejectReasonArea.setPromptText("请输入驳回理由（仅驳回时需要）");
-        rejectReasonArea.setPrefRowCount(4);
-        rejectReasonArea.setPrefWidth(400);
-        rejectReasonArea.setStyle("-fx-font-size: 13px; -fx-padding: 10;");
-
-        Label titleLabel = new Label("入库单审批");
-        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-
-        Separator separator = new Separator();
-        separator.setStyle("-fx-background-color: #e0e6ed;");
-
-        javafx.scene.layout.HBox titleBox = new javafx.scene.layout.HBox(10, titleLabel);
-        titleBox.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
-
-        javafx.scene.layout.VBox infoBox = new javafx.scene.layout.VBox(12);
-        infoBox.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);");
-        
-        Label inCodeLabel = new Label("入库单号：" + stockIn.getInCode());
-        inCodeLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-        
-        Label applyUserLabel = new Label("申请人：" + stockIn.getApplyUserName());
-        applyUserLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
-        
-        Label typeLabel = new Label("入库类型：" + getTypeName(stockIn.getType()));
-        typeLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
-        
-        Label amountLabel = new Label("总金额：" + stockIn.getTotalAmount());
-        amountLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
-        
-        Label timeLabel = new Label("申请时间：" + stockIn.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        timeLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #546e7a;");
-        
-        infoBox.getChildren().addAll(inCodeLabel, applyUserLabel, typeLabel, amountLabel, timeLabel);
-
-        Label rejectLabel = new Label("驳回理由：");
-        rejectLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
-
-        javafx.scene.layout.VBox rejectBox = new javafx.scene.layout.VBox(8, rejectLabel, rejectReasonArea);
-        rejectBox.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-padding: 15; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 1);");
-
-        javafx.scene.layout.VBox content = new javafx.scene.layout.VBox(15);
-        content.setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff); -fx-padding: 25;");
-        content.getChildren().addAll(titleBox, separator, infoBox, rejectBox);
-
-        dialog.getDialogPane().setContent(content);
-        dialog.getDialogPane().setStyle("-fx-background-color: linear-gradient(to bottom, #f5f7fa, #ffffff);");
-
-        Button approveBtn = (Button) dialog.getDialogPane().lookupButton(approveButtonType);
-        approveBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(74, 144, 217, 0.3), 8, 0, 0, 2);");
-
-        Button rejectBtn = (Button) dialog.getDialogPane().lookupButton(rejectButtonType);
-        rejectBtn.setStyle("-fx-background-color: #e87070; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 30; -fx-background-radius: 6; -fx-cursor: hand;");
-
-        Button cancelBtn = (Button) dialog.getDialogPane().lookupButton(cancelButtonType);
-        cancelBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #7f8c8d; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 8 25; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-cursor: hand;");
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == approveButtonType) {
-                return true;
-            } else if (dialogButton == rejectButtonType) {
-                return false;
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(approved -> {
-            if (approved) {
-                approveAndCompleteStockIn(stockIn);
-            } else {
-                String rejectReason = rejectReasonArea.getText();
-                if (rejectReason == null || rejectReason.trim().isEmpty()) {
-                    SimpleMessageDialog.showWarning("请填写驳回理由");
-                    showApproveDialog(stockIn);
-                    return;
-                }
-                
-                showConfirmDialog("确认驳回", "确认要驳回该入库单吗？\n\n驳回理由：\n" + rejectReason, () -> {
-                    approveStockIn(stockIn, false, rejectReason);
-                });
-            }
-        });
+    private void showStockInApproveDialog(StockIn stockIn) {
+        StockInApproveDialog dialog = StockInApproveDialog.createDialog(stockIn);
+        if (dialog != null) {
+            dialog.showAndWait();
+            loadStockInList();
+        }
     }
+
 
     private void approveStockIn(StockIn stockIn, boolean approved, String rejectReason) {
         try {

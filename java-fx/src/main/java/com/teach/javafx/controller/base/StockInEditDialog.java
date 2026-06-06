@@ -934,17 +934,9 @@ public class StockInEditDialog extends Stage {
 
             // 打印请求数据
             String requestJson = gson.toJson(requestBody);
-            System.out.println("========== 更新入库单 ==========");
-            System.out.println("入库单ID: " + editingStockIn.getId());
-            System.out.println("入库单号: " + editingStockIn.getInCode());
-            System.out.println("明细项数量: " + items.size());
-            System.out.println("请求数据: " + requestJson);
-            System.out.println("================================");
 
             // 使用正确的 PUT 接口
             String url = HttpRequestUtil.serverUrl + "/stock-in/update/" + editingStockIn.getId();
-            System.out.println("请求URL: " + url);
-            System.out.println("请求方法: PUT");
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -955,12 +947,9 @@ public class StockInEditDialog extends Stage {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-            System.out.println("响应状态码: " + response.statusCode());
-            System.out.println("响应内容: " + response.body());
 
             // 解析响应
             Map<String, Object> result = gson.fromJson(response.body(), Map.class);
-            System.out.println("解析结果: " + result);
 
             Object codeObj = result.get("code");
             int code = codeObj instanceof Number ? ((Number) codeObj).intValue() : -1;
@@ -983,12 +972,10 @@ public class StockInEditDialog extends Stage {
      */
     private void deleteAndRecreate(String requestJson) {
         try {
-            System.out.println("========== 删除+创建模式 ==========");
-            
+
             // 1. 先删除原入库单（使用DELETE方法）
             String deleteUrl = HttpRequestUtil.serverUrl + "/stock-in/delete/" + editingStockIn.getId();
-            System.out.println("删除URL: " + deleteUrl);
-            
+
             HttpRequest deleteRequest = HttpRequest.newBuilder()
                     .uri(URI.create(deleteUrl))
                     .DELETE()  // 使用DELETE方法
@@ -996,16 +983,13 @@ public class StockInEditDialog extends Stage {
                     .build();
             
             HttpResponse<String> deleteResponse = httpClient.send(deleteRequest, HttpResponse.BodyHandlers.ofString());
-            System.out.println("删除响应状态码: " + deleteResponse.statusCode());
-            System.out.println("删除响应内容: " + deleteResponse.body());
-            
+
             // 检查删除是否成功
             if (deleteResponse.statusCode() == 200) {
                 Map<String, Object> deleteResult = gson.fromJson(deleteResponse.body(), Map.class);
                         
                 if (deleteResult.get("code").equals(200.0)) {
-                    System.out.println("删除成功，开始创建新入库单...");
-                            
+
                     HttpRequest createRequest = HttpRequest.newBuilder()
                             .uri(URI.create(HttpRequestUtil.serverUrl + "/stock-in/create"))
                             .POST(HttpRequest.BodyPublishers.ofString(requestJson))
@@ -1071,14 +1055,14 @@ public class StockInEditDialog extends Stage {
         VBox messageBox = new VBox(8); // 8px 行间距
         messageBox.setAlignment(Pos.CENTER);
         messageBox.setPadding(new Insets(20, 20, 20, 20));
-        messageBox.setStyle("-fx-background-color: #f5f5f5; -fx-background-radius: 8;");
+        messageBox.setStyle("-fx-background-color:white; -fx-background-radius: 8;");
         
         // 将消息按行分割并分别显示
         String[] lines = message.split("\n");
         for (String line : lines) {
             if (line != null && !line.trim().isEmpty()) {
                 Label lineLabel = new Label(line.trim());
-                lineLabel.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-text-alignment: center;");
+                lineLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-text-alignment: center;");
                 lineLabel.setAlignment(Pos.CENTER);
                 lineLabel.setMaxWidth(400);
                 messageBox.getChildren().add(lineLabel);
@@ -1087,7 +1071,7 @@ public class StockInEditDialog extends Stage {
         
         // 将消息放入 ScrollPane，支持多行内容完整显示
         ScrollPane scrollPane = new ScrollPane(messageBox);
-        scrollPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        scrollPane.setStyle("-fx-background-color: white; -fx-border-color: transparent;");
         scrollPane.setFitToWidth(true);
         scrollPane.setVbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);

@@ -427,9 +427,16 @@ public class MainFrameController {
                             String today = java.time.LocalDate.now().toString();
                             for (Object item : list) {
                                 if (item instanceof Map) {
-                                    Object createTime = ((Map<?, ?>) item).get("createTime");
+                                    Map<?, ?> map = (Map<?, ?>) item;
+                                    Object createTime = map.get("createTime");
+                                    Object status = map.get("status");
                                     if (createTime != null && createTime.toString().startsWith(today)) {
-                                        count++;
+                                        if (status != null) {
+                                            int statusValue = status instanceof Number ? ((Number) status).intValue() : -1;
+                                            if (statusValue != 0 && statusValue != 2) {
+                                                count++;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -439,6 +446,8 @@ public class MainFrameController {
                     }
                 });
 
+
+
                 Thread t3 = new Thread(() -> {
                     try {
                         DataResponse stockOutRes = HttpRequestUtil.request("/api/stockOut/list", req);
@@ -447,7 +456,6 @@ public class MainFrameController {
                             Object data = stockOutRes.getData();
                             List<?> list = null;
 
-                            // 处理分页数据结构 {records: [...], total: ..., ...}
                             if (data instanceof Map) {
                                 Map<?, ?> map = (Map<?, ?>) data;
                                 Object records = map.get("records");
@@ -462,9 +470,16 @@ public class MainFrameController {
                                 String today = java.time.LocalDate.now().toString();
                                 for (Object item : list) {
                                     if (item instanceof Map) {
-                                        Object createTime = ((Map<?, ?>) item).get("createTime");
+                                        Map<?, ?> map = (Map<?, ?>) item;
+                                        Object createTime = map.get("createTime");
+                                        Object status = map.get("status");
                                         if (createTime != null && createTime.toString().startsWith(today)) {
-                                            count++;
+                                            if (status != null) {
+                                                int statusValue = status instanceof Number ? ((Number) status).intValue() : -1;
+                                                if (statusValue == 3) {
+                                                    count++;
+                                                }
+                                            }
                                         }
                                     }
                                 }
