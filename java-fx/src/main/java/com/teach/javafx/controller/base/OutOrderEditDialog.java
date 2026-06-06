@@ -92,25 +92,25 @@ public class OutOrderEditDialog extends Stage {
                     OutOrderEditDialog.class.getResource("/com/teach/javafx/base/outorder-edit-dialog.fxml"));
 
             Scene scene = new Scene(loader.load());
-            
+
             scene.getStylesheets().add(OutOrderEditDialog.class.getResource("/styles/modern-style.css").toExternalForm());
-            
+
             OutOrderEditDialog dialog = loader.getController();
-            
+
             if (dialog == null) {
                 throw new RuntimeException("无法获取控制器实例");
             }
-            
+
             dialog.setScene(scene);
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setTitle(isNew ? "新增出库单" : "编辑出库单");
             dialog.setResizable(false);
-            
+
             dialog.editingOutOrder = order;
             dialog.isNew = isNew;
-            
+
             dialog.initControls();
-            
+
             // 异步加载物资列表，避免阻塞UI
             new Thread(() -> {
                 try {
@@ -122,7 +122,7 @@ public class OutOrderEditDialog extends Stage {
                     e.printStackTrace();
                 }
             }).start();
-            
+
             if (order != null) {
                 // 编辑模式：异步加载出库单详情
                 new Thread(() -> {
@@ -136,23 +136,23 @@ public class OutOrderEditDialog extends Stage {
                     }
                 }).start();
             }
-            
+
             return dialog;
-            
+
         } catch (Exception e) {
             System.err.println("=== FXML 加载失败 ===");
             System.err.println("错误类型: " + e.getClass().getName());
             System.err.println("错误消息: " + e.getMessage());
             e.printStackTrace();
-            
+
             StringBuilder errorMsg = new StringBuilder("打开对话框失败：\n");
             errorMsg.append("错误类型: ").append(e.getClass().getSimpleName()).append("\n");
             errorMsg.append("错误消息: ").append(e.getMessage()).append("\n");
-            
+
             if (e.getCause() != null) {
                 errorMsg.append("原因: ").append(e.getCause().getMessage()).append("\n");
             }
-            
+
             MessageDialog.showDialog(errorMsg.toString());
             return null;
         }
@@ -163,18 +163,18 @@ public class OutOrderEditDialog extends Stage {
             System.err.println("错误：outTypeComboBox 为 null，FXML 绑定失败");
             return;
         }
-        
+
         // 初始化出库类型
         outTypeComboBox.getItems().addAll("领料出库", "销售出库", "报损出库", "其他出库");
         outTypeComboBox.setValue(isNew ? "领料出库" : getOutTypeName(editingOutOrder.getOutType()));
-        
+
         // 添加出库类型切换监听器
         outTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 updateFieldEditableState(newVal);
             }
         });
-        
+
         // 初始化表格
         detailTable.setItems(detailList);
         detailTable.setEditable(true);
@@ -186,11 +186,11 @@ public class OutOrderEditDialog extends Stage {
                 private final TextField textField = new TextField();
                 private final Button selectBtn = new Button("选择");
                 private final HBox container = new HBox(5, textField, selectBtn);
-                
+
                 {
                     textField.setEditable(false);
                     textField.setPromptText("请选择物资");
-                    
+
                     // 修改按钮样式，增加内边距和最小宽度
                     selectBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 6 12 6 12; -fx-min-width: 50; -fx-cursor: hand; -fx-background-radius: 6;");
                     selectBtn.setOnAction(e -> {
@@ -201,14 +201,14 @@ public class OutOrderEditDialog extends Stage {
                         }
                         showMaterialSelectionDialog(detail);
                     });
-                    
+
                     HBox.setHgrow(textField, Priority.ALWAYS);
                 }
-                
+
                 @Override
                 protected void updateItem(String item, boolean empty) {
                     super.updateItem(item, empty);
-                    
+
                     if (empty || getTableRow().getItem() == null) {
                         setGraphic(null);
                         setText(null);
@@ -230,11 +230,11 @@ public class OutOrderEditDialog extends Stage {
         quantityColumn.setCellFactory(col -> {
             return new TableCell<OutOrderDetail, Integer>() {
                 private final TextField textField = new TextField();
-                
+
                 {
                     textField.setEditable(true);
                     textField.setPromptText("数量");
-                    
+
                     textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
                         if (!newVal) {
                             OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
@@ -259,7 +259,7 @@ public class OutOrderEditDialog extends Stage {
                             }
                         }
                     });
-                    
+
                     textField.setOnAction(e -> {
                         OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
                         if (detail != null) {
@@ -283,11 +283,11 @@ public class OutOrderEditDialog extends Stage {
                         }
                     });
                 }
-                
+
                 @Override
                 protected void updateItem(Integer quantity, boolean empty) {
                     super.updateItem(quantity, empty);
-                    
+
                     if (empty || getTableRow().getItem() == null) {
                         setGraphic(null);
                         setText(null);
@@ -309,12 +309,12 @@ public class OutOrderEditDialog extends Stage {
         priceColumn.setCellFactory(col -> {
             return new TableCell<OutOrderDetail, BigDecimal>() {
                 private final TextField textField = new TextField();
-                
+
                 {
                     textField.setPromptText("单价");
                     // 可编辑状态的样式
                     textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-prompt-text-fill: #bdc3c7; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
-                    
+
                     textField.focusedProperty().addListener((obs, oldVal, newVal) -> {
                         if (!newVal) {
                             OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
@@ -339,7 +339,7 @@ public class OutOrderEditDialog extends Stage {
                             }
                         }
                     });
-                    
+
                     textField.setOnAction(e -> {
                         OutOrderDetail detail = getTableRow() != null ? getTableRow().getItem() : null;
                         if (detail != null) {
@@ -363,11 +363,11 @@ public class OutOrderEditDialog extends Stage {
                         }
                     });
                 }
-                
+
                 @Override
                 protected void updateItem(BigDecimal price, boolean empty) {
                     super.updateItem(price, empty);
-                    
+
                     if (empty || getTableRow().getItem() == null) {
                         setGraphic(null);
                         setText(null);
@@ -375,7 +375,7 @@ public class OutOrderEditDialog extends Stage {
                         // 根据出库类型设置编辑状态和样式
                         String currentOutType = outTypeComboBox.getValue();
                         boolean isSales = "销售出库".equals(currentOutType);
-                        
+
                         if (isSales) {
                             // 销售出库：单价可编辑，白色背景
                             textField.setEditable(true);
@@ -387,7 +387,7 @@ public class OutOrderEditDialog extends Stage {
                             textField.setFocusTraversable(false);
                             textField.setStyle("-fx-background-color: #f5f5f5; -fx-text-fill: #999999; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6;");
                         }
-                        
+
                         if (price != null && price.compareTo(BigDecimal.ZERO) >= 0) {
                             textField.setText(price.toPlainString());
                         } else {
@@ -409,21 +409,21 @@ public class OutOrderEditDialog extends Stage {
             }
             return new javafx.beans.property.SimpleObjectProperty<>(amt);
         });
-        
+
         amountColumn.setCellFactory(col -> new TableCell<OutOrderDetail, BigDecimal>() {
             private final TextField textField = new TextField();
-            
+
             {
                 textField.setEditable(false);
                 textField.setFocusTraversable(false);
                 // 默认样式（销售出库时可编辑）
                 textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
             }
-            
+
             @Override
             protected void updateItem(BigDecimal amount, boolean empty) {
                 super.updateItem(amount, empty);
-                
+
                 if (empty || getTableRow().getItem() == null) {
                     setGraphic(null);
                     setText(null);
@@ -431,7 +431,7 @@ public class OutOrderEditDialog extends Stage {
                     // 根据出库类型设置金额显示和样式
                     String currentOutType = outTypeComboBox.getValue();
                     boolean isSales = "销售出库".equals(currentOutType);
-                    
+
                     if (isSales) {
                         // 销售出库：金额自动计算显示，白色背景
                         textField.setStyle("-fx-background-color: white; -fx-text-fill: #2c3e50; -fx-font-size: 13px; -fx-padding: 8 12 8 12; -fx-background-radius: 6; -fx-border-color: #e0e6ed; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 4, 0, 0, 1);");
@@ -474,10 +474,10 @@ public class OutOrderEditDialog extends Stage {
         if (detailList.isEmpty()) {
             onAddItemButtonClick();
         }
-        
+
         // 初始化字段编辑状态
         updateFieldEditableState(outTypeComboBox.getValue());
-        
+
         calculateTotal();
     }
 
@@ -488,7 +488,7 @@ public class OutOrderEditDialog extends Stage {
     private void updateFieldEditableState(String outType) {
         System.out.println("切换出库类型: " + outType);
         boolean isSales = "销售出库".equals(outType);
-        
+
         // 遍历所有行，更新单价
         for (OutOrderDetail detail : detailList) {
             if (!isSales) {
@@ -496,10 +496,10 @@ public class OutOrderEditDialog extends Stage {
                 detail.setUnitPrice(BigDecimal.ZERO);
             }
         }
-        
+
         // 刷新表格以应用更改（这会触发CellFactory的updateItem方法）
         detailTable.refresh();
-        
+
         // 重新计算总金额
         calculateTotal();
     }
@@ -508,7 +508,7 @@ public class OutOrderEditDialog extends Stage {
         System.out.println("\n=== 开始加载出库单详情 ===");
         System.out.println("出库单ID: " + outOrder.getId());
         System.out.println("出库类型: " + outOrder.getOutType());
-        
+
         // 设置出库类型
         String outTypeName = getOutTypeName(outOrder.getOutType());
         System.out.println("设置出库类型: " + outTypeName);
@@ -517,20 +517,20 @@ public class OutOrderEditDialog extends Stage {
         try {
             // 尝试多种可能的路径
             String[] possibleUrls = {
-                HttpRequestUtil.serverUrl + "/api/stockOut/detail/" + outOrder.getId(),
-                HttpRequestUtil.serverUrl + "/stockOut/detail/" + outOrder.getId(),
-                HttpRequestUtil.serverUrl + "/api/outOrder/detail/" + outOrder.getId(),
-                HttpRequestUtil.serverUrl + "/outOrder/detail/" + outOrder.getId()
+                    HttpRequestUtil.serverUrl + "/api/stockOut/detail/" + outOrder.getId(),
+                    HttpRequestUtil.serverUrl + "/stockOut/detail/" + outOrder.getId(),
+                    HttpRequestUtil.serverUrl + "/api/outOrder/detail/" + outOrder.getId(),
+                    HttpRequestUtil.serverUrl + "/outOrder/detail/" + outOrder.getId()
             };
-            
+
             String url = null;
             HttpResponse<String> response = null;
-            
+
             // 尝试每个可能的URL
             for (String testUrl : possibleUrls) {
                 try {
                     System.out.println("尝试URL: " + testUrl);
-                    
+
                     HttpRequest request = HttpRequest.newBuilder()
                             .uri(URI.create(testUrl))
                             .GET()
@@ -538,9 +538,9 @@ public class OutOrderEditDialog extends Stage {
                             .build();
 
                     response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-                    
+
                     System.out.println("HTTP状态码: " + response.statusCode());
-                    
+
                     if (response.statusCode() == 200) {
                         url = testUrl;
                         System.out.println("✓ 找到正确的URL: " + url);
@@ -552,7 +552,7 @@ public class OutOrderEditDialog extends Stage {
                     System.out.println("✗ 请求失败: " + e.getMessage());
                 }
             }
-            
+
             if (url == null || response == null || response.statusCode() != 200) {
                 System.err.println("\n所有URL都失败了！");
                 MessageDialog.showDialog("无法加载出库单详情，请检查后端接口");
@@ -562,11 +562,11 @@ public class OutOrderEditDialog extends Stage {
             Map<String, Object> result = gson.fromJson(response.body(), Map.class);
             int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
             System.out.println("返回code: " + code);
-            
+
             if (code == 200 || code == 0) {
                 Map<String, Object> data = (Map<String, Object>) result.get("data");
                 List<Map<String, Object>> items = (List<Map<String, Object>>) data.get("items");
-                
+
                 System.out.println("明细数量: " + (items != null ? items.size() : 0));
 
                 detailList.clear();
@@ -575,25 +575,29 @@ public class OutOrderEditDialog extends Stage {
                         Map<String, Object> itemMap = items.get(i);
                         System.out.println("\n--- 明细项 " + (i+1) + " ---");
                         System.out.println("原始数据: " + itemMap);
-                        
+
                         // 手动创建并填充OutOrderDetail对象
                         OutOrderDetail detail = new OutOrderDetail();
-                        
+
                         // 解析各个字段（注意后端可能返回的字段名）
                         if (itemMap.get("id") instanceof Number) {
                             detail.setId(((Number) itemMap.get("id")).intValue());
                             System.out.println("ID: " + detail.getId());
                         }
-                        
+
                         if (itemMap.get("orderId") instanceof Number) {
                             detail.setOrderId(((Number) itemMap.get("orderId")).intValue());
                         }
-                        
-                        if (itemMap.get("goodsId") instanceof Number) {
-                            detail.setGoodsId(((Number) itemMap.get("goodsId")).intValue());
+
+                        // 修复：后端返回的是 materialId，不是 goodsId
+                        if (itemMap.get("materialId") instanceof Number) {
+                            detail.setGoodsId(((Number) itemMap.get("materialId")).intValue());
                             System.out.println("物资ID: " + detail.getGoodsId());
+                        } else if (itemMap.get("goodsId") instanceof Number) {
+                            detail.setGoodsId(((Number) itemMap.get("goodsId")).intValue());
+                            System.out.println("物资ID(从goodsId): " + detail.getGoodsId());
                         }
-                        
+
                         // 物资名称（后端可能返回goodsName或materialName）
                         String goodsName = (String) itemMap.get("goodsName");
                         if (goodsName == null && itemMap.get("materialName") != null) {
@@ -601,36 +605,47 @@ public class OutOrderEditDialog extends Stage {
                         }
                         detail.setGoodsName(goodsName);
                         System.out.println("物资名称: " + detail.getGoodsName());
-                        
+
                         // 规格和单位
                         detail.setGoodsSpec((String) itemMap.get("goodsSpec"));
                         detail.setUnit((String) itemMap.get("unit"));
-                        
-                        // 数量
-                        if (itemMap.get("outNum") instanceof Number) {
+
+                        // 数量（后端可能返回outQuantity或outNum）
+                        if (itemMap.get("outQuantity") instanceof Number) {
+                            detail.setOutNum(((Number) itemMap.get("outQuantity")).intValue());
+                            System.out.println("数量(从outQuantity): " + detail.getOutNum());
+                        } else if (itemMap.get("outNum") instanceof Number) {
                             detail.setOutNum(((Number) itemMap.get("outNum")).intValue());
                             System.out.println("数量: " + detail.getOutNum());
                         } else if (itemMap.get("quantity") instanceof Number) {
                             detail.setOutNum(((Number) itemMap.get("quantity")).intValue());
                             System.out.println("数量(从quantity): " + detail.getOutNum());
                         }
-                        
+
                         // 单价
                         if (itemMap.get("unitPrice") instanceof Number) {
                             detail.setUnitPrice(BigDecimal.valueOf(((Number) itemMap.get("unitPrice")).doubleValue()));
                             System.out.println("单价: " + detail.getUnitPrice());
                         }
-                        
-                        // 总价
-                        if (itemMap.get("totalPrice") instanceof Number) {
+
+                        // 总价（后端可能返回amount或totalPrice）
+                        if (itemMap.get("amount") instanceof Number) {
+                            detail.setTotalPrice(BigDecimal.valueOf(((Number) itemMap.get("amount")).doubleValue()));
+                            System.out.println("总价(从amount): " + detail.getTotalPrice());
+                        } else if (itemMap.get("totalPrice") instanceof Number) {
                             detail.setTotalPrice(BigDecimal.valueOf(((Number) itemMap.get("totalPrice")).doubleValue()));
+                            System.out.println("总价: " + detail.getTotalPrice());
                         }
-                        
+
                         detailList.add(detail);
                         System.out.println("明细项 " + (i+1) + " 加载完成");
+                        System.out.println("  - goodsId: " + detail.getGoodsId());
+                        System.out.println("  - goodsName: " + detail.getGoodsName());
+                        System.out.println("  - outNum: " + detail.getOutNum());
+                        System.out.println("  - unitPrice: " + detail.getUnitPrice());
                     }
                 }
-                
+
                 System.out.println("\n=== 明细列表加载完成，共 " + detailList.size() + " 条 ===");
                 calculateTotal();
             } else {
@@ -649,12 +664,13 @@ public class OutOrderEditDialog extends Stage {
      * 显示物资选择对话框
      */
     private void showMaterialSelectionDialog(OutOrderDetail detail) {
-        System.out.println("=== 打开物资选择对话框 ===");
+        System.out.println("\n=== 打开物资选择对话框 ===");
         System.out.println("materialList大小: " + materialList.size());
+        System.out.println("materialMapList大小: " + materialMapList.size());
         if (!materialList.isEmpty()) {
-            System.out.println("第一个物资: " + materialList.get(0).getName());
+            System.out.println("第一个物资: " + materialList.get(0).getName() + ", ID: " + materialList.get(0).getId());
         }
-        
+
         if (materialList.isEmpty()) {
             MessageDialog.showDialog("物资列表为空，无法选择。");
             return;
@@ -666,38 +682,78 @@ public class OutOrderEditDialog extends Stage {
         }
 
         dialog.showAndWait();
-        
+
         OptionItem selectedMaterial = dialog.getSelectedMaterial();
         if (selectedMaterial != null) {
+            System.out.println("\n=== 选中物资信息 ===");
             System.out.println("选中物资: " + selectedMaterial.getName());
+            System.out.println("选中物资ID: " + selectedMaterial.getId());
+            System.out.println("选中物资价格: " + selectedMaterial.getPrice());
+
+            // 设置基本信息
             detail.setGoodsName(selectedMaterial.getName());
             detail.setGoodsId(selectedMaterial.getId());
 
+            System.out.println("设置后的 detail.goodsName: " + detail.getGoodsName());
+            System.out.println("设置后的 detail.goodsId: " + detail.getGoodsId());
+
+            // 从 materialMapList 中查找详细信息
+            boolean found = false;
             for (Map<String, Object> mat : materialMapList) {
                 if (((Number) mat.get("id")).intValue() == selectedMaterial.getId()) {
+                    found = true;
+                    System.out.println("在 materialMapList 中找到匹配的物资");
                     detail.setGoodsSpec((String) mat.getOrDefault("spec", "默认规格"));
                     detail.setUnit((String) mat.getOrDefault("unit", "件"));
-                    
+
                     // 根据当前出库类型决定是否设置单价
                     String currentOutType = outTypeComboBox.getValue();
                     boolean isSales = "销售出库".equals(currentOutType);
-                    
+
                     if (isSales) {
                         // 销售出库：设置物资的默认单价
                         Object priceObj = mat.get("price");
                         if (priceObj instanceof Number) {
                             detail.setUnitPrice(BigDecimal.valueOf(((Number) priceObj).doubleValue()));
+                            System.out.println("设置单价: " + detail.getUnitPrice());
                         }
                     } else {
                         // 领料、报损、其他出库：单价强制为0
                         detail.setUnitPrice(BigDecimal.ZERO);
+                        System.out.println("设置单价为0（非销售出库）");
                     }
-                    
+
                     break;
                 }
             }
+
+            if (!found) {
+                System.out.println("️ 警告：在 materialMapList 中未找到物资 ID=" + selectedMaterial.getId());
+                System.out.println("将使用 OptionItem 中的价格信息");
+
+                // 如果 materialMapList 中没有找到，使用 OptionItem 中的信息
+                String currentOutType = outTypeComboBox.getValue();
+                boolean isSales = "销售出库".equals(currentOutType);
+
+                if (isSales && selectedMaterial.getPrice() != null) {
+                    detail.setUnitPrice(selectedMaterial.getPrice());
+                    System.out.println("从 OptionItem 设置单价: " + detail.getUnitPrice());
+                } else if (!isSales) {
+                    detail.setUnitPrice(BigDecimal.ZERO);
+                    System.out.println("设置单价为0（非销售出库）");
+                }
+            }
+
+            System.out.println("\n=== 最终 detail 状态 ===");
+            System.out.println("goodsId: " + detail.getGoodsId());
+            System.out.println("goodsName: " + detail.getGoodsName());
+            System.out.println("unitPrice: " + detail.getUnitPrice());
+            System.out.println("outNum: " + detail.getOutNum());
+
             detailTable.refresh();
             calculateTotal();
+        } else {
+            System.out.println("⚠️ 用户未选择物资或点击了取消");
         }
     }
 
@@ -709,62 +765,65 @@ public class OutOrderEditDialog extends Stage {
             System.out.println("开始同步加载物资列表...");
             String url = HttpRequestUtil.serverUrl + "/api/material/available";
             System.out.println("请求URL: " + url);
-            
+
             // 使用 POST 方法，发送空的 JSON 对象（与入库单保持一致）
             Map<String, Object> emptyBody = new HashMap<>();
-            
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(emptyBody)))
                     .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                     .build();
-            
+
             System.out.println("发送HTTP请求...");
             // 使用 send() 方法同步发送请求，会阻塞直到收到响应
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            
+
             System.out.println("HTTP状态码: " + response.statusCode());
-            
+
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
                 int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
                 System.out.println("返回code: " + code);
-                
+
                 if (code == 200 || code == 0) {
                     List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
                     System.out.println("data列表大小: " + (data != null ? data.size() : "null"));
-                    
+
                     materialList.clear();
+                    materialMapList.clear();
                     if (data != null) {
                         for (int i = 0; i < data.size() && i < 3; i++) {
                             Map<String, Object> item = data.get(i);
                             System.out.println("物资项 " + i + ": name=" + item.get("name") + ", price=" + item.get("price"));
                         }
-                        
+
                         for (Map<String, Object> item : data) {
                             OptionItem option = new OptionItem();
                             option.setId(((Number) item.get("id")).intValue());
-                            
+
                             // 修复：后端返回的字段是 name，不是 materialName
                             String materialName = (String) item.get("name");
                             option.setName(materialName);
-                            
+
                             // 修复：后端返回的字段是 price，不是 unitPrice
                             if (item.get("price") instanceof Number) {
                                 option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
                             }
-                            
+
                             // 设置状态字段（available接口返回的都是启用的）
                             option.setStatus(1);
-                            
+
                             materialList.add(option);
+                            materialMapList.add(item);
                         }
                     }
                     System.out.println("物资列表加载成功，共 " + materialList.size() + " 条数据");
+                    System.out.println("物资Map列表加载成功，共 " + materialMapList.size() + " 条数据");
                     if (!materialList.isEmpty()) {
-                        System.out.println("第一个物资: id=" + materialList.get(0).getId() + 
-                                         ", name=" + materialList.get(0).getName() + 
-                                         ", price=" + materialList.get(0).getPrice());
+                        System.out.println("第一个物资: id=" + materialList.get(0).getId() +
+                                ", name=" + materialList.get(0).getName() +
+                                ", price=" + materialList.get(0).getPrice());
                     }
                 } else {
                     System.err.println("加载物资列表失败: code=" + code);
@@ -786,7 +845,7 @@ public class OutOrderEditDialog extends Stage {
 
             // 使用 POST 方法，发送空的 JSON 对象（与入库单保持一致）
             Map<String, Object> emptyBody = new HashMap<>();
-            
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(emptyBody)))
@@ -804,11 +863,11 @@ public class OutOrderEditDialog extends Stage {
                     for (Map<String, Object> item : data) {
                         OptionItem option = new OptionItem();
                         option.setId(((Number) item.get("id")).intValue());
-                        
+
                         // 修复：后端返回的字段是 name，不是 materialName
                         String materialName = (String) item.get("name");
                         option.setName(materialName);
-                        
+
                         // 修复：后端返回的字段是 price，不是 unitPrice
                         if (item.get("price") instanceof Number) {
                             option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
@@ -875,7 +934,7 @@ public class OutOrderEditDialog extends Stage {
         try {
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("outType", getOutTypeValue(outType));
-            
+
             String remark = editingOutOrder != null ? editingOutOrder.getRemark() : "";
             if (remark == null || remark.trim().isEmpty()) {
                 remark = "无";
@@ -911,34 +970,47 @@ public class OutOrderEditDialog extends Stage {
             }
             requestBody.put("items", items);
 
-            String url = isNew ? "/api/stockOut/submitApply" : "/api/stockOut/update";
-            
             // 打印详细的请求信息
             System.out.println("\n=== [出库单" + (isNew ? "新增" : "编辑") + "] 提交数据 ===");
-            System.out.println("请求URL: " + HttpRequestUtil.serverUrl + url);
             System.out.println("Token: " + AppStore.getJwt().getToken());
             System.out.println("请求体: " + gson.toJson(requestBody));
 
-            HttpRequest request;
+            HttpResponse<String> response = null;
+
             if (isNew) {
                 // 新增使用 POST
-                request = HttpRequest.newBuilder()
-                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
+                String url = HttpRequestUtil.serverUrl + "/api/stockOut/submitApply";
+                System.out.println("请求URL: " + url);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
                         .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
                         .headers("Content-Type", "application/json")
                         .headers("satoken", AppStore.getJwt().getToken())
                         .build();
+
+                response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             } else {
-                // 更新使用 PUT
-                request = HttpRequest.newBuilder()
-                        .uri(URI.create(HttpRequestUtil.serverUrl + url))
+                // 更新使用 PUT，需要在URL中包含orderId
+                Integer orderId = editingOutOrder != null ? editingOutOrder.getId() : null;
+                if (orderId == null) {
+                    MessageDialog.showDialog("编辑出库单时，出库单ID不能为空");
+                    return;
+                }
+
+                String url = HttpRequestUtil.serverUrl + "/api/stockOut/update/" + orderId;
+                System.out.println("请求URL: " + url);
+                System.out.println("出库单ID: " + orderId);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
                         .PUT(HttpRequest.BodyPublishers.ofString(gson.toJson(requestBody)))
                         .headers("Content-Type", "application/json")
                         .headers("satoken", AppStore.getJwt().getToken())
                         .build();
-            }
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            }
 
             System.out.println("响应状态码: " + response.statusCode());
             System.out.println("响应内容: " + response.body());
