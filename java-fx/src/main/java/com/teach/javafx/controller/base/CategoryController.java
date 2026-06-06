@@ -1004,6 +1004,7 @@ public class CategoryController extends ToolController {
         dialog.setMinHeight(280);
         dialog.showAndWait();
     }
+
     private String generateCategoryCode() {
         java.time.LocalDateTime now = java.time.LocalDateTime.now();
         int year = now.getYear();
@@ -1011,8 +1012,9 @@ public class CategoryController extends ToolController {
         int day = now.getDayOfMonth();
         int hour = now.getHour();
         int minute = now.getMinute();
+        int second = now.getSecond();
 
-        return String.format("WZ%04d%02d%02d%02d%02d", year, month, day, hour, minute);
+        return String.format("WZ%04d%02d%02d%02d%02d%02d", year, month, day, hour, minute, second);
     }
 
     private void showInfo(String title, String message) {

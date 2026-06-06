@@ -122,8 +122,9 @@ public class MaterialController extends ToolController {
         int day = now.getDayOfMonth();
         int hour = now.getHour();
         int minute = now.getMinute();
+        int second = now.getSecond();
 
-        return String.format("AW%04d%02d%02d%02d%02d", year, month, day, hour, minute);
+        return String.format("AW%04d%02d%02d%02d%02d%02d", year, month, day, hour, minute, second);
     }
 
     private void setupTable() {
