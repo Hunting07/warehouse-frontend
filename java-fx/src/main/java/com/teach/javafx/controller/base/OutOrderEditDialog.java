@@ -763,67 +763,75 @@ public class OutOrderEditDialog extends Stage {
     private void loadMaterialListSync() {
         try {
             System.out.println("开始同步加载物资列表...");
-            String url = HttpRequestUtil.serverUrl + "/api/material/available";
+            String url = HttpRequestUtil.serverUrl + "/api/material/list";
             System.out.println("请求URL: " + url);
-
+            
             // 使用 POST 方法，发送空的 JSON 对象（与入库单保持一致）
             Map<String, Object> emptyBody = new HashMap<>();
-
+            
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(emptyBody)))
                     .headers("Content-Type", "application/json", "satoken", AppStore.getJwt().getToken())
                     .build();
-
+            
             System.out.println("发送HTTP请求...");
             // 使用 send() 方法同步发送请求，会阻塞直到收到响应
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
+            
             System.out.println("HTTP状态码: " + response.statusCode());
-
+            
             if (response.statusCode() == 200) {
                 Map<String, Object> result = gson.fromJson(response.body(), Map.class);
                 int code = (result.get("code") instanceof Number) ? ((Number) result.get("code")).intValue() : -1;
                 System.out.println("返回code: " + code);
-
+                
                 if (code == 200 || code == 0) {
                     List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
                     System.out.println("data列表大小: " + (data != null ? data.size() : "null"));
-
+                    
                     materialList.clear();
                     materialMapList.clear();
                     if (data != null) {
+                        // 打印前3条数据用于调试
                         for (int i = 0; i < data.size() && i < 3; i++) {
                             Map<String, Object> item = data.get(i);
-                            System.out.println("物资项 " + i + ": name=" + item.get("name") + ", price=" + item.get("price"));
+                            System.out.println("物资项 " + i + ": name=" + item.get("name") + ", price=" + item.get("price") + ", status=" + item.get("status"));
                         }
-
+                        
                         for (Map<String, Object> item : data) {
-                            OptionItem option = new OptionItem();
-                            option.setId(((Number) item.get("id")).intValue());
-
-                            // 修复：后端返回的字段是 name，不是 materialName
-                            String materialName = (String) item.get("name");
-                            option.setName(materialName);
-
-                            // 修复：后端返回的字段是 price，不是 unitPrice
-                            if (item.get("price") instanceof Number) {
-                                option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
+                            // 修复：只添加启用状态的物资（status=1）
+                            Object statusObj = item.get("status");
+                            Integer status = statusObj instanceof Number ? ((Number) statusObj).intValue() : 1;
+                            
+                            // 只添加启用状态的物资
+                            if (status == 1) {
+                                OptionItem option = new OptionItem();
+                                option.setId(((Number) item.get("id")).intValue());
+                                
+                                // 修复：后端返回的字段是 name，不是 materialName
+                                String materialName = (String) item.get("name");
+                                option.setName(materialName);
+                                
+                                // 修复：后端返回的字段是 price，不是 unitPrice
+                                if (item.get("price") instanceof Number) {
+                                    option.setPrice(BigDecimal.valueOf(((Number) item.get("price")).doubleValue()));
+                                }
+                                
+                                // 设置状态字段
+                                option.setStatus(status);
+                                
+                                materialList.add(option);
+                                materialMapList.add(item);
                             }
-
-                            // 设置状态字段（available接口返回的都是启用的）
-                            option.setStatus(1);
-
-                            materialList.add(option);
-                            materialMapList.add(item);
                         }
                     }
                     System.out.println("物资列表加载成功，共 " + materialList.size() + " 条数据");
                     System.out.println("物资Map列表加载成功，共 " + materialMapList.size() + " 条数据");
                     if (!materialList.isEmpty()) {
-                        System.out.println("第一个物资: id=" + materialList.get(0).getId() +
-                                ", name=" + materialList.get(0).getName() +
-                                ", price=" + materialList.get(0).getPrice());
+                        System.out.println("第一个物资: id=" + materialList.get(0).getId() + 
+                                         ", name=" + materialList.get(0).getName() + 
+                                         ", price=" + materialList.get(0).getPrice());
                     }
                 } else {
                     System.err.println("加载物资列表失败: code=" + code);
