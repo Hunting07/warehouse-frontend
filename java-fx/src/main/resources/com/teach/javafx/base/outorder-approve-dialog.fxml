@@ -52,6 +52,7 @@
         <TableView fx:id="detailTableView" VBox.vgrow="ALWAYS" prefHeight="200"
                    style="-fx-background-color: white; -fx-border-color: #f0f0f0; -fx-border-width: 1; -fx-border-radius: 6; -fx-padding: 2;">
             <columns>
+                <TableColumn fx:id="serialNumberColumn" text="序号" prefWidth="60" />
                 <TableColumn fx:id="materialCodeColumn" text="物资编号" prefWidth="120" />
                 <TableColumn fx:id="materialColumn" text="物资名称" prefWidth="160" />
                 <TableColumn fx:id="unitPriceColumn" text="单价" prefWidth="100" />

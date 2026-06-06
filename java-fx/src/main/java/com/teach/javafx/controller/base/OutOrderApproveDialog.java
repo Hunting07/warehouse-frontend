@@ -5,15 +5,14 @@ import com.teach.javafx.AppStore;
 import com.teach.javafx.GsonUtil;
 import com.teach.javafx.bean.OutOrder;
 import com.teach.javafx.request.HttpRequestUtil;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.math.BigDecimal;
@@ -21,7 +20,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,6 +43,8 @@ public class OutOrderApproveDialog extends Stage {
 
     @FXML
     private TableView<Map<String, Object>> detailTableView;
+    @FXML
+    private TableColumn<Map<String, Object>, Integer> serialNumberColumn;
     @FXML
     private TableColumn<Map<String, Object>, String> materialCodeColumn;
     @FXML
@@ -113,6 +117,12 @@ public class OutOrderApproveDialog extends Stage {
         // 初始化表格
         detailTableView.setItems(detailList);
 
+        // 序号列
+        serialNumberColumn.setCellValueFactory(param -> {
+            int index = detailList.indexOf(param.getValue()) + 1;
+            return new SimpleObjectProperty<>(index);
+        });
+
         materialCodeColumn.setCellValueFactory(param -> {
             String code = (String) param.getValue().get("goodsCode");
             if (code == null || code.isEmpty()) {
@@ -161,16 +171,12 @@ public class OutOrderApproveDialog extends Stage {
         });
 
         amountColumn.setCellValueFactory(param -> {
-            Object price = param.getValue().get("unitPrice");
-            BigDecimal unitPrice = price instanceof Number ? BigDecimal.valueOf(((Number) price).doubleValue()) : BigDecimal.ZERO;
-
-            Object quantity = param.getValue().get("outNum");
-            if (quantity == null) {
-                quantity = param.getValue().get("quantity");
+            // 直接使用规范化后的 totalPrice 字段
+            Object totalPrice = param.getValue().get("totalPrice");
+            if (totalPrice instanceof Number) {
+                return new SimpleObjectProperty<>(BigDecimal.valueOf(((Number) totalPrice).doubleValue()));
             }
-            Integer qty = quantity instanceof Number ? ((Number) quantity).intValue() : 0;
-
-            return new SimpleObjectProperty<>(unitPrice.multiply(BigDecimal.valueOf(qty)));
+            return new SimpleObjectProperty<>(BigDecimal.ZERO);
         });
     }
 
@@ -246,35 +252,84 @@ public class OutOrderApproveDialog extends Stage {
                             Map<String, Object> firstItem = items.get(0);
                             System.out.println("  - goodsCode: " + firstItem.get("goodsCode"));
                             System.out.println("  - goodsName: " + firstItem.get("goodsName"));
+                            System.out.println("  - materialCode: " + firstItem.get("materialCode"));
+                            System.out.println("  - materialName: " + firstItem.get("materialName"));
                             System.out.println("  - unitPrice: " + firstItem.get("unitPrice"));
                             System.out.println("  - outNum: " + firstItem.get("outNum"));
+                            System.out.println("  - quantity: " + firstItem.get("quantity"));
+                            System.out.println("  - totalPrice: " + firstItem.get("totalPrice"));
+                            System.out.println("  - amount: " + firstItem.get("amount"));
 
                             javafx.application.Platform.runLater(() -> {
                                 detailList.clear();
                                 
-                                List<Map<String, Object>> filteredItems = items.stream()
+                                // 规范化字段名，统一处理
+                                List<Map<String, Object>> normalizedItems = new ArrayList<>();
+                                for (Map<String, Object> item : items) {
+                                    Map<String, Object> normalized = new HashMap<>(item);
+                                    
+                                    // 统一物资名称字段
+                                    String materialName = (String) item.get("materialName");
+                                    if (materialName == null || materialName.isEmpty()) {
+                                        materialName = (String) item.get("goodsName");
+                                    }
+                                    normalized.put("materialName", materialName != null ? materialName : "未知");
+                                    normalized.put("goodsName", materialName);
+                                    
+                                    // 统一物资编号字段
+                                    String materialCode = (String) item.get("materialCode");
+                                    if (materialCode == null || materialCode.isEmpty()) {
+                                        materialCode = (String) item.get("goodsCode");
+                                    }
+                                    normalized.put("materialCode", materialCode != null ? materialCode : "-");
+                                    normalized.put("goodsCode", materialCode);
+                                    
+                                    // 统一数量字段
+                                    Object quantity = item.get("outNum");
+                                    if (quantity == null) {
+                                        quantity = item.get("quantity");
+                                    }
+                                    if (quantity == null) {
+                                        quantity = item.get("outQuantity");
+                                    }
+                                    if (quantity == null) {
+                                        quantity = item.get("num");
+                                    }
+                                    if (quantity == null) {
+                                        quantity = item.get("materialOutNum");
+                                    }
+                                    int qty = quantity instanceof Number ? ((Number) quantity).intValue() : 0;
+                                    normalized.put("outNum", qty);
+                                    normalized.put("quantity", qty);
+                                    
+                                    // 统一总金额字段
+                                    Object totalPrice = item.get("totalPrice");
+                                    if (totalPrice == null) {
+                                        totalPrice = item.get("amount");
+                                    }
+                                    if (totalPrice == null && item.get("unitPrice") != null && qty > 0) {
+                                        Object unitPriceObj = item.get("unitPrice");
+                                        BigDecimal unitPrice = unitPriceObj instanceof Number ? 
+                                            BigDecimal.valueOf(((Number) unitPriceObj).doubleValue()) : BigDecimal.ZERO;
+                                        totalPrice = unitPrice.multiply(BigDecimal.valueOf(qty));
+                                    }
+                                    normalized.put("totalPrice", totalPrice instanceof Number ? 
+                                        BigDecimal.valueOf(((Number) totalPrice).doubleValue()) : BigDecimal.ZERO);
+                                    normalized.put("amount", totalPrice);
+                                    
+                                    // 统一单价字段
+                                    Object unitPrice = item.get("unitPrice");
+                                    normalized.put("unitPrice", unitPrice instanceof Number ? 
+                                        BigDecimal.valueOf(((Number) unitPrice).doubleValue()) : BigDecimal.ZERO);
+                                    
+                                    normalizedItems.add(normalized);
+                                }
+                                
+                                List<Map<String, Object>> filteredItems = normalizedItems.stream()
                                     .filter(item -> {
-                                        String name = (String) item.get("goodsName");
-                                        if (name == null || name.isEmpty()) {
-                                            name = (String) item.get("materialName");
-                                        }
-                                        if (name == null || name.isEmpty()) {
-                                            return false;
-                                        }
-                                        
-                                        Object quantity = item.get("outNum");
-                                        if (quantity == null) {
-                                            quantity = item.get("quantity");
-                                        }
-                                        if (quantity == null) {
-                                            quantity = item.get("outQuantity");
-                                        }
-                                        if (quantity == null) {
-                                            quantity = item.get("num");
-                                        }
-                                        int qty = quantity instanceof Number ? ((Number) quantity).intValue() : 0;
-                                        
-                                        return qty > 0;
+                                        String name = (String) item.get("materialName");
+                                        int qty = (int) item.get("outNum");
+                                        return name != null && !name.equals("未知") && qty > 0;
                                     })
                                     .collect(Collectors.toList());
                                 
@@ -283,35 +338,11 @@ public class OutOrderApproveDialog extends Stage {
                                 detailList.addAll(filteredItems);
                                 
                                 int totalQuantity = filteredItems.stream()
-                                    .mapToInt(item -> {
-                                        Object quantity = item.get("outNum");
-                                        if (quantity == null) {
-                                            quantity = item.get("quantity");
-                                        }
-                                        if (quantity == null) {
-                                            quantity = item.get("outQuantity");
-                                        }
-                                        if (quantity == null) {
-                                            quantity = item.get("num");
-                                        }
-                                        return quantity instanceof Number ? ((Number) quantity).intValue() : 0;
-                                    })
+                                    .mapToInt(item -> (int) item.get("outNum"))
                                     .sum();
                                 
                                 BigDecimal totalAmount = filteredItems.stream()
-                                    .map(item -> {
-                                        Object price = item.get("unitPrice");
-                                        BigDecimal unitPrice = price instanceof Number ? 
-                                            BigDecimal.valueOf(((Number) price).doubleValue()) : BigDecimal.ZERO;
-                                        
-                                        Object quantity = item.get("outNum");
-                                        if (quantity == null) {
-                                            quantity = item.get("quantity");
-                                        }
-                                        int qty = quantity instanceof Number ? ((Number) quantity).intValue() : 0;
-                                        
-                                        return unitPrice.multiply(BigDecimal.valueOf(qty));
-                                    })
+                                    .map(item -> (BigDecimal) item.get("totalPrice"))
                                     .reduce(BigDecimal.ZERO, BigDecimal::add);
                                 
                                 totalQuantityLabel.setText(String.valueOf(totalQuantity));
