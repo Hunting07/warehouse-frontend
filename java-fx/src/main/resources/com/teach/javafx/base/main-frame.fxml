@@ -169,6 +169,8 @@
       <children>
         <Label styleClass="status-label" text="准备就绪" HBox.hgrow="ALWAYS" fx:id="systemPrompt" />
         <Pane prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="ALWAYS" />
+        <Button fx:id="switchRoleBtn" text="切换管理员/员工" onAction="#handleSwitchRole"
+                style="-fx-font-size: 12px; -fx-background-color: #ff9800; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 4 12; -fx-cursor: hand;" />
         <Label styleClass="status-label" text="" HBox.hgrow="NEVER" />
       </children>
       <padding>

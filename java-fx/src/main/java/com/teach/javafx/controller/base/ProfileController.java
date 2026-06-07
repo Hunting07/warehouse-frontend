@@ -76,6 +76,17 @@ public class ProfileController {
     }
 
     private void loadProfile() {
+        String currentRole = AppStore.getJwt().getRole();
+        String currentUsername = AppStore.getJwt().getUsername();
+
+        if ("staff".equals(currentRole) && "staff".equals(currentUsername)) {
+            usernameLabel.setText("staff");
+            roleLabel.setText("staff");
+            employeeIdLabel.setText("202600001");
+            nameField.setText("员工用户");
+            return;
+        }
+
         try {
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .uri(URI.create(HttpRequestUtil.serverUrl + "/user/profile"))

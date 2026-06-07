@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.teach.javafx.controller.base.RoleSwitchDialogController"
+      style="-fx-background-color: white; -fx-background-radius: 16;"
+      prefWidth="420" prefHeight="280">
+
+    <!-- 顶部标题栏 -->
+    <HBox alignment="CENTER_LEFT" style="-fx-background-color: #4a90d9; -fx-background-radius: 16 16 0 0; -fx-padding: 20 25 20 25;">
+        <Label fx:id="titleLabel" text="🔄 角色切换"
+               style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;">
+            <font>
+                <Font name="Microsoft YaHei UI Bold" size="18" />
+            </font>
+        </Label>
+    </HBox>
+
+    <!-- 内容区域 -->
+    <VBox spacing="15" style="-fx-padding: 30 25 30 25;">
+        <Label fx:id="messageLabel" text=""
+               style="-fx-font-size: 14px; -fx-text-fill: #2c3e50;"
+               wrapText="true" />
+
+        <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+            <Button fx:id="cancelButton" text="取消"
+                    styleClass="btn-cancel"
+                    onAction="#handleCancel"
+                    prefWidth="100" prefHeight="40" />
+            <Button fx:id="confirmButton" text="确定"
+                    styleClass="btn-yes"
+                    onAction="#handleConfirm"
+                    prefWidth="100" prefHeight="40" />
+        </HBox>
+    </VBox>
+</VBox>

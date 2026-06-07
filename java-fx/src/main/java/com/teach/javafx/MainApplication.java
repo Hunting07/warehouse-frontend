@@ -26,6 +26,11 @@ public class MainApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1200, 650);
         scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+        com.teach.javafx.controller.base.LoginController loginController = fxmlLoader.getController();
+        loginController.setAutoLogin(true);
+        loginController.setDefaultCredentials("admin", "123456");
+
         stage.setTitle("登录");
         stage.setScene(scene);
         stage.setResizable(true);
@@ -39,6 +44,7 @@ public class MainApplication extends Application {
         });
         mainStage = stage;
     }
+
 
 
     /**

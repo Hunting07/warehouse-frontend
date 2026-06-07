@@ -10,6 +10,8 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.Parent;
+import javafx.stage.Stage;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
@@ -74,8 +76,11 @@ public class MainFrameController {
     private Label stockInFunctionLabel;
     @FXML
     private Label stockOutFunctionLabel;
+    @FXML
+    private Button switchRoleBtn;
 
-        void addMenuItems(Menu parent, List<Map<String, Object>> mList) {
+
+    void addMenuItems(Menu parent, List<Map<String, Object>> mList) {
         String name, title;
         Menu menu;
         MenuItem item;
@@ -166,6 +171,18 @@ public class MainFrameController {
             if (isLeft == 1) {
                 String icon = getMenuIcon(name, title);
                 String displayText = icon + "  " + title;
+
+                String currentRole = AppStore.getJwt().getRole();
+                String currentUsername = AppStore.getJwt().getUsername();
+
+                if ("staff".equals(currentRole) && "staff".equals(currentUsername)) {
+                    if (title.contains("入库审批")) {
+                        displayText = icon + "  入库申请";
+                    } else if (title.contains("出库审批")) {
+                        displayText = icon + "  出库申请";
+                    }
+                }
+
                 menu = new TreeItem<>(new MyTreeNode(null, name, displayText, isLeft));
                 if (sList != null && !sList.isEmpty()) {
                     addMenuItems(menu, sList);
@@ -173,7 +190,6 @@ public class MainFrameController {
                 root.getChildren().add(menu);
             }
         }
-
         menuTree.setRoot(root);
         menuTree.setShowRoot(false);
         menuTree.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<>() {
@@ -197,6 +213,8 @@ public class MainFrameController {
                 }
                 if ("logout".equals(menuName)) {
                     logout();
+                } else if ("switchRole".equals(menuName)) {
+                    handleSwitchRole();
                 } else if (menuName.endsWith("Command")) {
                     try {
                         Method m = this.getClass().getMethod(menuName);
@@ -209,6 +227,20 @@ public class MainFrameController {
             }
         });
     }
+
+    private void addRoleSwitchMenuItem(String role) {
+        TreeItem<MyTreeNode> root = menuTree.getRoot();
+        if (root == null) {
+            return;
+        }
+
+        String switchText = "admin".equals(role) ? "切换到员工" : "切换到管理员";
+        TreeItem<MyTreeNode> switchItem = new TreeItem<>(
+                new MyTreeNode(null, "switchRole", "🔄  " + switchText, 0)
+        );
+        root.getChildren().add(switchItem);
+    }
+
 
     private String getMenuIcon(String name, String title) {
         if (title == null) return "";
@@ -250,6 +282,8 @@ public class MainFrameController {
         addUserCenterToTree(role);
 
         addCustomMenus(role);
+
+        addRoleSwitchMenuItem(role);
 
         setupWelcomeMessage(role);
 
@@ -541,6 +575,123 @@ public class MainFrameController {
             MainApplication.loginStage("Login", scene);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @FXML
+    private void handleSwitchRole() {
+        String currentRole = AppStore.getJwt().getRole();
+
+        if ("admin".equals(currentRole)) {
+            switchToEmployee();
+        } else {
+            switchToAdmin();
+        }
+    }
+
+    private void switchToEmployee() {
+        try {
+            FXMLLoader loader = new FXMLLoader(MainApplication.class.getResource("base/role-switch-dialog.fxml"));
+            Parent root = loader.load();
+
+            RoleSwitchDialogController controller = loader.getController();
+            controller.setTitle("🔄 切换到员工角色");
+            controller.setMessage("即将切换到【员工】操作界面\n\n员工可以进行：入库申请、出库申请、查看物资等操作");
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            Stage dialogStage = new Stage();
+            dialogStage.setScene(scene);
+            dialogStage.setTitle("角色切换");
+            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialogStage.initOwner(switchRoleBtn.getScene().getWindow());
+            dialogStage.setResizable(false);
+
+            controller.setOnConfirm(() -> {
+                try {
+                    String originalToken = AppStore.getJwt().getToken();
+                    String originalTokenValue = AppStore.getJwt().getTokenValue();
+                    String originalLoginId = AppStore.getJwt().getLoginId();
+                    Integer originalId = AppStore.getJwt().getId();
+
+                    com.teach.javafx.request.JwtResponse jwt = new com.teach.javafx.request.JwtResponse();
+                    jwt.setToken(originalToken);
+                    jwt.setTokenValue(originalTokenValue);
+                    jwt.setUsername("staff");
+                    jwt.setRole("staff");
+                    jwt.setLoginId(originalLoginId);
+                    jwt.setId(originalId);
+
+                    AppStore.setJwt(jwt);
+
+                    FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/main-frame.fxml"));
+                    Scene mainScene = new Scene(fxmlLoader.load(), 1200, 800);
+                    mainScene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+                    Stage stage = MainApplication.getMainStage();
+                    stage.setMaximized(false);
+                    stage.setWidth(1200);
+                    stage.setHeight(800);
+                    stage.setTitle("仓储管理系统");
+                    stage.setScene(mainScene);
+                    stage.setMaximized(true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+
+            dialogStage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void switchToAdmin() {
+        try {
+            FXMLLoader loader = new FXMLLoader(MainApplication.class.getResource("base/role-switch-dialog.fxml"));
+            Parent root = loader.load();
+
+            RoleSwitchDialogController controller = loader.getController();
+            controller.setTitle("🔐 切换到管理员角色");
+            controller.setMessage("切换到管理员需要重新登录\n\n默认账号：admin\n默认密码：123456\n\n是否打开登录页面？");
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+            Stage dialogStage = new Stage();
+            dialogStage.setScene(scene);
+            dialogStage.setTitle("角色切换");
+            dialogStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+            dialogStage.initOwner(switchRoleBtn.getScene().getWindow());
+            dialogStage.setResizable(false);
+
+            controller.setOnConfirm(() -> {
+                try {
+                    FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
+                    Scene loginScene = new Scene(fxmlLoader.load(), 1200, 650);
+                    loginScene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+
+                    LoginController loginController = fxmlLoader.getController();
+                    loginController.setDefaultCredentials("admin", "123456");
+                    loginController.setAutoLogin(true);
+
+                    Stage stage = MainApplication.getMainStage();
+                    stage.setMaximized(false);
+                    stage.setWidth(1200);
+                    stage.setHeight(650);
+                    stage.setTitle("登录");
+                    stage.setScene(loginScene);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            dialogStage.showAndWait();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

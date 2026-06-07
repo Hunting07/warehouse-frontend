@@ -40,11 +40,37 @@ public class LoginController {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
+    private String defaultUsername = null;
+    private String defaultPassword = null;
+    private boolean autoLogin = false;
+
+
     @FXML
     public void initialize() {
-        //vbox.setStyle("-fx-background-image: url('shanda1.jpg'); -fx-background-repeat: no-repeat; -fx-background-size: cover;");
         passwordInputControl = passwordField;
+
+        javafx.application.Platform.runLater(() -> {
+            if (autoLogin && defaultUsername != null && defaultPassword != null) {
+                usernameField.setText(defaultUsername);
+                if (passwordInputControl instanceof TextField) {
+                    ((TextField) passwordInputControl).setText(defaultPassword);
+                } else if (passwordInputControl instanceof PasswordField) {
+                    ((PasswordField) passwordInputControl).setText(defaultPassword);
+                }
+            }
+        });
     }
+
+    public void setDefaultCredentials(String username, String password) {
+        this.defaultUsername = username;
+        this.defaultPassword = password;
+    }
+
+    public void setAutoLogin(boolean autoLogin) {
+        this.autoLogin = autoLogin;
+    }
+
+
 
     @FXML
     protected void onAdminLoginButtonClick() {
