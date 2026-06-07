@@ -29,6 +29,7 @@ import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -252,9 +253,48 @@ public class StockInController extends ToolController {
                     if (resultMap.get("code").equals(200.0)) {
                         List<Map<String, Object>> dataList = (List<Map<String, Object>>) resultMap.get("data");
                         List<StockIn> list = gson.fromJson(gson.toJson(dataList), new TypeToken<List<StockIn>>(){}.getType());
-                        
+
+                        String loginIdStr = AppStore.getJwt().getLoginId();
+                        Integer currentUserId = null;
+                        if (loginIdStr != null && !loginIdStr.isEmpty()) {
+                            try {
+                                if (loginIdStr.contains(".")) {
+                                    currentUserId = (int) Double.parseDouble(loginIdStr);
+                                } else {
+                                    currentUserId = Integer.valueOf(loginIdStr);
+                                }
+                            } catch (NumberFormatException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        System.out.println("=== 调试信息 ===");
+                        System.out.println("当前用户角色: " + AppStore.getJwt().getRole());
+                        System.out.println("当前用户名: " + AppStore.getJwt().getUsername());
+                        System.out.println("当前用户loginId: " + loginIdStr);
+                        System.out.println("转换后的用户ID: " + currentUserId);
+                        System.out.println("后端返回数据条数: " + list.size());
+                        for (StockIn stockIn : list) {
+                            System.out.println("  单据ID=" + stockIn.getId() + ", 申请人ID=" + stockIn.getApplyUserId() + ", 申请人姓名=" + stockIn.getApplyUserName());
+                        }
+
+                        if (!isAdmin && currentUserId != null) {
+                            List<StockIn> filteredList = new ArrayList<>();
+                            for (StockIn stockIn : list) {
+                                if (currentUserId.equals(stockIn.getApplyUserId())) {
+                                    filteredList.add(stockIn);
+                                }
+                            }
+                            list = filteredList;
+                        }
+
+                        System.out.println("过滤后数据条数: " + list.size());
+                        System.out.println("===============\n");
+
+
+                        final List<StockIn> finalList = new ArrayList<>(list);
                         javafx.application.Platform.runLater(() -> {
-                            stockInList.setAll(list);
+                            stockInList.setAll(finalList);
                         });
                     } else {
                         javafx.application.Platform.runLater(() -> {
@@ -450,8 +490,12 @@ public class StockInController extends ToolController {
     private void showStockInApproveDialog(StockIn stockIn) {
         StockInApproveDialog dialog = StockInApproveDialog.createDialog(stockIn);
         if (dialog != null) {
+            dialog.setOnApproveCallback(() -> {
+                javafx.application.Platform.runLater(() -> {
+                    loadStockInList();
+                });
+            });
             dialog.showAndWait();
-            loadStockInList();
         }
     }
 

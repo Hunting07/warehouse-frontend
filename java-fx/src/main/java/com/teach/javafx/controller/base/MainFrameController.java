@@ -25,13 +25,22 @@ import java.time.format.DateTimeFormatter;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 
 public class MainFrameController {
+    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final Gson gson = new Gson();
+
     class ChangePanelHandler implements EventHandler<ActionEvent> {
         @Override
         public void handle(ActionEvent actionEvent) {
@@ -596,7 +605,7 @@ public class MainFrameController {
 
             RoleSwitchDialogController controller = loader.getController();
             controller.setTitle("🔄 切换到员工角色");
-            controller.setMessage("即将切换到【员工】操作界面\n\n员工可以进行：入库申请、出库申请、查看物资等操作");
+            controller.setMessage("即将切换到【员工】操作界面\n\n请点击确定后重新登录员工账号");
 
             Scene scene = new Scene(root);
             scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
@@ -610,37 +619,24 @@ public class MainFrameController {
 
             controller.setOnConfirm(() -> {
                 try {
-                    String originalToken = AppStore.getJwt().getToken();
-                    String originalTokenValue = AppStore.getJwt().getTokenValue();
-                    String originalLoginId = AppStore.getJwt().getLoginId();
-                    Integer originalId = AppStore.getJwt().getId();
+                    FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
+                    Scene loginScene = new Scene(fxmlLoader.load(), 1200, 650);
+                    loginScene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
 
-                    com.teach.javafx.request.JwtResponse jwt = new com.teach.javafx.request.JwtResponse();
-                    jwt.setToken(originalToken);
-                    jwt.setTokenValue(originalTokenValue);
-                    jwt.setUsername("staff");
-                    jwt.setRole("staff");
-                    jwt.setLoginId(originalLoginId);
-                    jwt.setId(originalId);
-
-                    AppStore.setJwt(jwt);
-
-                    FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/main-frame.fxml"));
-                    Scene mainScene = new Scene(fxmlLoader.load(), 1200, 800);
-                    mainScene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+                    LoginController loginController = fxmlLoader.getController();
+                    loginController.setDefaultCredentials("staff", "123456");
+                    loginController.setAutoLogin(true);
 
                     Stage stage = MainApplication.getMainStage();
                     stage.setMaximized(false);
                     stage.setWidth(1200);
-                    stage.setHeight(800);
-                    stage.setTitle("仓储管理系统");
-                    stage.setScene(mainScene);
-                    stage.setMaximized(true);
+                    stage.setHeight(650);
+                    stage.setTitle("登录 - 员工");
+                    stage.setScene(loginScene);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             });
-
 
             dialogStage.showAndWait();
         } catch (Exception e) {
@@ -695,6 +691,7 @@ public class MainFrameController {
         }
     }
 
+
     public void changeContent(ActionEvent ae) {
         Object obj = ae.getSource();
         String name = null, title = null;
@@ -726,7 +723,7 @@ public class MainFrameController {
             fxmlPath = "/view/StockWarningView";
         } else if (name.contains("stockin")) {
             fxmlPath = "/com/teach/javafx/base/stockin-panel";
-        } else if (name.contains("stockout")) {
+        } else if (name.contains("stockout") || name.contains("outbound")){
             fxmlPath = "/com/teach/javafx/base/outbound-panel";
         } else if (name.contains("outorder") || name.contains("出库审批")) {
             fxmlPath = "/com/teach/javafx/base/outorder-list-panel";

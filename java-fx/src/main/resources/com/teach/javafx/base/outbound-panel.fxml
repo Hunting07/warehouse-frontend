@@ -13,8 +13,8 @@
             <!-- 标题卡片 - 与出库审批管理样式完全一致 -->
             <HBox alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0, 0, 2); -fx-padding: 16 24 16 24;" spacing="12">
                 <VBox spacing="2">
-                    <Label text="出库申请管理" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
-                    <Label text="提交与查看所有出库申请单据" style="-fx-font-size: 12px; -fx-text-fill: #86909c;" />
+                    <Label fx:id="titleLabel" text="出库申请管理" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1d3f66;" />
+                    <Label fx:id="subtitleLabel" text="提交与查看所有出库申请单据" style="-fx-font-size: 12px; -fx-text-fill: #86909c;" />
                 </VBox>
             </HBox>
 
@@ -48,12 +48,12 @@
 
                 <!-- 操作按钮区域 -->
                 <HBox spacing="10" alignment="CENTER_LEFT">
-                    <Button text="+ 新增出库单" onAction="#onAddButtonClick"
+                    <Button fx:id="addButton" text="+ 新增出库单" onAction="#onAddButtonClick"
                             style="-fx-background-color: linear-gradient(to right, #52c41a, #73d13d); -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 24 9 24; -fx-background-radius: 6; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(82,196,26,0.2), 6, 0, 0, 2);" />
-                    <Button text="编辑" onAction="#onEditButtonClick"
+                    <Button fx:id="editButton" text="编辑" onAction="#onEditButtonClick"
                             style="-fx-background-color: #4096ff; -fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-cursor: hand;" />
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button text="删除" onAction="#onDeleteButtonClick"
+                    <Button fx:id="approveButton" text="删除" onAction="#onDeleteButtonClick"
                             style="-fx-background-color: white; -fx-text-fill: #f53f3f; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 9 22 9 22; -fx-background-radius: 6; -fx-border-color: #f53f3f; -fx-border-width: 1; -fx-border-radius: 6; -fx-cursor: hand;" />
                 </HBox>
             </VBox>

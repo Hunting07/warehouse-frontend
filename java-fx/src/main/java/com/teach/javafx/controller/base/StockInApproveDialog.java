@@ -67,6 +67,11 @@ public class StockInApproveDialog extends Stage {
     private final Gson gson = GsonUtil.getGson();
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private StockIn stockIn;
+    private Runnable onApproveCallback;
+
+    public void setOnApproveCallback(Runnable callback) {
+        this.onApproveCallback = callback;
+    }
 
     // ... existing code ...
 
@@ -282,6 +287,10 @@ public class StockInApproveDialog extends Stage {
                     javafx.application.Platform.runLater(() -> {
                         if (code == 200 || code == 0) {
                             MessageDialog.showDialog(approved ? "批准成功，库存已更新" : "驳回成功");
+
+                            if (onApproveCallback != null) {
+                                onApproveCallback.run();
+                            }
                         } else {
                             MessageDialog.showDialog("审批失败：" + result.get("msg"));
                         }

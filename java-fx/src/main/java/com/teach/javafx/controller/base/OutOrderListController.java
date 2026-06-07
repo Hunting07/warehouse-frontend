@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -34,6 +35,18 @@ import java.util.List;
 import java.util.Map;
 
 public class OutOrderListController extends ToolController {
+
+    @FXML
+    private Label titleLabel;
+
+    @FXML
+    private Label subtitleLabel;
+
+    @FXML
+    private Button editButton;
+
+    @FXML
+    private Button approveButton;
 
     @FXML
     private TextField searchOrderNoField;
@@ -82,7 +95,18 @@ public class OutOrderListController extends ToolController {
     public void initialize() {
         String role = AppStore.getJwt().getRole();
         isAdmin = "admin".equals(role) || "ADMIN".equals(role);
-        
+
+        if (isAdmin) {
+            titleLabel.setText("出库审批管理");
+            subtitleLabel.setText("管理和审批所有出库单据");
+            editButton.setVisible(false);
+            editButton.setManaged(false);
+        } else {
+            titleLabel.setText("出库申请管理");
+            subtitleLabel.setText("查看和管理我的出库申请单");
+            approveButton.setVisible(false);
+            approveButton.setManaged(false);
+        }
 
         indexColumn.setCellValueFactory(data -> {
             int index = outOrderTable.getItems().indexOf(data.getValue());
@@ -395,20 +419,41 @@ public class OutOrderListController extends ToolController {
                                 list.add(order);
                             }
 
+                            String loginIdStr = AppStore.getJwt().getLoginId();
+                            Integer currentUserId = null;
+                            if (loginIdStr != null && !loginIdStr.isEmpty()) {
+                                try {
+                                    if (loginIdStr.contains(".")) {
+                                        currentUserId = (int) Double.parseDouble(loginIdStr);
+                                    } else {
+                                        currentUserId = Integer.valueOf(loginIdStr);
+                                    }
+                                } catch (NumberFormatException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            if (!isAdmin && currentUserId != null) {
+                                List<OutOrder> filteredList = new ArrayList<>();
+                                for (OutOrder order : list) {
+                                    if (currentUserId.equals(order.getApplicantId())) {
+                                        filteredList.add(order);
+                                    }
+                                }
+                                list = filteredList;
+                            }
+
+                            final List<OutOrder> finalList = new ArrayList<>(list);
                             javafx.application.Platform.runLater(() -> {
-                                outOrderList.setAll(list);
-                            });
-                        } else {
-                            javafx.application.Platform.runLater(() -> {
-                                outOrderList.clear();
+                                outOrderList.setAll(finalList);
                             });
                         }
-                    } else {
-                        final String errorMsg = resultMap.get("msg") != null ? resultMap.get("msg").toString() : "未知错误";
-                        javafx.application.Platform.runLater(() -> {
-                            MessageDialog.showDialog("加载数据失败：" + errorMsg);
-                        });
-                    }
+                } else {
+                    final String errorMsg = resultMap.get("msg") != null ? resultMap.get("msg").toString() : "未知错误";
+                    javafx.application.Platform.runLater(() -> {
+                        MessageDialog.showDialog("加载数据失败：" + errorMsg);
+                    });
+                }
 
                 } else {
                     String errorMsg = "";
@@ -508,26 +553,68 @@ public class OutOrderListController extends ToolController {
         }
 
         if (selected.getStatus() == 2) {
-            String rejectReason = selected.getRejectReason();
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("驳回理由");
-            alert.setHeaderText("该出库单已被驳回");
-            String message = rejectReason != null && !rejectReason.isEmpty()
-                    ? "驳回理由：\n\n" + rejectReason + "\n\n点击确定后进入编辑模式"
-                    : "该出库单已被驳回\n\n点击确定后进入编辑模式";
-            alert.setContentText(message);
-            alert.showAndWait();
+            showRejectReasonDialog(selected.getRejectReason());
+            return;
         }
 
         try {
             OutOrderEditDialog dialog = OutOrderEditDialog.createEditDialog(selected);
             if (dialog != null) {
                 dialog.showAndWait();
-                loadOutOrderList();
+
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(500);
+                        javafx.application.Platform.runLater(() -> {
+                            loadOutOrderList();
+                        });
+                    } catch (InterruptedException e) {
+                    }
+                }).start();
             }
         } catch (Exception e) {
             MessageDialog.showDialog("打开编辑窗口失败：" + e.getMessage());
         }
+    }
+
+    private void showRejectReasonDialog(String rejectReason) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.DECORATED);
+        dialog.setTitle("驳回理由");
+
+        VBox root = new VBox(30);
+        root.setAlignment(Pos.CENTER);
+        root.setPadding(new Insets(45, 55, 40, 55));
+        root.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
+
+        Label titleLabel = new Label("该出库单已被驳回");
+        titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+        Label reasonLabel = new Label();
+        if (rejectReason != null && !rejectReason.isEmpty()) {
+            reasonLabel.setText("驳回理由：\n\n" + rejectReason);
+        } else {
+            reasonLabel.setText("该出库单已被驳回（无驳回理由）");
+        }
+        reasonLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: #546e7a; -fx-text-alignment: center;");
+        reasonLabel.setWrapText(true);
+        reasonLabel.setMaxWidth(400);
+
+        Label hintLabel = new Label("只有待审批的出库单可以重新编辑");
+        hintLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+
+        Button confirmBtn = new Button("确定");
+        confirmBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-padding: 12 55; -fx-background-radius: 8; -fx-cursor: hand;");
+        confirmBtn.setOnAction(e -> dialog.close());
+
+        root.getChildren().addAll(titleLabel, reasonLabel, hintLabel, confirmBtn);
+
+        Scene scene = new Scene(root, 500, 380);
+        scene.setFill(Color.WHITE);
+        dialog.setScene(scene);
+
+        dialog.showAndWait();
     }
 
     @FXML
