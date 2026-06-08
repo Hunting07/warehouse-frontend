@@ -16,8 +16,6 @@ public class MainApplication extends Application {
      * 加载登录对话框，设置登录Scene到Stage,显示该场景
      */
     private static Stage mainStage;
-    private static double stageWidth = -1;
-    private static double stageHeight = -1;
 
     private static boolean canClose=true;
 
@@ -26,10 +24,6 @@ public class MainApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1200, 650);
         scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
-
-        com.teach.javafx.controller.base.LoginController loginController = fxmlLoader.getController();
-        loginController.setAutoLogin(true);
-        loginController.setDefaultCredentials("admin", "123456");
 
         stage.setTitle("登录");
         stage.setScene(scene);
@@ -54,28 +48,19 @@ public class MainApplication extends Application {
      */
 
     public static void resetStage(String name, Scene scene) {
+        mainStage.setTitle(name);
+        mainStage.setScene(scene);
+        // 先取消最大化，设置固定尺寸
         mainStage.setMaximized(false);
         mainStage.setWidth(1200);
         mainStage.setHeight(800);
-        mainStage.setTitle(name);
-        mainStage.setScene(scene);
-        mainStage.setMaximized(true);
+        // 等待场景加载完成后最大化，避免闪烁和黑块
+        javafx.application.Platform.runLater(() -> {
+            mainStage.setMaximized(true);
+        });
         mainStage.show();
     }
 
-    public static void loginStage(String name, Scene scene) {
-        stageWidth = mainStage.getWidth();
-        stageHeight = mainStage.getHeight();
-        mainStage.setTitle(name);
-        mainStage.setScene(scene);
-        double x = (stageWidth-320)/2;
-        double y = (stageHeight-240)/2;
-        mainStage.setX(x);
-        mainStage.setY(y);
-        mainStage.setWidth(320);
-        mainStage.setHeight(240);
-        mainStage.show();
-    }
 
     public static void main(String[] args) {
         launch();

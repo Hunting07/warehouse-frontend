@@ -44,21 +44,15 @@ public class LoginController {
     private String defaultPassword = null;
     private boolean autoLogin = false;
 
+    private String adminUsername = "admin";
+    private String adminPassword = "123456";
+    private String staffUsername = "staff";
+    private String staffPassword = "123456";
 
     @FXML
     public void initialize() {
         passwordInputControl = passwordField;
-
-        javafx.application.Platform.runLater(() -> {
-            if (autoLogin && defaultUsername != null && defaultPassword != null) {
-                usernameField.setText(defaultUsername);
-                if (passwordInputControl instanceof TextField) {
-                    ((TextField) passwordInputControl).setText(defaultPassword);
-                } else if (passwordInputControl instanceof PasswordField) {
-                    ((PasswordField) passwordInputControl).setText(defaultPassword);
-                }
-            }
-        });
+        passwordToggleBtn.setText("🔒");
     }
 
     public void setDefaultCredentials(String username, String password) {
@@ -74,29 +68,14 @@ public class LoginController {
 
     @FXML
     protected void onAdminLoginButtonClick() {
-        String username = usernameField.getText().trim();
-        String password = passwordInputControl.getText();
-
-        if (username.isEmpty() || password.isEmpty()) {
-            MessageDialog.showDialog("请输入用户名和密码");
-            return;
-        }
-
-        login(username, password, true);
+        login(adminUsername, adminPassword, true);
     }
 
     @FXML
     protected void onEmployeeLoginButtonClick() {
-        String username = usernameField.getText().trim();
-        String password = passwordInputControl.getText();
-
-        if (username.isEmpty() || password.isEmpty()) {
-            MessageDialog.showDialog("请输入用户名和密码");
-            return;
-        }
-
-        login(username, password, false);
+        login(staffUsername, staffPassword, false);
     }
+
     @FXML
     protected void onRegisterButtonClick() {
         try {

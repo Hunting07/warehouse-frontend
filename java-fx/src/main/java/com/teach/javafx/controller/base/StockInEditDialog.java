@@ -1051,13 +1051,11 @@ public class StockInEditDialog extends Stage {
         root.setPadding(new Insets(15, 35, 15, 35));
         root.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
 
-        // 消息文本 - 使用 VBox 而不是 Label，以便控制行间距
-        VBox messageBox = new VBox(8); // 8px 行间距
+        VBox messageBox = new VBox(8);
         messageBox.setAlignment(Pos.CENTER);
         messageBox.setPadding(new Insets(20, 20, 20, 20));
-        messageBox.setStyle("-fx-background-color:white; -fx-background-radius: 8;");
+        messageBox.setStyle("-fx-background-color: white; -fx-background-radius: 8;");
         
-        // 将消息按行分割并分别显示
         String[] lines = message.split("\n");
         for (String line : lines) {
             if (line != null && !line.trim().isEmpty()) {
@@ -1068,30 +1066,17 @@ public class StockInEditDialog extends Stage {
                 messageBox.getChildren().add(lineLabel);
             }
         }
-        
-        // 将消息放入 ScrollPane，支持多行内容完整显示
-        ScrollPane scrollPane = new ScrollPane(messageBox);
-        scrollPane.setStyle("-fx-background-color: white; -fx-border-color: transparent;");
-        scrollPane.setFitToWidth(true);
-        scrollPane.setVbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scrollPane.setHbarPolicy(javafx.scene.control.ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setPrefHeight(200);
-        scrollPane.setMaxHeight(280);
-        scrollPane.setPadding(new Insets(5, 5, 5, 5));
 
-        // 按钮
         Button confirmBtn = new Button("确认");
         confirmBtn.setStyle("-fx-background-color: #4a90d9; -fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 10 45; -fx-background-radius: 8; -fx-cursor: hand;");
         confirmBtn.setOnAction(e -> dialog.close());
 
-        root.getChildren().addAll(scrollPane, confirmBtn);
+        root.getChildren().addAll(messageBox, confirmBtn);
 
-        // 根据内容动态计算高度
-        Scene scene = new Scene(root, 520, 360);
+        Scene scene = new Scene(root, 520, 280);
         scene.setFill(javafx.scene.paint.Color.WHITE);
         dialog.setScene(scene);
 
-        // 按 ESC 键关闭
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
                 dialog.close();

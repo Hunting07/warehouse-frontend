@@ -168,7 +168,7 @@ public class StockWarningController {
                     setStyle("");
                 } else {
                     if (isSelected()) {
-                        setStyle("-fx-background-color: #2196F3; -fx-text-fill: #000000;");
+                        setStyle("-fx-background-color: #E3F2FD; -fx-text-fill: #333333;");
                     } else if (getIndex() % 2 == 0) {
                         setStyle("-fx-background-color: #fff5f5;");
                     } else {

@@ -87,6 +87,8 @@ public class MainFrameController {
     private Label stockOutFunctionLabel;
     @FXML
     private Button switchRoleBtn;
+    @FXML
+    private Button logoutButton;
 
 
     void addMenuItems(Menu parent, List<Map<String, Object>> mList) {
@@ -201,6 +203,28 @@ public class MainFrameController {
         }
         menuTree.setRoot(root);
         menuTree.setShowRoot(false);
+        menuTree.setCellFactory(tv -> new TreeCell<MyTreeNode>() {
+            @Override
+            protected void updateItem(MyTreeNode item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    setMouseTransparent(true);
+                    setStyle("-fx-background-color: transparent; -fx-padding: 0;");
+                    setPrefHeight(0);
+                    setMinHeight(0);
+                    setMaxHeight(0);
+                } else {
+                    setText(item.toString());
+                    setMouseTransparent(false);
+                    setStyle("");
+                    setPrefHeight(-1);
+                    setMinHeight(-1);
+                    setMaxHeight(-1);
+                }
+            }
+        });
         menuTree.addEventFilter(MouseEvent.MOUSE_CLICKED, new EventHandler<>() {
             public void handle(MouseEvent event) {
                 TreeItem<MyTreeNode> treeItem = menuTree.getSelectionModel().getSelectedItem();
@@ -576,12 +600,23 @@ public class MainFrameController {
         loadDashboardData();
     }
 
+    @FXML
+    private void handleLogout() {
+        logout();
+    }
+
     protected void logout() {
         AppStore.setJwt(null);
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("base/login-view.fxml"));
         try {
-            Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-            MainApplication.loginStage("Login", scene);
+            Scene scene = new Scene(fxmlLoader.load(), 1200, 650);
+            scene.getStylesheets().add(getClass().getResource("/styles/modern-style.css").toExternalForm());
+            Stage stage = MainApplication.getMainStage();
+            stage.setMaximized(false);
+            stage.setWidth(1200);
+            stage.setHeight(650);
+            stage.setTitle("登录");
+            stage.setScene(scene);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
